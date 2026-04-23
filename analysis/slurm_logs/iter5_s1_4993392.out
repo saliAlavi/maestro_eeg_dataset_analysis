@@ -1,0 +1,10 @@
+[S1] extracting features
+[S1] 100 trials × 368 features  (44s)
+[S1] done in 49s
+ subject        task classifier  chance  acc
+       1  hemisphere     logreg    0.50 0.48
+       1  hemisphere   lightgbm    0.50 0.40
+       1 inner_outer     logreg    0.50 0.64
+       1 inner_outer   lightgbm    0.50 0.52
+       1      4class     logreg    0.25 0.28
+       1      4class   lightgbm    0.25 0.24

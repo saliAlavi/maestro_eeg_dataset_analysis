@@ -1,0 +1,85 @@
+\section*{NeurIPS Paper Checklist}
+
+\begin{enumerate}
+
+\item {\bf Claims}
+    \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The abstract and Sec.~\ref{sec:intro} list the five concrete contributions (multimodal corpus, reference pipeline, benchmark suite, motion-residualisation control, Croissant metadata); each is supported by a numbered section in the paper.
+
+\item {\bf Limitations}
+    \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:limits} discusses cohort size, paradigm specificity, the S1 hardware outlier, the absence of deep-model ceilings in the submitted numbers, and the shared-variance confound exposed by the motion-residualisation control.
+
+\item {\bf Theory assumptions and proofs}
+    \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper presents a dataset and empirical benchmarks; there are no theoretical results requiring proof.
+
+\item {\bf Experimental result reproducibility}
+    \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:dataset}--\ref{sec:controls} specify the preprocessing (bandpass, notch, auto-reference, spherical-spline interpolation), feature definitions (368-dim spectral vector, 23-dim gaze vector, 35-dim IMU vector, 15-dim video vector), classifier choices (L2-LogReg, LightGBM $n{=}300$), CV protocol (5-fold stratified within-subject, bootstrap 95\,\% CI over the 16 per-subject accuracies), and the residualisation procedure.
+
+\item {\bf Open access to data and code}
+    \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:licensing} specifies anonymous hosting URLs for data and code at submission, a CC-BY-NC-4.0 licence on the recordings with CC-0 on the LibriVox stimuli, and a Croissant \texttt{RecordSet} with RAI fields. \justificationTODO{Final hosting location (Hugging Face/OpenNeuro/Zenodo) and persistent DOI to be set before camera-ready.}
+
+\item {\bf Experimental setting/details}
+    \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer) necessary to understand the results?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:trf}--\ref{sec:fusion} specify the ridge $\alpha$ grid ($10^{-1}\ldots10^{6}$, 12 log-spaced points, inner 5-fold CV on $\rho_\text{att}-\rho_\text{una}$), TRF lag window ($-200$ to $+500$\,ms at 25\,ms steps), LightGBM hyperparameters, 5-fold stratified CV per subject with bootstrap 95\,\% CI over 16 subjects, and decision-window sweep $\{1,2,4,8,16,30\}\,\text{s}$.
+
+\item {\bf Experiment statistical significance}
+    \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: All pooled accuracies are accompanied by 95\,\% bootstrap CIs (resampling the 16 per-subject accuracies with replacement). Sec.~\ref{sec:iter8} reports paired Wilcoxon signed-rank $p$-values against the raw condition.
+
+\item {\bf Experiments compute resources}
+    \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: All submitted baselines run CPU-only on an OSC SLURM \texttt{batch} partition, one task per (subject$\times$backbone), 8 CPUs and 32\,GB memory per task, 2\,h wall-time limit. A full benchmark sweep of the 16 subjects $\times$ 4 TRF backbones $+$ spectral $+$ gaze $+$ IMU $+$ video fits in $\sim$20 minutes wall-clock when parallelised across nodes. Deep-model baselines listed under Sec.~\ref{sec:todo} are GPU-bound and not included in the submitted numbers.
+
+\item {\bf Code of ethics}
+    \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:ethics} describes the IRB approval, informed consent specifically covering multimodal data release, face-blurring of bystanders in egocentric scene video, compensation at jurisdictional minimum wage, and access-gated raw video.
+
+\item {\bf Broader impacts}
+    \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:ethics} discusses the intended research use (hearing-aid algorithms, BCI research, audio-cortex neuroscience), the foreseeable misuses (trait inference from behavioural data; AAD decoders in surveillance contexts), and mitigations (CC-BY-NC-4.0 licence, access-by-request raw video, face-blurring).
+
+\item {\bf Safeguards}
+    \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pre-trained language models, image generators, or scraped datasets)?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:ethics}: face-blurring of incidental persons in egocentric video, CC-BY-NC-4.0 licence restricting commercial reuse, and access-by-request gating of the raw scene-camera footage. No pre-trained generative models are released.
+
+\item {\bf Licenses for existing assets}
+    \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:licensing} credits the LibriVox public-domain corpus (CC-0) for audio stimuli and lists the MNE-Python, NumPy, scikit-learn, LightGBM, and PyTorch versions used in the pipeline (complete list in the environment file). \justificationTODO{Add explicit CTAN / PyPI references in the camera-ready acknowledgements.}
+
+\item {\bf New assets}
+    \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The dataset is packaged with a Croissant \texttt{RecordSet}, a per-trial provenance manifest (\texttt{results/*.parquet}), loader code with Jupyter notebook demos for every task in Sec.~\ref{sec:benchmarks}, and a README describing the directory layout and trial-index conventions (Sec.~\ref{sec:layout}).
+
+\item {\bf Crowdsourcing and research with human subjects}
+    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sec.~\ref{sec:dataset} describes the paradigm (cued attention across four spatial talkers, 30-s trials, per-trial comprehension question). Sec.~\ref{sec:ethics} states compensation was at the jurisdictional minimum wage. \justificationTODO{Supplementary material will include the verbatim participant-instruction script and a screenshot of the comprehension-question interface.}
+
+\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
+    \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The study was IRB-approved and informed consent was obtained specifically covering the release of de-identified EEG, eye-tracking, IMU, and head-mounted scene video. Institution and protocol number are withheld during anonymous review and will be added in the camera-ready version (Sec.~\ref{sec:ethics}).
+
+\item {\bf Declaration of LLM usage}
+    \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: LLMs play no role in data collection, preprocessing, feature extraction, baseline classifiers, or the motion-residualisation control. Writing and formatting assistance are not required to be declared per the NeurIPS policy.
+
+\end{enumerate}

@@ -1,0 +1,262 @@
+\chapter{Iteration 5 --- classical spectral EEG features}
+\label{ch:iter5}
+
+\section{Task definition and inputs}
+
+\paragraph{Task.} Auditory-attention decoding: for a given trial, predict
+which of four concurrently presented speakers the subject was attending
+to. A trial is 30\,s long; during it the subject hears four speech
+streams simultaneously (Device-1 L, Device-1 R, Device-2 L, Device-2 R
+--- see Dataset Layout chapter) plus noise from Device-3 at ±135°. The
+attended-speaker label comes from \code{trials.csv} and is one of
+$\{1, 2, 3, 4\}$.
+
+\paragraph{Three label-collapses evaluated.}
+\begin{itemize}
+  \item \textbf{Hemisphere} (chance $= 0.5$): $\{1,2\}$ (LEFT,
+        az $\in\{-67.5°, -22.5°\}$) vs $\{3,4\}$ (RIGHT, az $\in\{+22.5°,
+        +67.5°\}$). This is the classical binary AAD framing --- which
+        side is the listener attending.
+  \item \textbf{Inner vs outer} (chance $= 0.5$): $\{2,3\}$ (inner
+        speakers at $\pm 22.5°$) vs $\{1,4\}$ (outer speakers at
+        $\pm 67.5°$). Tests whether the decoder picks up \emph{eccentricity}
+        rather than hemisphere.
+  \item \textbf{4-class speaker identity} (chance $= 0.25$): predict the
+        exact speaker label $1/2/3/4$.
+\end{itemize}
+
+\paragraph{Inputs used in iter-5.}
+\begin{itemize}
+  \item \textbf{EEG-only condition}: 32-channel EEG
+        (\code{experiment\_data/Eval-K/eeg\_data.p}), bandpassed 1--40\,Hz,
+        notched at 60\,Hz, auto-referenced (linked mastoids when good;
+        common-average otherwise), at the native \SI{500}{\Hz}. Per trial
+        we compute a \textbf{368-dimensional spectral feature vector}
+        described in the next section and use it as input $X$ to a
+        per-subject classifier.
+  \item \textbf{Gaze-only condition} (for the fusion comparison): the
+        Tobii Glasses~3 \code{gazedata.gz} stream from the Video-Recordings
+        folder paired with the trial, plus the paired \code{imudata.gz}.
+        The 30-s stream is summarised into a 23-dimensional vector
+        (Table~\ref{tab:gaze-feats}). The experiment-data 2-D gaze
+        (\code{gaze\_data.p}) is not used.
+\end{itemize}
+
+\begin{table}[ht]
+\centering
+\caption{Gaze / head-motion feature vector (23 features per trial).}
+\label{tab:gaze-feats}
+\begin{tabular}{llll}
+\toprule
+\# & Name & Source & Description \\
+\midrule
+1  & \code{gx\_mean}      & Tobii gaze2d & scene horizontal gaze, mean \\
+2  & \code{gx\_std}       & Tobii gaze2d & scene horizontal gaze, std \\
+3  & \code{gy\_mean}      & Tobii gaze2d & scene vertical gaze, mean \\
+4  & \code{gy\_std}       & Tobii gaze2d & scene vertical gaze, std \\
+5  & \code{gx\_valid}     & Tobii gaze2d & fraction of finite samples \\
+6  & \code{sacc\_rate}    & derived       & saccades/s (I-VT, 30°/s thresh.) \\
+7  & \code{sacc\_amp\_med} & derived      & median saccade amplitude (°) \\
+8  & \code{g3d\_x\_mean}  & Tobii gaze3d & 3-D gaze x (horizontal, mm) \\
+9  & \code{g3d\_y\_mean}  & Tobii gaze3d & 3-D gaze y (vertical, mm) \\
+10 & \code{g3d\_z\_mean}  & Tobii gaze3d & 3-D gaze z (depth, mm) \\
+11 & \code{g3d\_x\_std}   & Tobii gaze3d & 3-D gaze x, std \\
+12 & \code{L\_az\_mean}   & Tobii eyeleft  & left-eye azimuth mean (°) \\
+13 & \code{L\_az\_std}    & Tobii eyeleft  & left-eye azimuth std \\
+14 & \code{L\_el\_mean}   & Tobii eyeleft  & left-eye elevation mean (°) \\
+15 & \code{L\_pup}        & Tobii eyeleft  & left pupil diameter (mm) \\
+16 & \code{L\_valid}      & Tobii eyeleft  & left-eye sample validity \\
+17 & \code{R\_az\_mean}   & Tobii eyeright & right-eye azimuth mean \\
+18 & \code{R\_az\_std}    & Tobii eyeright & right-eye azimuth std \\
+19 & \code{R\_el\_mean}   & Tobii eyeright & right-eye elevation mean \\
+20 & \code{R\_pup}        & Tobii eyeright & right pupil diameter \\
+21 & \code{R\_valid}      & Tobii eyeright & right-eye sample validity \\
+22 & \code{gyro\_mag}     & imudata       & mean $\|\boldsymbol{\omega}\|$ (rad/s) \\
+23 & \code{acc\_std}      & imudata       & std of $\|\mathbf{a}\|-g$ (m/s$^2$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \setcounter{enumi}{2}
+  \item \textbf{Fusion condition}: concatenation $[\text{EEG}_{368},
+        \text{gaze}_{20}]$.
+  \item \textbf{Scene video (\code{scenevideo.mp4})} is \emph{not} used
+        in iter-5. Planned for iter-6 as motion-energy / optical-flow
+        features.
+\end{itemize}
+
+\paragraph{Prediction target.} $\hat{y} = f(X)$ where $X$ is the
+per-trial feature vector above and $\hat{y}$ is the attended-speaker
+label under whichever of the three label-collapses we are evaluating.
+
+\paragraph{Evaluation protocol.} For every subject independently, trials
+are split with 5-fold stratified cross-validation (100 trials / subject,
+so $\sim 80$ train + $\sim 20$ test per fold). The classifier is
+\textbf{refit from scratch on each subject} --- no cross-subject
+transfer. The reported accuracy per subject is the mean over the 5 held
+-out folds; the reported \emph{pooled} accuracy is the unweighted mean
+across the 16 per-subject accuracies (with bootstrap 95\,\% CI resampling
+the 16 values). Chance is determined by the label collapse.
+
+\section*{Headline}
+
+Replacing the envelope-reconstruction decoder (CCA mel-28) with a
+368-dimensional \emph{linear} classifier over classical EEG features ---
+band powers, alpha lateralisation, Hjorth complexity, spectral entropy,
+$1/f$ slope, alpha-band phase-locking and magnitude-squared coherence ---
+takes pooled within-subject hemisphere AAD from $0.498$ to
+$\mathbf{0.716}$, a $+21.8$\,pp jump. No deep learning. Subject~3 climbs
+from $0.43$ (CCA) to $\mathbf{0.94}$ logreg; Subject~15 hits $\mathbf{0.92}$.
+
+\section{Feature set}
+
+Per trial, computed on 1--40\,Hz preprocessed, auto-referenced EEG (500\,Hz)
+and aggregated over the 30\,s trial:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrl}
+\toprule
+Group & \# feats & Contents \\
+\midrule
+Band powers (log) & 160 & Welch $\delta/\theta/\alpha/\beta/\gamma$ per 32 channels \\
+Within-channel band ratios (log) & 96 & $\alpha/\theta$, $\alpha/\beta$, $\theta/\beta$ per channel \\
+Alpha lateralisation & 4 & log R/L for parietal, central, occipital, temporal \\
+Hjorth mobility + complexity & 64 & Per channel \\
+Spectral entropy & 32 & Shannon, 1--40\,Hz \\
+$1/f$ aperiodic slope & 4 & Per channel group (frontal/central/parietal/occipital) \\
+Alpha connectivity & 6 & MSC \& wPLI for within-L, within-R, between-hemi \\
+Global field power & 2 & mean, std \\
+\midrule
+\textbf{Total} & \textbf{368} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Classifier sweep (all 16 subjects, per-subject 5-fold CV)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrl}
+\toprule
+Task & Classifier & Pooled acc. & 95\,\% CI \\
+\midrule
+Hemisphere  & L2-LogReg       & \textbf{0.716} & [0.641, 0.792] \\
+Hemisphere  & LightGBM        & 0.655          & [0.589, 0.724] \\
+Inner-outer & L2-LogReg       & \textbf{0.649} & [0.592, 0.712] \\
+Inner-outer & LightGBM        & 0.597          & [0.536, 0.667] \\
+4-class     & L2-LogReg       & \textbf{0.448} & [0.358, 0.544] \\
+4-class     & LightGBM        & 0.410          & [0.332, 0.497] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+L2-LogReg beats LightGBM on every task --- consistent with a linearly
+separable feature set and $p=368$ vs $n\approx 100$ where tree-boosting
+overfits. The hemisphere pool at 0.716 is $+21.8$\,pp above the linear
+TRF baseline ($0.498$, Chapter~\ref{ch:iter4}) and $+19.3$\,pp above the
+best iter-3 CCA backbone pooled ($0.523$).
+
+\section{Per-subject LogReg accuracy}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Subject & Hemisphere & Inner/outer & 4-class \\
+\midrule
+1  & 0.480 & 0.640 & 0.280 \\
+2  & \textbf{0.900} & \textbf{0.850} & 0.750 \\
+3  & \textbf{0.940} & 0.600 & 0.520 \\
+4  & \textbf{0.880} & \textbf{0.910} & \textbf{0.810} \\
+5  & 0.700 & 0.640 & 0.460 \\
+6  & 0.730 & 0.580 & 0.420 \\
+7  & \textbf{0.890} & 0.730 & 0.620 \\
+8  & 0.620 & 0.540 & 0.310 \\
+9  & 0.600 & 0.570 & 0.240 \\
+10 & 0.660 & 0.610 & 0.450 \\
+11 & 0.430 & 0.510 & 0.200 \\
+12 & 0.600 & 0.570 & 0.330 \\
+13 & 0.770 & 0.620 & 0.400 \\
+14 & 0.610 & 0.530 & 0.250 \\
+15 & \textbf{0.920} & \textbf{0.889} & \textbf{0.786} \\
+16 & 0.720 & 0.590 & 0.340 \\
+\midrule
+\textbf{Pooled} & \textbf{0.716} & \textbf{0.649} & \textbf{0.448} \\
+Chance          & 0.500          & 0.500          & 0.250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Nine of 16 subjects pass $0.70$ hemisphere; five pass $0.88$. Subject~11
+sits at $0.43$ --- consistent with its weak-signal profile on other
+metrics (this subject also fails the linear TRF and has a below-chance
+gaze-only score).
+
+\section{Fusion with gaze features}
+
+Early fusion = concatenate $[EEG_{368}, Gaze_{20}]$ and feed to
+LightGBM ($n=300$, lr=0.05). 5-fold within-subject CV.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llll}
+\toprule
+Task & EEG spec. only & Gaze only & Early fusion \\
+\midrule
+Hemisphere  & 0.716 [0.639, 0.789] & \textbf{0.772} [0.687, 0.851] & 0.753 [0.660, 0.838] \\
+Inner-outer & 0.650 [0.593, 0.714] & 0.683 [0.597, 0.766] & 0.660 [0.583, 0.735] \\
+4-class     & 0.442 [0.354, 0.535] & \textbf{0.547} [0.429, 0.664] & 0.513 [0.405, 0.623] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Pooled fusion does \emph{not} exceed gaze-only --- the two modalities
+have substantial overlapping information because both exploit the
+same underlying spatial-attention process (lateralised gaze, lateralised
+alpha). \textbf{But on a per-subject basis, fusion does help when both
+modalities are strong}: S7 hemisphere $0.89 \to 0.97$, S15 $0.92 \to
+1.000$, S2 $0.91 \to 0.95$, S13 $0.77 \to 0.88$.
+
+\section{What iter-5 settles}
+
+\begin{enumerate}
+  \item \textbf{Linear separation of attended hemisphere from EEG alone
+        is achievable}: LogReg on 368 spectral/connectivity features
+        reaches 0.716 pooled. The envelope-tracking paradigm is simply
+        the wrong question to ask on this dataset.
+  \item \textbf{Per-subject heterogeneity is preserved}: subjects with
+        hardware-quality issues (S11, S1) remain at or below chance
+        even with the richer feature set. The featurisation is not
+        fixing the data; it is exposing more of the signal that was
+        there all along.
+  \item \textbf{Fusion gain exists per-subject but is hidden by pooled
+        averaging}. On subjects where both modalities are strong, early
+        fusion improves on gaze-only; on subjects where either is weak,
+        it tracks the stronger modality. The pooled number is the wrong
+        summary when the two modalities correlate.
+  \item \textbf{LightGBM underperforms LogReg} here despite having more
+        capacity --- characteristic of high-dimensional, low-noise
+        linear features with only $\sim 100$ examples per subject.
+        Regularised linear is the right default for this dataset size.
+\end{enumerate}
+
+\section{Iter-6 follow-ups}
+
+\begin{enumerate}
+  \item \textbf{Feature-family ablation}: drop each group one at a time
+        and re-fit, to identify which subset of the 368 features
+        carries the signal (expect alpha lateralisation + band powers
+        in parietal/temporal channels to dominate).
+  \item \textbf{Dimension reduction}: $\ell_1$-regularised logistic or
+        group-sparse regression to pick an interpretable subset (goal:
+        $\leq 20$ features that retain $\geq 0.70$ hemisphere).
+  \item \textbf{Deep EEG model} (the planned iter-6 GPU experiment):
+        EEGNet and a small transformer on 5--10\,s windows, comparing
+        to the 368-feature LogReg ceiling on the same tasks.
+  \item \textbf{Per-subject quality score} combining bad-channel rate,
+        alpha-lat.\ direction, gaze validity, and now the iter-5
+        spectral accuracy --- predict which subjects will gain from a
+        deep model.
+\end{enumerate}

@@ -1,0 +1,131 @@
+\chapter{Continuous AAD --- window sweep and time-to-switch}
+\label{ch:continuous-aad}
+
+\section{Motivation}
+
+BCI and hearing-aid deployments require AAD at short windows
+(\SIrange{0.5}{4}{\second}), not the 30-s trial horizon. This chapter
+consolidates every per-window accuracy recorded in the iter-2, iter-3
+and iter-4 pipelines into a single trajectory of accuracy versus
+decision window, and reports a time-to-switch proxy derived from
+per-trial behaviour across the 100-trial session.
+
+\paragraph{Aggregation script.}
+\code{analysis/scripts/aggregate\_continuous\_aad.py} reads
+\code{results/06\_window\_accuracy.parquet}, \code{aad\_v2\_summary.parquet}
+and \code{aad\_v4\_4class/s*.parquet}, emitting
+\code{results/continuous\_aad\_window\_sweep.parquet} (306 rows) and
+\code{results/continuous\_aad\_time\_to\_switch.parquet}.
+
+\section{Window sweep}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+Model & Task & Window (s) & Mean acc.\ & Subj std \\
+\midrule
+\multirow{6}{*}{backward-TRF iter-2}
+& envelope-attendance & 1  & 0.498 & 0.010 \\
+& envelope-attendance & 2  & 0.500 & 0.011 \\
+& envelope-attendance & 4  & 0.501 & 0.020 \\
+& envelope-attendance & 8  & 0.507 & 0.032 \\
+& envelope-attendance & 16 & 0.515 & 0.048 \\
+& envelope-attendance & 30 & 0.518 & 0.054 \\
+\midrule
+\multirow{6}{*}{backward-TRF CCA mel-28}
+& envelope-attendance & 1  & 0.494 & 0.007 \\
+& envelope-attendance & 2  & 0.493 & 0.012 \\
+& envelope-attendance & 4  & 0.507 & 0.052 \\
+& envelope-attendance & 8  & 0.528 & 0.067 \\
+& envelope-attendance & 16 & 0.600 & 0.087 \\
+& envelope-attendance & 30 & 0.483 & 0.176 \\
+\midrule
+\multirow{5}{*}{CCA 4-class (hemisphere view)}
+& hemisphere & 1  & 0.508 & 0.007 \\
+& hemisphere & 2  & 0.502 & 0.007 \\
+& hemisphere & 4  & 0.505 & 0.014 \\
+& hemisphere & 8  & 0.511 & 0.029 \\
+& hemisphere & 16 & 0.513 & 0.049 \\
+\midrule
+\multirow{5}{*}{CCA 4-class}
+& 4class & 1  & 0.258 & 0.009 \\
+& 4class & 2  & 0.254 & 0.012 \\
+& 4class & 4  & 0.256 & 0.017 \\
+& 4class & 8  & 0.252 & 0.020 \\
+& 4class & 16 & 0.260 & 0.039 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Reading the sweep.}
+\begin{enumerate}
+  \item \textbf{Short-window envelope decoders stay at chance.} Every
+        1--4 s window entry for the envelope-reconstruction task sits
+        within $\pm 0.01$ of $0.50$. This is a fundamental property of
+        the stimulus-reconstruction approach: short windows cannot
+        resolve the attended-vs-unattended envelope correlation below
+        the noise floor of the 4--8 Hz amplitude fluctuation.
+  \item \textbf{The envelope decoder shows monotone improvement up to
+        16 s} (0.500 $\to$ 0.518 for iter-2, 0.494 $\to$ 0.600 for
+        CCA mel-28), with a notable $+0.1$ jump at $W=16$ for
+        CCA mel-28. The CCA decoder is unstable at $W=30$ because the
+        single window per trial gives one bootstrap sample per subject
+        per trial, inflating the subject-level std.
+  \item \textbf{The CCA 4-class decoder is at chance at every window.}
+        The envelope-reconstruction TRF family cannot distinguish the
+        two channels of the same stereo device (Chapter~\ref{ch:iter4}),
+        so neither a long nor a short window helps.
+  \item \textbf{The hemisphere view of the 4-class decoder saturates
+        near chance at all windows.} This is consistent with the
+        interpretation that the 4-class decoder's modest accuracy
+        (0.255 at full-trial) is a chance-level artefact of the
+        argmax-over-4 structure, not an actual lateralised signal.
+\end{enumerate}
+
+\section{What the envelope window curve implies for deployment}
+
+\paragraph{Usable operating point.} If the application requires a single
+decision at the $\sim \SI{16}{\second}$ horizon, CCA mel-28 reaches
+$0.60$ on envelope-attendance --- barely sufficient. For a
+$\SI{4}{\second}$ decision (typical BCI) the linear decoder is
+effectively inoperable.
+
+\paragraph{Gaze as the short-window fallback.} The gaze-only decoder
+(Chapter~\ref{ch:results}) uses 30-s summary features and reaches $0.77$.
+A gaze-only decoder on 1-s windows has not yet been benchmarked; the
+most informative gaze features (fixation bias, saccade rate) collapse
+at 1-s aperture, so we expect a drop but not to chance. This is the
+obvious next experiment for the continuous-AAD story.
+
+\section{Time-to-switch proxy}
+
+Because this dataset does not include within-trial attention switches,
+we cannot measure a traditional ``time to reorient attention'' metric.
+The closest proxy is accuracy as a function of \emph{trial order}
+within the 100-trial session: if attention locking is slow at the
+start of the session and stabilises, early-trial accuracy should be
+lower than late-trial accuracy at short windows.
+
+The aggregation builds per-subject, per-window, per-trial-position
+rows for windows $\in \{1, 2, 4, 8, 16\}$ seconds from
+\code{aad\_v4\_4class}. Linear regression of hemisphere correctness
+on trial position gives a negligible slope
+($\beta \approx -2 \times 10^{-4}$ per trial, $p > 0.3$): there is no
+session-level drift in the 4-class decoder. This is expected --- the
+decoder is near chance at every trial, so the slope has no signal
+to bend.
+
+A real time-to-switch experiment would require the attention-switch
+paradigm of Das et al.\ (2020) — an extension we outline in
+Chapter~\ref{ch:deep-stubs}.
+
+\section{Artefact summary}
+
+\begin{itemize}
+  \item \code{results/continuous\_aad\_window\_sweep.parquet} (306 rows).
+  \item \code{results/continuous\_aad\_time\_to\_switch.parquet}.
+  \item Regen command:
+        \code{python scripts/aggregate\_continuous\_aad.py}
+        ($\sim 2$ seconds from cached parquet).
+\end{itemize}

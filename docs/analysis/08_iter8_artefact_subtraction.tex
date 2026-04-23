@@ -1,0 +1,209 @@
+\chapter{Iteration 8 --- artefact-subtraction decoder}
+\label{ch:iter8}
+
+\section{Motivation and method}
+
+Iter-6 showed that \emph{channel-wise time-domain} regression of gaze
+and IMU out of EEG costs only $-0.7$\,pp of hemisphere AAD. Iter-7 showed
+that at the trial-summary level, EEG linearly predicts head-motion and
+gaze-behaviour features at $r \approx 0.5$. That leaves a strictly
+harder question open: if we force EEG features to be \emph{orthogonal}
+to the motion features \emph{at the same trial-summary level the AAD
+classifier operates on}, does the classifier still work?
+
+\paragraph{Procedure (per subject, per 5-fold CV split).}
+Let $X \in \mathbb{R}^{n \times 368}$ be the iter-5 EEG spectral
+features for the $n$ trials, and $Z \in \mathbb{R}^{n \times p}$ the
+concatenated motion features (gaze 23-D, IMU 35-D, video 13-D; $p=71$
+total). For each training fold:
+\begin{enumerate}
+  \item Fit \code{StandardScaler} on $X_\text{train}$ and
+        $Z_\text{train}$ separately.
+  \item Fit $M = \text{Ridge}(\alpha{=}10)$ on the standardised
+        $Z_\text{train} \to X_\text{train}$.
+  \item Compute residuals
+        $\tilde X_\text{train} = X_\text{train} - M(Z_\text{train})$
+        and $\tilde X_\text{test} = X_\text{test} - M(Z_\text{test})$.
+  \item Fit the AAD logistic regression on $\tilde X_\text{train}$,
+        evaluate on $\tilde X_\text{test}$.
+\end{enumerate}
+This removes, inside every CV fold, the component of EEG features that
+a linear map from motion features could have reproduced --- no
+train/test leakage.
+
+\paragraph{Conditions compared.}
+\begin{itemize}
+  \item \texttt{raw} --- iter-5 baseline (no residualisation).
+  \item \texttt{gaze} / \texttt{imu} / \texttt{motion} --- $Z$ from
+        that modality (or their concatenation).
+  \item \texttt{shuffle\_motion} --- same as \texttt{motion} but with
+        $Z$ row-permuted across trials, breaking the trial$\to$motion
+        binding. A null that removes a 71-dim subspace with no
+        trial-level relationship to $X$; measures the cost of removing
+        a subspace per se.
+\end{itemize}
+
+\section{Pooled results (16 subjects, bootstrap 95\,\% CI)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lllll}
+\toprule
+Task & Condition & Pooled acc.\ & 95\,\% CI & Paired Wilcoxon $p$ vs.\ \texttt{raw} \\
+\midrule
+\multirow{5}{*}{Hemisphere}
+& raw            & \textbf{0.716} & [0.641, 0.793] & -- \\
+& shuffle\_motion & 0.643 & [0.585, 0.701] & 0.001 \\
+& gaze           & 0.544 & [0.517, 0.569] & 0.0003 \\
+& imu            & 0.542 & [0.504, 0.576] & 0.001 \\
+& motion (all)   & \textbf{0.521} & [0.488, 0.552] & 0.0006 \\
+\midrule
+\multirow{5}{*}{Inner/outer}
+& raw            & 0.650 & [0.592, 0.714] & -- \\
+& shuffle\_motion & 0.610 & [0.559, 0.665] & 0.018 \\
+& gaze           & 0.549 & [0.514, 0.577] & 0.006 \\
+& imu            & 0.550 & [0.516, 0.588] & 0.003 \\
+& motion (all)   & 0.510 & [0.480, 0.536] & 0.001 \\
+\midrule
+\multirow{5}{*}{4-class}
+& raw            & 0.442 & [0.357, 0.535] & -- \\
+& shuffle\_motion & 0.392 & [0.328, 0.462] & 0.017 \\
+& gaze           & 0.295 & [0.259, 0.332] & 0.001 \\
+& imu            & 0.313 & [0.268, 0.367] & 0.004 \\
+& motion (all)   & 0.270 & [0.239, 0.296] & 0.004 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{How to read this (the nuanced part)}
+
+\begin{enumerate}
+  \item The shuffle control \emph{already} costs $7$\,pp of hemisphere
+        accuracy ($0.716 \to 0.643$, $p = 0.001$). Removing any 71-dim
+        subspace of a 368-dim feature space removes some decision
+        capacity by itself --- the shuffle number is the ``cost of
+        orthogonalisation'' even when the subspace is unrelated to
+        the target.
+  \item The real-motion condition costs an additional $12$\,pp on top
+        of the shuffle ($0.643 \to 0.521$). That is the
+        \emph{motion-attributable} component of the AAD signal at the
+        feature-summary level.
+  \item After motion residualisation, hemisphere AAD sits at
+        $0.521$ with CI $[0.488, 0.552]$ --- the lower bound is below
+        chance. \textbf{Most of the hemisphere signal in the iter-5
+        feature classifier lives in a subspace that is correlated
+        with trial-level motion features.}
+\end{enumerate}
+
+\section{Reconciling iter-6 and iter-8}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Iter & What is regressed out & Hemisphere $\Delta$ & What it means \\
+\midrule
+6 & Motion time-series from EEG time-series per channel        & $-0.7$\,pp & trivial time-domain overlap \\
+8 & Motion feature-summaries from EEG feature-summaries        & $-19.5$\,pp & substantial trial-level overlap \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both are correct; they answer different questions:
+\begin{itemize}
+  \item Iter-6: ``could an instantaneous time-domain gaze/IMU signal
+        explain the moment-to-moment EEG?'' No (tiny $-0.7$\,pp).
+  \item Iter-8: ``if we force the trial-level EEG summary to be
+        statistically independent of trial-level motion summary, can
+        we still decode?'' Mostly no (near chance).
+\end{itemize}
+The discrepancy is expected. Within a trial the motion stream has
+many time points but its trial-level statistics (mean/std/frequency
+ratios) are a much smaller, highly-informative set for classification.
+When we orthogonalise in the classifier's own basis (trial-level
+summaries) we remove signal that iter-6's time-domain residualisation
+cannot touch.
+
+\section{What this implies for the paper}
+
+\begin{enumerate}
+  \item \textbf{The iter-5 pooled hemisphere accuracy of $0.716$ is
+        partly attributable to a motion-correlated subspace.} A
+        reviewer's ``is it really audio cortex?'' question should be
+        answered by the \textbf{motion-residualised} number (pooled
+        $0.521$), not by the raw number.
+  \item The 52\,\% is only marginally above chance but is statistically
+        non-trivial: the Wilcoxon $p$ for motion-residualised vs.\
+        shuffle ($0.521$ vs.\ $0.643$) is 0.0001, and the motion vs.\
+        raw $p$ is 0.0006 --- both very significant.
+  \item \textbf{The motion-correlated component is not necessarily
+        artefact.} Attending to a lateral sound source engages both
+        lateralised neural activity and lateralised subtle head /
+        gaze orientation. The two streams correlate via a common
+        attention-related cause; orthogonalising discards the shared
+        component even if it is genuinely neural.
+  \item \textbf{Two headlines the paper can honestly claim}:
+  \begin{itemize}
+    \item Conservative: EEG spectral features achieve
+          $0.716$ pooled hemisphere AAD with a $0.521$ motion-orthogonal
+          floor ($+2.1$\,pp above chance).
+    \item Strong: $0.716$ pooled, with the caveat that the
+          motion-correlated subspace carries most of the discriminative
+          information --- consistent with the audio-cortex signal and
+          the head-orientation signal being aspects of the same
+          attention process.
+  \end{itemize}
+\end{enumerate}
+
+\section{Per-subject $\Delta$ (motion-residualised $-$ raw, hemisphere)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Subj & raw & motion-residualised & $\Delta$(motion) & $\Delta$(shuffle) \\
+\midrule
+1  & 0.480 & 0.380 & $-0.100$ & $-0.070$ \\
+2  & 0.908 & 0.541 & $-0.367$ & $-0.194$ \\
+3  & 0.940 & 0.580 & $-0.360$ & $-0.130$ \\
+4  & 0.880 & 0.510 & $-0.370$ & $-0.070$ \\
+5  & 0.700 & 0.440 & $-0.260$ & $-0.040$ \\
+6  & 0.730 & 0.600 & $-0.130$ & $-0.040$ \\
+7  & 0.890 & 0.530 & $-0.360$ & $-0.090$ \\
+8  & 0.620 & 0.590 & $-0.030$ & $-0.070$ \\
+9  & 0.600 & 0.580 & $-0.020$ & $+0.030$ \\
+10 & 0.660 & 0.510 & $-0.150$ & $-0.070$ \\
+11 & 0.430 & 0.450 & $+0.020$ & $+0.030$ \\
+12 & 0.600 & 0.430 & $-0.170$ & $+0.030$ \\
+13 & 0.770 & 0.500 & $-0.270$ & $-0.210$ \\
+14 & 0.610 & 0.510 & $-0.100$ & $-0.060$ \\
+15 & 0.920 & 0.568 & $-0.352$ & $-0.150$ \\
+16 & 0.720 & 0.610 & $-0.110$ & $-0.070$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The high-performing subjects (S2, S3, S4, S7, S15) see the largest
+residualisation drops ($\Delta \approx -0.35$), while subjects already
+near chance (S1, S9, S11, S12, S14) lose very little. Subjects whose
+AAD is motion-decorrelated (e.g.\ S8: $\Delta = -0.03$; S9:
+$\Delta = -0.02$) may be the ones where a deep or non-linear EEG
+decoder would be most informative.
+
+\section{What to run next}
+
+\begin{enumerate}
+  \item Repeat this analysis with \emph{partial} residualisation
+        ($\text{X}' = X - \alpha M(Z)$ for $\alpha \in \{0, 0.25,
+        0.5, 0.75, 1\}$) to draw the full trade-off curve between
+        artefact removal and classifier capacity.
+  \item Apply the same residualisation at the EEG \emph{channel-level}
+        PSD (rather than the 368-feature derived space), to see
+        whether the motion-correlated signal is broad or concentrated
+        in specific frequency bands / topographies.
+  \item Train a deep EEG decoder on the motion-residualised residual
+        EEG --- if a deeper model recovers discriminative signal from
+        a 52\,\%-accuracy linear ceiling, that's evidence for
+        non-linear audio-cortex structure that is genuinely orthogonal
+        to motion.
+\end{enumerate}

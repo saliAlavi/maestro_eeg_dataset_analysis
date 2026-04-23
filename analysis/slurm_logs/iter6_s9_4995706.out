@@ -1,0 +1,19 @@
+[S9] processed 10 trials  (20s)
+[S9] processed 20 trials  (41s)
+[S9] processed 30 trials  (61s)
+[S9] processed 40 trials  (81s)
+[S9] processed 50 trials  (101s)
+[S9] processed 60 trials  (121s)
+[S9] processed 70 trials  (141s)
+[S9] processed 80 trials  (161s)
+[S9] processed 90 trials  (181s)
+[S9] processed 100 trials  (199s)
+[S9] 100 trials × 13 video features
+[S9] done in 208s
+ subject        task classifier  chance  acc
+       9  hemisphere     logreg    0.50 0.46
+       9  hemisphere   lightgbm    0.50 0.40
+       9 inner_outer     logreg    0.50 0.48
+       9 inner_outer   lightgbm    0.50 0.59
+       9      4class     logreg    0.25 0.30
+       9      4class   lightgbm    0.25 0.22

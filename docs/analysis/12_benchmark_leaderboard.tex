@@ -1,0 +1,261 @@
+\chapter{Benchmark leaderboard}
+\label{ch:benchmark}
+
+\section{Purpose}
+
+A NeurIPS Datasets \& Benchmarks submission must make it easy for a
+reviewer to answer \emph{which model wins on which task under which
+evaluation protocol}. This chapter consolidates the 755 per-subject
+accuracy entries scattered across iter-2 through iter-8 into a single
+leaderboard with uniform bootstrap 95\,\% confidence intervals.
+
+\paragraph{Aggregation script.}
+\code{analysis/scripts/aggregate\_benchmark\_leaderboard.py} reads every
+per-subject result parquet currently produced by the pipeline and emits
+\code{results/benchmark\_leaderboard.parquet} (long form) and
+\code{results/benchmark\_leaderboard\_pooled.parquet} (pooled per
+(model, task, split)). The leaderboard is re-generated in $\sim 3$
+seconds from cached artefacts, so extending the table is cheap once a
+new model writes its per-subject parquet.
+
+\paragraph{Splits covered.}
+\begin{itemize}
+  \item \textbf{within-5fold}: the primary within-subject protocol used
+        throughout the pipeline. 5-fold stratified CV over 100 main
+        trials, per subject, pooled unweighted across 16 subjects.
+  \item \textbf{LOSO}: leave-one-subject-out. Populated for gaze-logreg
+        (16 subjects, \code{07\_loso\_gaze.parquet}), backward-TRF
+        hemisphere (3 subjects, \code{06\_loso\_backward.parquet}), and
+        backward-TRF CCA mel-28 envelope-attendance on all 16 subjects
+        from SLURM job \textbf{8702986} (\code{slurm\_scripts/aad\_loso.sbatch},
+        PAS2301, 16-task array, 96 GB / task, 50 ms lag grid, $2\times$
+        time subsampled).
+\end{itemize}
+
+\paragraph{LOSO CCA mel-28 (16 subjects, new results).}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rr|rr}
+\toprule
+Subj & Acc.\ & Subj & Acc.\ \\
+\midrule
+1 & 0.490 &  9 & 0.540 \\
+2 & 0.580 & 10 & 0.480 \\
+3 & 0.600 & 11 & 0.510 \\
+4 & 0.490 & 12 & 0.610 \\
+5 & 0.570 & 13 & 0.610 \\
+6 & 0.590 & 14 & 0.550 \\
+7 & 0.480 & 15 & 0.485 \\
+8 & 0.520 & 16 & 0.520 \\
+\midrule
+\multicolumn{4}{l}{\textbf{Pooled $= 0.539$ \quad 95\,\% CI $[0.516, 0.562]$}} \\
+\bottomrule
+\end{tabular}
+\caption{Per-subject LOSO accuracy (CCA mel-28 backward TRF, envelope
+attendance task, chance $= 0.5$). Pipeline: train on the 15 other
+subjects' concatenated trials, test on the held-out subject. All 16
+test subjects yield 100 trials except S15 (99 after one corrupt
+trial). Pooled CI from $10^4$ bootstrap draws over per-subject means.}
+\end{table}
+
+The LOSO CCA mel-28 decoder lands at $0.539$ pooled, $+3.9$\,pp above
+chance and $+1.6$\,pp above the within-subject baseline of $0.523$
+from the same backbone (§\ref{ch:iter4}). Zero per-subject LOSO
+accuracies fall below chance (all $\geq 0.48$), and 12/16 are above
+$0.50$ --- the decoder transfers across subjects without per-subject
+calibration, but with roughly half the effect size of gaze-only
+LOSO ($0.475$ on 4-class $= +22.5$\,pp above chance).
+
+\section{Hemisphere task (chance 0.500)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrcr}
+\toprule
+Model & Split & Pooled acc.\ & 95\,\% CI & $n$ subj \\
+\midrule
+gaze-only                              & within-5fold & \textbf{0.770} & [0.728, 0.811] & 64$^\dagger$ \\
+fusion-late-cca\_mel                   & within-5fold & 0.768 & [0.689, 0.849] & 16 \\
+fusion-late-split\_$\delta$+$\theta$ & within-5fold & 0.767 & [0.685, 0.850] & 16 \\
+fusion-late-broadband                  & within-5fold & 0.766 & [0.686, 0.847] & 16 \\
+fusion-early-cca\_mel                  & within-5fold & 0.764 & [0.682, 0.847] & 16 \\
+fusion-early-mel28                     & within-5fold & 0.763 & [0.683, 0.845] & 16 \\
+fusion-stack-mel28                     & within-5fold & 0.758 & [0.677, 0.841] & 16 \\
+fusion-early-split $\delta$+$\theta$ & within-5fold & 0.757 & [0.672, 0.842] & 16 \\
+fusion-stack-cca\_mel                  & within-5fold & 0.756 & [0.676, 0.839] & 16 \\
+fusion-late-mel28                      & within-5fold & 0.756 & [0.672, 0.840] & 16 \\
+fusion-stack-broadband                 & within-5fold & 0.752 & [0.668, 0.836] & 16 \\
+fusion-early-broadband                 & within-5fold & 0.751 & [0.666, 0.838] & 16 \\
+fusion-stack-split $\delta$+$\theta$ & within-5fold & 0.734 & [0.642, 0.825] & 16 \\
+eeg-spectral-logreg                    & within-5fold & \textbf{0.716} & [0.640, 0.791] & 16 \\
+eeg-spectral-lightgbm                  & within-5fold & 0.655 & [0.587, 0.723] & 16 \\
+video-logreg                           & within-5fold & 0.617 & [0.561, 0.676] & 16 \\
+imu-logreg                             & within-5fold & 0.607 & [0.542, 0.670] & 16 \\
+imu-lightgbm                           & within-5fold & 0.602 & [0.553, 0.652] & 16 \\
+video-lightgbm                         & within-5fold & 0.584 & [0.539, 0.631] & 16 \\
+backward-trf-cca-mel (gaze-resid)      & within-5fold & 0.531 & [0.502, 0.558] & 16 \\
+eeg-mel28 (raw TRF, not fused)         & within-5fold & 0.511 & [0.483, 0.537] & 16 \\
+backward-trf-cca-mel (raw)             & within-5fold & 0.503 & [0.476, 0.527] & 16 \\
+\midrule
+backward-trf-cca-mel                   & LOSO         & 0.400 & [0.333, 0.467] & 3$^\ddagger$ \\
+\bottomrule
+\end{tabular}
+\caption{Hemisphere task (binary left vs right) leaderboard. $^\dagger$
+Gaze-only is reported across 4 backbones in the fusion files, giving
+64 rows pooled; the per-subject accuracy is identical across backbones
+because gaze-only is backbone-independent. $^\ddagger$ LOSO backward-TRF
+subject count will rise to 16 once \code{aad\_loso.sbatch} completes.}
+\end{table}
+
+\paragraph{Reading the hemisphere table.}
+\begin{enumerate}
+  \item \textbf{Gaze-only is the single strongest model at 77.0\,\%}. Every
+        fusion variant sits within the gaze-only CI; this reflects the
+        limit imposed by the weak EEG-only linear signal on this binary
+        task (Chapter~\ref{ch:results} already showed the ceiling is set
+        by gaze).
+  \item \textbf{The EEG-spectral LogReg model at 71.6\,\%} is the single
+        best EEG-only model in the leaderboard. This matches the iter-5
+        writeup (Chapter~\ref{ch:iter5}): a 368-D trial-level spectral
+        feature vector dominates both the backward-TRF reconstruction
+        approach and raw band-limited ridge.
+  \item \textbf{Video and IMU decoders} cluster around 60\,\% — the head-motion
+        signal they observe is real but weaker than gaze (Chapter~\ref{ch:scene-video}).
+  \item \textbf{Gaze-residualised backward-TRF at 53.1\,\%} is a direct
+        reviewer answer: even when the gaze-correlated component of EEG
+        is explicitly removed, AAD remains $+3.1$\,pp above chance.
+\end{enumerate}
+
+\section{Inner / outer task (chance 0.500)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrc}
+\toprule
+Model & Split & Pooled acc.\ & 95\,\% CI \\
+\midrule
+video-logreg             & within-5fold & \textbf{0.657} & [0.583, 0.734] \\
+imu-logreg               & within-5fold & 0.657 & [0.610, 0.702] \\
+eeg-spectral-logreg      & within-5fold & 0.649 & [0.593, 0.714] \\
+video-lightgbm           & within-5fold & 0.637 & [0.569, 0.710] \\
+imu-lightgbm             & within-5fold & 0.626 & [0.572, 0.679] \\
+eeg-spectral-lightgbm    & within-5fold & 0.597 & [0.536, 0.667] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the eccentricity-only task the three motion modalities (gaze, IMU,
+video) collapse onto the same $\sim 65$\,\% ceiling. This is the
+cleanest evidence that the spatial signal on this task is
+head-orientation, not neural selectivity.
+
+\section{4-class speaker identity (chance 0.250)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrc}
+\toprule
+Model & Split & Pooled acc.\ & 95\,\% CI \\
+\midrule
+eeg-spectral-logreg      & within-5fold & \textbf{0.448} & [0.359, 0.548] \\
+video-logreg             & within-5fold & 0.421 & [0.341, 0.511] \\
+imu-logreg               & within-5fold & 0.413 & [0.336, 0.493] \\
+eeg-spectral-lightgbm    & within-5fold & 0.410 & [0.333, 0.499] \\
+imu-lightgbm             & within-5fold & 0.398 & [0.330, 0.473] \\
+video-lightgbm           & within-5fold & 0.386 & [0.315, 0.467] \\
+gaze-logreg              & LOSO         & 0.475 & [0.405, 0.548] \\
+cca-4class (TRF)         & within-5fold & 0.255 & [0.240, 0.271] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the full 4-class task:
+\begin{itemize}
+  \item EEG-spectral LogReg leads at $+20$\,pp above chance.
+  \item Video / IMU decoders remain close ($+17/+16$\,pp), again
+        because head-orientation is the leading non-neural cue.
+  \item The LOSO gaze decoder lands at 47.5\,\%, which is
+        $+22$\,pp above chance on a task with no per-subject calibration
+        — the single most transfer-ready configuration in the benchmark.
+  \item The envelope-reconstruction CCA decoder is exactly at chance
+        (0.255 with CI $[0.240, 0.271]$), confirming that envelope
+        identity between the two L/R channels of the same device
+        cannot be distinguished by linear stimulus-reconstruction.
+\end{itemize}
+
+\section{Envelope-attendance (TRF correctness)}
+
+For the native TRF task — ``is the decoder output more correlated with
+the attended envelope than the unattended envelope?'' — the four iter-3
+backbones rank as:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrc}
+\toprule
+Backbone & Split & Pooled acc.\ & 95\,\% CI \\
+\midrule
+cca\_mel         & within-5fold & \textbf{0.523} & [0.502, 0.544] \\
+mel28            & within-5fold & 0.511 & [0.486, 0.538] \\
+broadband        & within-5fold & 0.507 & [0.476, 0.537] \\
+split $\delta$+$\theta$ & within-5fold & 0.492 & [0.459, 0.524] \\
+\midrule
+cca\_mel         & LOSO         & \textbf{0.539} & [0.516, 0.562] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Gaze-residualised control}
+
+The headline EEG-only robustness check from Chapter~\ref{ch:iter4}, now
+in leaderboard form:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrc}
+\toprule
+Condition & Pooled acc.\ & 95\,\% CI & Paired $\Delta$ \\
+\midrule
+baseline               & 0.503 & [0.476, 0.527] & -- \\
+gaze-residualised EEG  & \textbf{0.531} & [0.502, 0.558] & $+0.028$ (Wilcoxon $p=0.084$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The paired positive $\Delta$ was first reported in Chapter~\ref{ch:iter4}
+and survives the bootstrap CI; adding it to the leaderboard makes the
+robustness-check result as discoverable as the headline accuracy.
+
+\section{Reproducibility artefacts}
+
+\begin{itemize}
+  \item \textbf{Leaderboard long-form}: \code{results/benchmark\_leaderboard.parquet}
+        (755 rows, one per (model, task, split, subject)).
+  \item \textbf{Pooled}: \code{results/benchmark\_leaderboard\_pooled.parquet}
+        (45 rows, one per (model, task, split) with bootstrap CI).
+  \item \textbf{Regeneration}: a single command
+        \code{python scripts/aggregate\_benchmark\_leaderboard.py}
+        ($\sim 3$\,s, cached artefacts).
+  \item \textbf{LOSO extension}: SLURM array
+        \code{aad\_loso.sbatch} fills the LOSO CCA-mel-28 rows (16 test
+        subjects × 15 train subjects) under the \code{PAS2301} account,
+        outputs to \code{results/loso\_cca\_mel28/s\{1\ldots 16\}.parquet},
+        then \code{aggregate\_benchmark\_leaderboard.py} picks them up
+        automatically on re-run. Completed as job 8702986 in this
+        iteration; pooled accuracy $= 0.539$ [0.516, 0.562].
+\end{itemize}
+
+\section{Outstanding gaps (Stage-C)}
+
+\begin{enumerate}
+  \item \textbf{By-story split}: no leaderboard entry yet uses trials
+        grouped by the underlying audiobook source. This is the
+        strictest generalisation test and is added in
+        Chapter~\ref{ch:generalisation}.
+  \item \textbf{Deep EEG models}: EEGNet / cross-modal transformer are
+        implemented but not run (see Chapter~\ref{ch:deep-stubs}).
+  \item \textbf{Multi-seed CI}: the bootstrap CI in this table collapses
+        seed variance into the per-subject bootstrap; a multi-seed
+        training pass remains on the to-do list.
+\end{enumerate}

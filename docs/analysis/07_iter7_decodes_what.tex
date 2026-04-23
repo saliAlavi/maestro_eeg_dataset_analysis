@@ -1,0 +1,208 @@
+\chapter{Iteration 7 --- what can EEG features decode about the other modalities?}
+\label{ch:iter7}
+
+\section{Task and inputs}
+
+\paragraph{Question.} If we take the same iter-5 368-dimensional EEG
+spectral feature vector that decodes attended-speaker hemisphere at
+$\sim 0.72$, and instead ask it to predict \emph{each individual
+feature} of gaze / IMU / video / audio, how well does it do?
+
+This is a direct readout of which external-modality features are
+linearly regressable from EEG spectral content. High $r$ for a feature
+means EEG carries that feature's variance in a linearly accessible way
+--- i.e.\ the EEG is ``about'' that dimension.
+
+\paragraph{Method.} Per subject, per modality, per target feature:
+\begin{enumerate}
+  \item Align per-trial feature tables on \code{(subject, trial)} ---
+        audio features are trial-level, so they're broadcast across
+        subjects.
+  \item $X$ = 368-D EEG spectral features (standardised), $y$ = one
+        scalar target feature.
+  \item 5-fold KFold ridge regression ($\lambda = 10$), record
+        held-out Pearson $r$ between predicted and actual $y$.
+  \item Pool across 16 subjects with bootstrap 95\,\% CI.
+\end{enumerate}
+
+\paragraph{Target feature counts.}
+23 gaze / 35 IMU / 15 video / 20 audio = 93 targets; per-subject-per-target
+CV gives $16 \times 93 = 1488$ ridge fits, all on CPU in under a minute.
+
+\section{Top EEG-decodable features per modality}
+
+\subsection{Gaze (23 features available)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Gaze feature                  & Pooled $r$ & 95\,\% CI \\
+\midrule
+\code{sacc\_rate}             & \textbf{+0.549} & [+0.467, +0.630] \\
+\code{gx\_valid}              & +0.540         & [+0.404, +0.672] \\
+\code{R\_valid}               & +0.508         & [+0.385, +0.632] \\
+\code{L\_valid}               & +0.472         & [+0.314, +0.621] \\
+\code{R\_pup}                 & +0.419         & [+0.323, +0.512] \\
+\code{L\_pup}                 & +0.385         & [+0.261, +0.500] \\
+\code{L\_az\_std}             & +0.361         & [+0.267, +0.467] \\
+\code{R\_el\_mean}            & +0.342         & [+0.262, +0.427] \\
+\code{gx\_std}                & +0.334         & [+0.232, +0.449] \\
+\code{R\_az\_mean}            & +0.332         & [+0.208, +0.460] \\
+\code{gy\_mean}               & +0.311         & [+0.221, +0.409] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The strongest EEG$\to$gaze predictor is \textbf{saccade rate}
+($r=+0.549$). Per-eye validity (fraction of samples where the
+eye-tracker locked a gaze vector) and pupil diameter are also highly
+linearly predictable --- these reflect arousal / eye-opening, which
+the EEG correlates with through both alpha and frontal power.
+
+\subsection{IMU (35 features available)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+IMU feature                   & Pooled $r$ & 95\,\% CI \\
+\midrule
+\code{gyr\_mag\_mean}         & \textbf{+0.559} & [+0.468, +0.647] \\
+\code{total\_rotation}        & +0.556         & [+0.465, +0.644] \\
+\code{gyr\_mag\_p95}          & +0.541         & [+0.445, +0.634] \\
+\code{gyr\_mag\_std}          & +0.534         & [+0.444, +0.621] \\
+\code{gx\_std}                & +0.529         & [+0.443, +0.616] \\
+\code{az\_mean}               & +0.507         & [+0.412, +0.609] \\
+\code{az\_peak}               & +0.506         & [+0.401, +0.602] \\
+\code{az\_std}                & +0.492         & [+0.422, +0.562] \\
+\code{gy\_std}                & +0.466         & [+0.362, +0.571] \\
+\code{acc\_mag\_std}          & +0.461         & [+0.376, +0.552] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Head-motion amplitude features are the most linearly predictable
+from EEG} — integrated rotation, gyroscope magnitude mean / std / 95th
+pct, all above $r = 0.5$. This is not surprising: EMG contamination in
+temporal / frontotemporal EEG channels is a direct sensor readout of
+neck and head muscle activity.
+
+\subsection{Video (15 features available)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Video feature                 & Pooled $r$ & 95\,\% CI \\
+\midrule
+\code{motion\_energy\_mean}   & \textbf{+0.487} & [+0.403, +0.565] \\
+\code{motion\_energy\_std}    & +0.471         & [+0.389, +0.550] \\
+\code{motion\_energy\_peak}   & +0.455         & [+0.387, +0.527] \\
+\code{brightness\_std}        & +0.453         & [+0.363, +0.545] \\
+\code{flow\_mag\_mean}        & +0.452         & [+0.347, +0.554] \\
+\code{flow\_std\_mean}        & +0.424         & [+0.327, +0.521] \\
+\code{brightness\_mean}       & +0.352         & [+0.267, +0.431] \\
+\code{flow\_mag\_std}         & +0.329         & [+0.232, +0.422] \\
+\code{flow\_mag\_peak}        & +0.277         & [+0.193, +0.363] \\
+\code{flow\_dir\_consistency} & +0.063         & [$-0.031$, +0.158] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Scene motion-energy and optical-flow magnitudes are linearly decodable
+from EEG at $r \approx 0.45$. Directional flow features (\code{flow\_dir\_consistency},
+\code{flow\_dir\_cy}) are at zero --- EEG doesn't know which way the
+camera panned, only how much. This matches the IMU story: EEG encodes
+motion amplitude, not motion direction.
+
+\subsection{Audio (20 features available)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Audio feature                 & Pooled $r$ & 95\,\% CI \\
+\midrule
+\code{una\_env\_der\_pos}     & $-0.086$ & [$-0.139$, $-0.038$] \\
+\code{una\_env\_std}          & $-0.065$ & [$-0.121$, $-0.011$] \\
+\code{att\_zcr}               & $+0.057$ & [$+0.002$, $+0.116$] \\
+\code{una\_centroid}          & $+0.051$ & [$-0.009$, $+0.107$] \\
+\code{una\_zcr}               & $+0.038$ & [$-0.012$, $+0.092$] \\
+\code{att\_env\_mean}         & $-0.036$ & [$-0.071$, $+0.001$] \\
+\code{att\_env\_std}          & $+0.031$ & [$-0.032$, $+0.092$] \\
+\code{una\_flatness}          & $+0.027$ & [$-0.031$, $+0.082$] \\
+\code{una\_rms}               & $-0.020$ & [$-0.080$, $+0.034$] \\
+\code{att\_centroid}          & $+0.020$ & [$-0.026$, $+0.068$] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{EEG does not linearly predict any summary audio feature}. Every
+correlation is within $\pm 0.09$, and the few that cross zero do so
+weakly. This is neither surprising nor damning --- attended-speech
+envelope \emph{tracking} is a time-resolved operation (the TRF works on
+aligned time-series, not on per-trial scalar summaries), and the iter-5
+spectral features deliberately summarise over the 30-s trial, collapsing
+any trial-internal tracking to zero-mean. What this result does confirm
+is that per-trial audio summary statistics are \emph{not} the axis along
+which EEG spectral content varies --- the AAD signal is not
+``EEG looks like the spectrogram''.
+
+\section{Joint picture}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Modality & Top feature & Top $r$ \\
+\midrule
+Gaze     & \code{sacc\_rate}          & +0.549 \\
+IMU      & \code{gyr\_mag\_mean}      & +0.559 \\
+Video    & \code{motion\_energy\_mean} & +0.487 \\
+Audio    & \code{una\_env\_der\_pos}  & $-0.086$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+EEG spectral content is \textbf{strongly linearly related to head
+motion, gaze validity / amplitude, and scene-motion energy}, and
+\textbf{essentially unrelated to per-trial audio summary statistics}.
+
+\paragraph{Reconciling with iter-5 and iter-6.}
+This looks at first like a contradiction --- if EEG shares $r \approx
+0.5$ with IMU and gaze, isn't the AAD signal just motion in disguise?
+But iter-6 (§\ref{ch:iter6}) already showed that regressing gaze + IMU
+out of EEG drops hemisphere AAD by only $-0.7$\,pp. The two findings
+together tell a clean story:
+
+\begin{itemize}
+  \item EEG has a substantial component that \emph{is} head-motion /
+        EMG artefact — this is real and predictable from external sensors.
+  \item The \emph{attended-speaker-discriminating} component of EEG is
+        a smaller but linearly separable signal that lives in
+        central/parietal channels and spectral/connectivity features
+        (iter-5 + iter-6). It survives artefact regression because the
+        regressor subspace and the attention subspace overlap only
+        partially.
+\end{itemize}
+
+\paragraph{Implications for iter-8.}
+\begin{enumerate}
+  \item Build an \textbf{artefact-subtraction decoder}: first predict
+        gaze / IMU / video from EEG (the trivial $r \approx 0.5$
+        regression), then train AAD on the \emph{residuals} of EEG
+        after subtracting what external sensors could have predicted.
+        This is a subject-level orthogonalisation that should isolate
+        the audio-cortex contribution more cleanly than channel-wise
+        regression did in iter-6.
+  \item The zero predictability of audio features from EEG spectral
+        summaries reinforces that we should not expect per-trial
+        scalar summaries of audio to help an EEG decoder --- the
+        temporal-tracking axis (TRF / CCA on time-series) is the
+        right place to find the EEG-audio link, despite its weak
+        pooled numbers in iter-3 and iter-4.
+\end{enumerate}

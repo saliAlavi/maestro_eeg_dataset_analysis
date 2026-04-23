@@ -1,0 +1,115 @@
+\documentclass[11pt]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{multirow}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{Multimodal AAD dataset --- analysis progress}
+\author{OSU / PAS2301}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\clearpage
+
+\chapter*{Dataset layout}
+\addcontentsline{toc}{chapter}{Dataset layout}
+
+For every subject, two data stores hold parallel copies of the same trials,
+partitioned by modality.
+
+\section*{\code{experiment\_data/Subject N/}}
+\begin{itemize}
+  \item \code{Training-1} \ldots \code{Training-5} --- 5 familiarisation trials
+        at the start of the recording session.
+  \item \code{Eval-1} \ldots \code{Eval-100} --- 100 main trials.
+        \code{Eval-K} corresponds to the \code{Trial-K} row of
+        \code{audio\_stimuli\_data/trials.csv}.
+  \item Each trial folder holds EEG (\code{eeg\_data.p}, 32-ch @ \SI{500}{\Hz})
+        and \code{audio\_timestamps.json}.
+\end{itemize}
+
+\section*{\code{Video Recordings/Subject N/}}
+Per-subject folders numbered \code{1} through \code{105}:
+\begin{itemize}
+  \item Folders \code{1}--\code{5} = training trials (same ordering as
+        \code{experiment\_data/Training-K}).
+  \item Folders \code{6}--\code{105} = main trials; folder \code{K}
+        corresponds to \code{Eval-(K-5)} (i.e.\ \code{Trial-(K-5)}).
+  \item Each folder holds the Tobii Glasses~3 bundle:
+        \code{gazedata.gz} (per-eye gaze direction + pupil + scene-projected
+        gaze), \code{imudata.gz}, \code{scenevideo.mp4},
+        \code{eventdata.gz}, \code{recording.g3}, \code{snap0.jpg}.
+\end{itemize}
+
+Subjects 1 and 2 use literal numeric folder names (\code{1}\ldots\code{105}).
+Subjects 3--16 use ISO-8601 timestamps (\code{YYYYMMDDTHHMMSSZ}); the loader
+parses the embedded time and sorts ascending to recover the natural recording
+order. This ordering is verified empirically against audio playback
+timestamps to $r_\Delta \geq 0.99$ trial-to-trial for every subject.
+
+\section*{Gaze source}
+The authoritative gaze stream is the Tobii \code{gazedata.gz} inside each
+Video-Recordings folder (per-eye 3-D gaze direction, pupil diameter,
+scene-projected \code{gaze2d}, 3-D \code{gaze3d}). Experiment-data 2-D gaze
+files are not used in the current pipeline.
+
+\section*{Audio}
+\code{audio\_stimuli\_data/trials.csv} lists per-trial metadata:
+attended-speaker index, the three device files, SNR in dB, and per-channel
+powers. Speech files live in \code{audio\_stimuli\_data/pairs/*.flac} as
+stereo; each device plays one stereo file with its two channels driving
+the two speakers of that device.
+
+\subsection*{Speaker geometry (listener-referenced azimuth)}
+\begin{center}
+\begin{tabular}{lrll}
+\toprule
+Label & Azimuth & Device / channel & Hemisphere \\
+\midrule
+1 & $-67.5^\circ$ & Device-1 Left  & LEFT \\
+2 & $-22.5^\circ$ & Device-1 Right & LEFT \\
+3 & $+22.5^\circ$ & Device-2 Left  & RIGHT \\
+4 & $+67.5^\circ$ & Device-2 Right & RIGHT \\
+-- & $-135^\circ$ & Device-3 Left  (noise) & back \\
+-- & $+135^\circ$ & Device-3 Right (noise) & back \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Device-1 is the entire \textbf{left} hemisphere speaker pair; Device-2 is
+the entire \textbf{right} hemisphere pair. Device-3 carries back-hemisphere
+noise. All speakers are at a radial distance of \SI{4}{ft}.
+
+\include{01_pipeline}
+\include{02_results}
+\include{04_iter4_results}
+\include{05_iter5_spectral}
+\include{06_iter6_controls}
+\include{07_iter7_decodes_what}
+\include{08_iter8_artefact_subtraction}
+\include{09_cross_modal_predictability}
+\include{10_advanced_neuroscience}
+\include{11_scene_video}
+\include{12_benchmark_leaderboard}
+\include{13_continuous_aad}
+\include{14_generalisation}
+\include{15_individual_differences}
+\include{16_deep_stubs}
+\include{17_behaviour_decoding}
+\include{03_next_steps}
+
+\end{document}

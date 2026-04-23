@@ -1,0 +1,186 @@
+\contentsline {chapter}{Dataset layout}{5}{chapter*.2}%
+\contentsline {chapter}{\numberline {1}Analysis pipeline}{7}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Shared preprocessing}{7}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Modality alignment}{7}{section.1.2}%
+\contentsline {section}{\numberline {1.3}EEG linear-decoder backbones (iter-3 on all 16 subjects)}{8}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Multimodal fusion}{8}{section.1.4}%
+\contentsline {section}{\numberline {1.5}SLURM design}{8}{section.1.5}%
+\contentsline {chapter}{\numberline {2}Current results}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Linear EEG decoder (backward TRF / CCA)}{9}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Pooled full-trial accuracy (chance $= 0.5$)}{9}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Per-subject winning backbone}{10}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Window-length sweep (mean across 16 subjects)}{10}{subsection.2.1.3}%
+\contentsline {section}{\numberline {2.2}Multimodal fusion}{10}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Task A --- Attended hemisphere (left vs right)}{10}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Pooled accuracy (bootstrap 95\,\% CI, $n = 16$)}{10}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Per-subject attended-hemisphere AAD (CCA mel-28 backbone)}{11}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Task B --- Inner vs Outer (gaze-lateralisation control)}{11}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}Task C --- 4-class speaker identity}{11}{subsection.2.2.5}%
+\contentsline {section}{\numberline {2.3}Observations}{11}{section.2.3}%
+\contentsline {chapter}{\numberline {3}Iteration 4 --- results}{13}{chapter.3}%
+\contentsline {section}{\numberline {3.1}4-class EEG speaker-identity decoder}{13}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Per-subject accuracy}{13}{subsection.3.1.1}%
+\contentsline {section}{\numberline {3.2}Cross-modal predictability (EEG $\leftrightarrow $ gaze)}{14}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}EEG $\rightarrow $ gaze (ridge regression, held-out Pearson $r$)}{14}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}CCA EEG $\leftrightarrow $ gaze (first-component correlation)}{14}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Gaze $\rightarrow $ attended (logistic classifier)}{15}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Gaze-residualised EEG AAD --- the headline control}{15}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Extended fusion (gaze + 4-class-EEG-probabilities)}{16}{section.3.4}%
+\contentsline {section}{\numberline {3.5}What iter-4 settles}{16}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Iteration 5 --- classical spectral EEG features}{17}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Task definition and inputs}{17}{section.4.1}%
+\contentsline {paragraph}{Task.}{17}{section*.10}%
+\contentsline {paragraph}{Three label-collapses evaluated.}{17}{section*.11}%
+\contentsline {paragraph}{Inputs used in iter-5.}{17}{section*.12}%
+\contentsline {paragraph}{Prediction target.}{18}{section*.13}%
+\contentsline {paragraph}{Evaluation protocol.}{18}{section*.14}%
+\contentsline {section}{\numberline {4.2}Feature set}{19}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Classifier sweep (all 16 subjects, per-subject 5-fold CV)}{19}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Per-subject LogReg accuracy}{19}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Fusion with gaze features}{19}{section.4.5}%
+\contentsline {section}{\numberline {4.6}What iter-5 settles}{20}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Iter-6 follow-ups}{21}{section.4.7}%
+\contentsline {chapter}{\numberline {5}Iteration 6 --- artefact controls (IMU, video, channel ablation)}{22}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Task and inputs}{22}{section.5.1}%
+\contentsline {section}{\numberline {5.2}IMU-only AAD}{22}{section.5.2}%
+\contentsline {paragraph}{Features (35 per trial).}{22}{section*.16}%
+\contentsline {section}{\numberline {5.3}Video-only AAD}{22}{section.5.3}%
+\contentsline {paragraph}{Features (15 per trial).}{22}{section*.17}%
+\contentsline {section}{\numberline {5.4}EEG spectral AAD under five cleaning conditions}{23}{section.5.4}%
+\contentsline {paragraph}{Per-subject hemisphere accuracy under each cleaning.}{24}{section*.18}%
+\contentsline {section}{\numberline {5.5}Joint conclusion}{24}{section.5.5}%
+\contentsline {paragraph}{Reviewer answer to ``is this just eye-tracking / head motion?''}{25}{section*.19}%
+\contentsline {chapter}{\numberline {6}Iteration 7 --- what can EEG features decode about the other modalities?}{26}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Task and inputs}{26}{section.6.1}%
+\contentsline {paragraph}{Question.}{26}{section*.20}%
+\contentsline {paragraph}{Method.}{26}{section*.21}%
+\contentsline {paragraph}{Target feature counts.}{26}{section*.22}%
+\contentsline {section}{\numberline {6.2}Top EEG-decodable features per modality}{26}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Gaze (23 features available)}{26}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}IMU (35 features available)}{27}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Video (15 features available)}{27}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}Audio (20 features available)}{27}{subsection.6.2.4}%
+\contentsline {section}{\numberline {6.3}Joint picture}{28}{section.6.3}%
+\contentsline {paragraph}{Reconciling with iter-5 and iter-6.}{28}{section*.23}%
+\contentsline {paragraph}{Implications for iter-8.}{29}{section*.24}%
+\contentsline {chapter}{\numberline {7}Iteration 8 --- artefact-subtraction decoder}{30}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Motivation and method}{30}{section.7.1}%
+\contentsline {paragraph}{Procedure (per subject, per 5-fold CV split).}{30}{section*.25}%
+\contentsline {paragraph}{Conditions compared.}{30}{section*.26}%
+\contentsline {section}{\numberline {7.2}Pooled results (16 subjects, bootstrap 95\,\% CI)}{31}{section.7.2}%
+\contentsline {section}{\numberline {7.3}How to read this (the nuanced part)}{31}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Reconciling iter-6 and iter-8}{31}{section.7.4}%
+\contentsline {section}{\numberline {7.5}What this implies for the paper}{32}{section.7.5}%
+\contentsline {section}{\numberline {7.6}Per-subject $\Delta $ (motion-residualised $-$ raw, hemisphere)}{32}{section.7.6}%
+\contentsline {section}{\numberline {7.7}What to run next}{32}{section.7.7}%
+\contentsline {chapter}{\numberline {8}Cross-modal predictability --- pairwise CCA across 6 streams}{34}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Motivation}{34}{section.8.1}%
+\contentsline {paragraph}{Method.}{34}{section*.27}%
+\contentsline {section}{\numberline {8.2}Pairwise first-component CCA}{34}{section.8.2}%
+\contentsline {paragraph}{How to read this.}{34}{section*.28}%
+\contentsline {section}{\numberline {8.3}Information-theoretic view (MI, CKA)}{35}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Implication for the fusion model}{35}{section.8.4}%
+\contentsline {chapter}{\numberline {9}Advanced EEG neuroscience (nb12)}{38}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Motivation}{38}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Aperiodic 1/f spectrum (FOOOF)}{38}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Alpha lateralisation (ALI)}{39}{section.9.3}%
+\contentsline {paragraph}{Group-level hemisphere effect.}{39}{section*.29}%
+\contentsline {section}{\numberline {9.4}Cortico-acoustic coherence (CAC)}{39}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Inter-subject correlation (ISC)}{40}{section.9.5}%
+\contentsline {section}{\numberline {9.6}Phase--amplitude coupling (PAC)}{40}{section.9.6}%
+\contentsline {section}{\numberline {9.7}ERSP and ITC at Cz}{40}{section.9.7}%
+\contentsline {section}{\numberline {9.8}Microstates (4-class)}{41}{section.9.8}%
+\contentsline {section}{\numberline {9.9}Connectivity (alpha coherence graph)}{41}{section.9.9}%
+\contentsline {section}{\numberline {9.10}Non-linear complexity (permutation/sample entropy, LZ)}{41}{section.9.10}%
+\contentsline {section}{\numberline {9.11}Summary}{42}{section.9.11}%
+\contentsline {chapter}{\numberline {10}Scene-video analysis (nb11) and video-only AAD}{44}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Motivation}{44}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Frame-level optical flow (Subject 1, Trial Eval-6)}{44}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Per-trial 15-feature video summary}{44}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Video-only AAD}{45}{section.10.4}%
+\contentsline {paragraph}{How to read.}{45}{section*.30}%
+\contentsline {section}{\numberline {10.5}IMU-only AAD (for comparison)}{46}{section.10.5}%
+\contentsline {section}{\numberline {10.6}Cross-modal relation: video / IMU / EEG}{46}{section.10.6}%
+\contentsline {section}{\numberline {10.7}What video uniquely contributes}{46}{section.10.7}%
+\contentsline {section}{\numberline {10.8}What to run next (covered in Chapter~\ref {ch:benchmark})}{46}{section.10.8}%
+\contentsline {chapter}{\numberline {11}Benchmark leaderboard}{48}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Purpose}{48}{section.11.1}%
+\contentsline {paragraph}{Aggregation script.}{48}{section*.31}%
+\contentsline {paragraph}{Splits covered.}{48}{section*.32}%
+\contentsline {paragraph}{LOSO CCA mel-28 (16 subjects, new results).}{48}{table.11.1}%
+\contentsline {section}{\numberline {11.2}Hemisphere task (chance 0.500)}{48}{section.11.2}%
+\contentsline {paragraph}{Reading the hemisphere table.}{48}{section*.34}%
+\contentsline {section}{\numberline {11.3}Inner / outer task (chance 0.500)}{49}{section.11.3}%
+\contentsline {section}{\numberline {11.4}4-class speaker identity (chance 0.250)}{49}{section.11.4}%
+\contentsline {section}{\numberline {11.5}Envelope-attendance (TRF correctness)}{50}{section.11.5}%
+\contentsline {section}{\numberline {11.6}Gaze-residualised control}{50}{section.11.6}%
+\contentsline {section}{\numberline {11.7}Reproducibility artefacts}{50}{section.11.7}%
+\contentsline {section}{\numberline {11.8}Outstanding gaps (Stage-C)}{51}{section.11.8}%
+\contentsline {chapter}{\numberline {12}Continuous AAD --- window sweep and time-to-switch}{53}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Motivation}{53}{section.12.1}%
+\contentsline {paragraph}{Aggregation script.}{53}{section*.35}%
+\contentsline {section}{\numberline {12.2}Window sweep}{53}{section.12.2}%
+\contentsline {paragraph}{Reading the sweep.}{53}{section*.36}%
+\contentsline {section}{\numberline {12.3}What the envelope window curve implies for deployment}{54}{section.12.3}%
+\contentsline {paragraph}{Usable operating point.}{54}{section*.37}%
+\contentsline {paragraph}{Gaze as the short-window fallback.}{54}{section*.38}%
+\contentsline {section}{\numberline {12.4}Time-to-switch proxy}{54}{section.12.4}%
+\contentsline {section}{\numberline {12.5}Artefact summary}{55}{section.12.5}%
+\contentsline {chapter}{\numberline {13}Generalisation stress tests}{56}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Motivation}{56}{section.13.1}%
+\contentsline {paragraph}{Aggregation.}{56}{section*.39}%
+\contentsline {section}{\numberline {13.2}SNR stratification (4-class decoder)}{56}{section.13.2}%
+\contentsline {paragraph}{Read-out.}{56}{section*.40}%
+\contentsline {section}{\numberline {13.3}Direction stratification}{57}{section.13.3}%
+\contentsline {paragraph}{Read-out.}{57}{section*.41}%
+\contentsline {section}{\numberline {13.4}Gaze-residualised decoder $\times $ SNR}{57}{section.13.4}%
+\contentsline {section}{\numberline {13.5}Cross-story leakage (what remains to be run)}{58}{section.13.5}%
+\contentsline {section}{\numberline {13.6}True cross-SNR retraining (outstanding)}{58}{section.13.6}%
+\contentsline {section}{\numberline {13.7}Artefact summary}{58}{section.13.7}%
+\contentsline {chapter}{\numberline {14}Individual differences --- who does the decoder work for?}{59}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Motivation}{59}{section.14.1}%
+\contentsline {paragraph}{Covariates (6 per subject).}{59}{section*.42}%
+\contentsline {paragraph}{Targets (5 per subject).}{59}{section*.43}%
+\contentsline {paragraph}{Method.}{59}{section*.44}%
+\contentsline {section}{\numberline {14.2}Covariate table}{59}{section.14.2}%
+\contentsline {section}{\numberline {14.3}Per-target regression}{59}{section.14.3}%
+\contentsline {section}{\numberline {14.4}Interpretation}{59}{section.14.4}%
+\contentsline {paragraph}{Three predictors carry most of the signal.}{59}{section*.45}%
+\contentsline {paragraph}{Negative / near-zero effects.}{60}{section*.46}%
+\contentsline {section}{\numberline {14.5}Proposed subject-exclusion rule}{60}{section.14.5}%
+\contentsline {section}{\numberline {14.6}Artefact summary}{61}{section.14.6}%
+\contentsline {chapter}{\numberline {15}Deep-model scaffolds (not executed on CPU)}{63}{chapter.15}%
+\contentsline {section}{\numberline {15.1}Motivation}{63}{section.15.1}%
+\contentsline {section}{\numberline {15.2}Stimulus reconstruction CNN}{63}{section.15.2}%
+\contentsline {paragraph}{Input / output.}{63}{section*.47}%
+\contentsline {paragraph}{Architecture.}{63}{section*.48}%
+\contentsline {paragraph}{Training.}{63}{section*.49}%
+\contentsline {paragraph}{Evaluation.}{63}{section*.50}%
+\contentsline {section}{\numberline {15.3}Foundation-model probe (LaBraM / BIOT)}{64}{section.15.3}%
+\contentsline {paragraph}{Architecture.}{64}{section*.51}%
+\contentsline {paragraph}{Motivation.}{64}{section*.52}%
+\contentsline {paragraph}{Expected pooled accuracy}{64}{section*.53}%
+\contentsline {section}{\numberline {15.4}Cross-modal attention (EEG $\times $ gaze dual-stream)}{64}{section.15.4}%
+\contentsline {paragraph}{Architecture.}{64}{section*.54}%
+\contentsline {paragraph}{Motivation.}{64}{section*.55}%
+\contentsline {paragraph}{Expected gain}{64}{section*.56}%
+\contentsline {section}{\numberline {15.5}Runtime estimate}{64}{section.15.5}%
+\contentsline {section}{\numberline {15.6}Integration with the benchmark}{64}{section.15.6}%
+\contentsline {chapter}{\numberline {16}Behavioural $\times $ decoding --- trial-level correlation}{66}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Question}{66}{section.16.1}%
+\contentsline {paragraph}{Method.}{66}{section*.57}%
+\contentsline {section}{\numberline {16.2}Pooled trial-level contingency}{66}{section.16.2}%
+\contentsline {paragraph}{Observations on the pooled table.}{66}{section*.58}%
+\contentsline {section}{\numberline {16.3}Within-subject paired test (the trustworthy one)}{67}{section.16.3}%
+\contentsline {paragraph}{The headline.}{68}{section*.59}%
+\contentsline {section}{\numberline {16.4}Envelope-tracking margin}{68}{section.16.4}%
+\contentsline {section}{\numberline {16.5}Subject-level decoder-vs-comprehension correlation}{68}{section.16.5}%
+\contentsline {section}{\numberline {16.6}Interpretation}{69}{section.16.6}%
+\contentsline {paragraph}{Gaze-based AAD tracks comprehension; envelope-tracking AAD does not.}{69}{section*.60}%
+\contentsline {paragraph}{The negative $\Delta $ for split $\delta +\theta $ is real but nuanced.}{69}{section*.61}%
+\contentsline {section}{\numberline {16.7}What this means for the paper}{69}{section.16.7}%
+\contentsline {section}{\numberline {16.8}Artefact summary}{69}{section.16.8}%
+\contentsline {chapter}{\numberline {17}Next steps}{71}{chapter.17}%
+\contentsline {section}{\numberline {17.1}Hypotheses that remain to be tested}{71}{section.17.1}%
+\contentsline {section}{\numberline {17.2}Planned experiments (iter-4 SLURM jobs)}{71}{section.17.2}%
+\contentsline {section}{\numberline {17.3}Success criteria (NeurIPS-ready)}{72}{section.17.3}%

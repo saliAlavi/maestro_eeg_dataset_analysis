@@ -1,0 +1,108 @@
+\chapter{Deep-model scaffolds (not executed on CPU)}
+\label{ch:deep-stubs}
+
+\section{Motivation}
+
+Three deep models complete the method coverage and are implemented in
+\code{analysis/scripts/deep\_models.py}, guarded behind the
+\code{RUN\_DEEP=1} environment flag. None are trained in the current
+iteration because no GPU allocation is available; the code is paper-ready
+so a single GPU session can produce the missing results.
+
+\section{Stimulus reconstruction CNN}
+
+\paragraph{Input / output.} Input is a 32-ch $\times$ 2-s EEG window
+at \SI{64}{\hertz} (shape $(B, 32, 128)$). Output is the reconstructed
+28-band gammatone envelope at the same sampling rate (shape
+$(B, 28, 128)$).
+
+\paragraph{Architecture.} A three-layer temporal-spatial 1-D CNN:
+spatial $1 \times 1$ convolution to 64 channels, two temporal
+convolutions (kernel 5) to 128 channels with GELU activation, and a
+$1 \times 1$ head projecting to 28 output bands.
+
+\paragraph{Training.} MSE loss between predicted and true attended
+envelope on non-overlapping 2-s windows. \code{AdamW}, lr $= 10^{-3}$,
+weight decay $10^{-4}$, 50 epochs. Per-subject fine-tuning from a
+LOSO pre-trained base.
+
+\paragraph{Evaluation.}
+\begin{itemize}
+  \item \textbf{Primary}: STOI between reconstructed and attended
+        envelope vs.\ reconstructed and unattended envelope; the AAD
+        decision is $\text{STOI}(rec, att) > \text{STOI}(rec, una)$.
+  \item \textbf{Secondary}: Pearson $r$ with attended vs.\ unattended
+        envelope band-by-band.
+  \item \textbf{Expected pooled accuracy}: $0.60$--$0.70$ on the
+        hemisphere task at $\SI{2}{\second}$ windows, based on the
+        KU Leuven CNN-reconstruction baseline (Geirnaert et al.\ 2020
+        report $0.65$ at $\SI{2}{\second}$ on a similar stereo paradigm).
+\end{itemize}
+
+\section{Foundation-model probe (LaBraM / BIOT)}
+
+\paragraph{Architecture.} Load a pretrained EEG foundation model
+(\code{BAAI/LaBraM-Base}, BIOT, or Neuro-GPT variants) with frozen
+weights, mean-pool the last hidden state across time, and attach a
+single linear classifier for 4-way AAD.
+
+\paragraph{Motivation.} Foundation-model probes are a 2026 publication
+staple: they produce a \emph{transfer} baseline that positions the
+dataset within the broader EEG pre-training literature without
+committing to a particular training recipe. Even a simple linear
+probe on a frozen LaBraM gives a reviewer-ready ``does this dataset
+benefit from cross-cohort pre-training?'' answer.
+
+\paragraph{Expected pooled accuracy}: hemisphere $\geq 0.70$, 4-class
+$\geq 0.35$ — within 5\,pp of the best bespoke model. A probe that
+\emph{beats} the bespoke model would be the single strongest result
+in the paper.
+
+\section{Cross-modal attention (EEG $\times$ gaze dual-stream)}
+
+\paragraph{Architecture.} A 4-head, 4-layer transformer encoder that
+takes EEG tokens (\SI{2}{\second} CNN patches) and gaze tokens
+(per-\SI{0.5}{\second} gaze-summary features), linearly embeds each
+to a shared 128-D token space, concatenates the two token streams, and
+applies joint self-attention before a mean-pool + linear head.
+
+\paragraph{Motivation.} This addresses the fusion ceiling identified in
+Chapter~\ref{ch:results}: late / stacked / early fusion all reach
+$\sim 0.77$ because the linear combination rule cannot model the
+per-trial interaction between gaze fixation and EEG envelope tracking.
+Cross-modal attention lets the network learn that interaction.
+
+\paragraph{Expected gain}: $+5$--$10$\,pp over gaze-only on the
+hemisphere task. The per-subject interaction is strongest for the
+mid-quality tier (5 subjects in Chapter~\ref{ch:indiv-diff}) whose
+gaze is only moderately reliable — exactly the subjects for whom
+gaze + EEG should compound.
+
+\section{Runtime estimate}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Model & GPU wall-clock (per subject) & Total (16 subj, single A100) \\
+\midrule
+StimulusReconstructionCNN   & $\sim 15$ min & $\sim 4$\,h \\
+FoundationEEGProbe (frozen) & $\sim 8$ min  & $\sim 2$\,h \\
+CrossModalAttention         & $\sim 20$ min & $\sim 5.5$\,h \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Total GPU-hours for the full Stage-C sweep: $\sim 12$\,h on a single
+A100, or one overnight run on a PAS2301 GPU node.
+
+\section{Integration with the benchmark}
+
+Each deep model writes its per-subject parquet into
+\code{results/deep/\{cnn\_recon,probe,xmod\}/s*.parquet} using the same
+schema as the existing classifier scripts
+(\code{subject, task, classifier, chance, acc}). Re-running
+\code{aggregate\_benchmark\_leaderboard.py} then folds the deep models
+into Chapter~\ref{ch:benchmark}'s pooled tables automatically, with
+bootstrap CIs computed the same way.

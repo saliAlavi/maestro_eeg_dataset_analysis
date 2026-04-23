@@ -1,0 +1,82 @@
+\chapter{Next steps}
+\label{ch:next}
+
+\section{Hypotheses that remain to be tested}
+
+\begin{enumerate}
+  \item \textbf{Deep EEG decoders}. Linear TRF is data-hungry and
+        envelope-reconstruction-based; EEGNet, DenseNet, and a cross-modal
+        attention transformer are already implemented in the notebook
+        suite, guarded behind a \code{RUN\_DEEP} flag. Targets: EEG-only
+        binary AAD $\geq 0.60$ pooled; per-subject $> 0.70$ on a majority
+        of responsive subjects.
+
+  \item \textbf{Gaze-excluded EEG control}. Regress Tobii scene-projected
+        gaze + per-eye direction out of the EEG \emph{before} decoder
+        training, and re-compute binary AAD. This answers the central
+        reviewer concern ``is your AAD really eye-tracking in disguise?''.
+
+  \item \textbf{Learning curves}. Per-subject AAD accuracy vs.\ number of
+        training trials $\in \{5, 10, 20, 50, 100\}$, including the 5
+        training-trial block as an auxiliary per-subject adaptation set.
+
+  \item \textbf{Subject-quality composite score}. Compose per-subject
+        bad-channel rate, behavioural comprehension accuracy,
+        $\alpha$-lateralisation sign, Tobii validity, ISC at Cz. Test
+        whether the composite predicts AAD accuracy well enough to
+        recommend inclusion/exclusion rules.
+
+  \item \textbf{Behavioural$\leftrightarrow$decoding correlation}. Per-trial
+        comprehension correctness vs.\ trial-level
+        $\rho_\text{att} - \rho_\text{una}$ from the EEG decoder;
+        reviewer-ready sanity story that the ``EEG signal is real''.
+
+  \item \textbf{SNR stratification}. AAD accuracy within each SNR bin
+        ($\leq 6$, $7$--$10$, $11$--$14$, $\geq 15$\,dB). Expect a
+        monotonic trend once a stronger decoder is in place.
+
+  \item \textbf{Speaker-identity (4-class) decoder}. Drop the binary
+        group-level framing and train a 4-class classifier over Device-1~L,
+        Device-1~R, Device-2~L, Device-2~R. The TRF is more naturally
+        aligned with this task.
+
+  \item \textbf{Cross-subject transfer}. Leave-one-subject-out training
+        with per-subject calibration on 5 main trials. Quantifies the
+        amount of per-subject data needed for deployment.
+\end{enumerate}
+
+\section{Planned experiments (iter-4 SLURM jobs)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lll}
+\toprule
+Experiment & Script & Backbone \\
+\midrule
+Deep EEG decoder           & \code{aad\_deep.py}      & EEGNet / transformer \\
+Gaze-regressed EEG control & \code{aad\_v3.py}        & CCA mel-28 (gaze-residualised) \\
+Learning curves            & \code{aad\_lc.py}        & CCA mel-28 \\
+Quality-score regression   & \code{audit\_quality.py} & --- \\
+4-class speaker decoder    & \code{aad\_4way.py}      & CCA mel-28 + LightGBM \\
+LOSO transfer              & \code{aad\_loso.py}      & CCA mel-28 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each experiment is a 16-task SLURM array; wall-clock budget per experiment
+$\leq 2$\,h at 8 CPUs and 32\,GB per task.
+
+\section{Success criteria (NeurIPS-ready)}
+
+\begin{itemize}
+  \item Pooled within-subject binary AAD $\geq 0.70$ with CI clear of
+        chance, \emph{after} regressing out gaze to rule out the
+        eye-tracking-in-disguise hypothesis.
+  \item Clean per-subject tier behaviour; no more than one subject (S1)
+        dropped and that exclusion justified by a hardware-quality score
+        rather than post-hoc accuracy.
+  \item A single clearly-novel contribution beyond the dataset itself ---
+        most likely the synchronised gaze-EEG fusion plus the per-trial
+        comprehension questionnaires, both of which are absent from
+        existing AAD datasets.
+\end{itemize}

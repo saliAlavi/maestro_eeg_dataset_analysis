@@ -1,0 +1,19 @@
+[S5] processed 10 trials  (21s)
+[S5] processed 20 trials  (41s)
+[S5] processed 30 trials  (61s)
+[S5] processed 40 trials  (82s)
+[S5] processed 50 trials  (102s)
+[S5] processed 60 trials  (122s)
+[S5] processed 70 trials  (142s)
+[S5] processed 80 trials  (162s)
+[S5] processed 90 trials  (183s)
+[S5] processed 100 trials  (201s)
+[S5] 100 trials × 13 video features
+[S5] done in 216s
+ subject        task classifier  chance  acc
+       5  hemisphere     logreg    0.50 0.68
+       5  hemisphere   lightgbm    0.50 0.68
+       5 inner_outer     logreg    0.50 0.70
+       5 inner_outer   lightgbm    0.50 0.61
+       5      4class     logreg    0.25 0.43
+       5      4class   lightgbm    0.25 0.39

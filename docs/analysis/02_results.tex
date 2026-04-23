@@ -1,0 +1,199 @@
+\chapter{Current results}
+\label{ch:results}
+
+\section*{What task is being decoded}
+
+\textbf{Goal}: for every trial (30\,s of concurrent multi-talker speech),
+predict which of 4 spatial speakers (Device-1 L at $-67.5°$, Device-1 R
+at $-22.5°$, Device-2 L at $+22.5°$, Device-2 R at $+67.5°$) the subject
+was attending. Ground truth is the \code{Attended Speaker} column of
+\code{trials.csv}.
+
+\textbf{Evaluation}: 5-fold stratified CV \emph{per subject} over 100
+main trials; accuracies are mean across folds. Pooled accuracy is the
+unweighted mean of per-subject accuracies across all 16 subjects
+(bootstrap 95\,\% CI).
+
+\textbf{Inputs used in this chapter}:
+\begin{itemize}
+  \item \emph{Linear EEG decoder}: 32-ch EEG ($\sim$\SI{500}{\Hz})
+        bandpassed to 1--9\,Hz and resampled to \SI{64}{\Hz}; decoder is
+        CCA between EEG-lags ($-200\ldots+500$\,ms) and the 28-band
+        gammatone envelope of the attended-device stereo audio
+        (\emph{inputs: EEG only}; audio envelopes are the supervision
+        signal, not classifier inputs).
+  \item \emph{Fusion}: Tobii \code{gazedata.gz} per-trial summary
+        (20 features) combined with the EEG CCA probabilities.
+  \item IMU and scene video are not used in this chapter.
+\end{itemize}
+
+All 16 subjects, 100 main trials each. Within-subject 5-fold CV, 30\,s
+full-trial decision windows unless stated otherwise.
+
+\section{Linear EEG decoder (backward TRF / CCA)}
+
+\subsection{Pooled full-trial accuracy (chance $= 0.5$)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Backbone & Pooled mean & $n$ trials \\
+\midrule
+\textbf{CCA mel-28}              & \textbf{0.523} & 1599 \\
+Mel-28 ridge                     & 0.511 & 1599 \\
+Broadband ridge                  & 0.507 & 1599 \\
+Split $\delta$+$\theta$          & 0.492 & 1599 \\
+\midrule
+Oracle adaptive (per-subject best backbone) & 0.555 & 1599 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CCA on the 28-band gammatone envelope is the best uniform backbone. A
+per-subject adaptive policy that picks whichever backbone wins on inner CV
+reaches 0.555, $\sim 3$\,pp above the best fixed choice.
+
+\subsection{Per-subject winning backbone}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{ll}
+\toprule
+Backbone & Subjects for which it wins \\
+\midrule
+CCA mel-28              & S1, S2, S4, S5, S7, S10, S11, S12, S13 (9) \\
+Broadband ridge         & S3, S9, S14, S16 (4) \\
+Mel-28 ridge            & S6, S15 (2) \\
+Split $\delta$+$\theta$ & S8 (1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Window-length sweep (mean across 16 subjects)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+\toprule
+Window (s) & Broadband & Mel-28 & Split $\delta$+$\theta$ \\
+\midrule
+1          & 0.496     & 0.499  & 0.500 \\
+2          & 0.499     & 0.501  & 0.498 \\
+4          & 0.500     & 0.505  & 0.499 \\
+8          & 0.505     & 0.500  & 0.502 \\
+16         & 0.510     & \textbf{0.524} & 0.504 \\
+30         & 0.507     & 0.510  & 0.492 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The short-window (1--4\,s) regime stays near chance; accuracy climbs
+modestly at 16--30\,s. This shallow gradient reflects the 30\,s trial length
+and the reduced stimulus separability of the paradigm (each device plays
+one speech file across both of its L/R speakers at different powers, so
+the attended and unattended streams are spatially smeared).
+
+\section{Multimodal fusion}
+
+Three task framings share the same Tobii-gaze feature set
+(\code{gazedata.gz}) and the same EEG backbones, evaluated per subject via
+5-fold stratified CV.
+
+\subsection{Task A --- Attended hemisphere (left vs right)}
+
+Binary task: attended speaker $\in$ Left hemisphere (labels 1--2, azimuth
+$\{-67.5^\circ,-22.5^\circ\}$) vs Right hemisphere (labels 3--4, azimuth
+$\{+22.5^\circ,+67.5^\circ\}$). Chance $= 0.5$.
+
+\subsection{Pooled accuracy (bootstrap 95\,\% CI, $n = 16$)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+EEG backbone & Gaze-only & EEG-only (LR) & Late fusion & Stacked & Early fusion \\
+\midrule
+Broadband          & 0.770 & 0.505 & 0.766 & 0.752 & 0.751 \\
+Split $\delta$+$\theta$ & 0.770 & 0.485 & 0.767 & 0.734 & 0.757 \\
+Mel-28             & 0.770 & 0.511 & 0.756 & 0.758 & 0.763 \\
+\textbf{CCA mel-28} & \textbf{0.770} & 0.502 & \textbf{0.768} & 0.756 & 0.764 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Pooled 95\,\% CI for gaze-only: $[0.685, 0.849]$. EEG-only sits at chance on
+the binary group-level task; fusion gives the same pooled number as
+gaze-only within CI overlap.
+
+\subsection{Per-subject attended-hemisphere AAD (CCA mel-28 backbone)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrrr}
+\toprule
+Subj & $n$ & Gaze & EEG (LR) & Late & Stacked & Early \\
+\midrule
+1  &  99 & 0.404 & 0.545 & 0.394 & 0.545 & 0.515 \\
+2  &  98 & 0.939 & 0.429 & 0.939 & 0.918 & 0.949 \\
+3  & 100 & \textbf{1.000} & 0.340 & 0.990 & 0.990 & \textbf{1.000} \\
+4  & 100 & 0.980 & 0.490 & 0.990 & 0.970 & 0.950 \\
+5  & 100 & 0.750 & 0.520 & 0.730 & 0.710 & 0.750 \\
+6  & 100 & 0.640 & 0.390 & 0.650 & 0.650 & 0.670 \\
+7  & 100 & 0.910 & 0.420 & 0.900 & 0.920 & 0.930 \\
+8  & 100 & 0.550 & 0.560 & 0.550 & 0.570 & 0.570 \\
+9  & 100 & 0.660 & 0.560 & 0.680 & 0.620 & 0.670 \\
+10 & 100 & 0.860 & 0.480 & 0.860 & 0.820 & 0.780 \\
+11 & 100 & 0.680 & 0.570 & 0.680 & 0.610 & 0.610 \\
+12 & 100 & 0.600 & 0.510 & 0.580 & 0.490 & 0.590 \\
+13 & 100 & 0.860 & 0.630 & 0.840 & 0.850 & 0.890 \\
+14 & 100 & 0.650 & 0.580 & 0.650 & 0.700 & 0.620 \\
+15 &  99 & 0.980 & 0.556 & 0.980 & 0.980 & \textbf{1.000} \\
+16 & 100 & 0.830 & 0.470 & 0.820 & 0.790 & 0.800 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Task B --- Inner vs Outer (gaze-lateralisation control)}
+
+Binary task: inner speakers (labels 2, 3, azimuth $\pm 22.5^\circ$) vs
+outer speakers (labels 1, 4, azimuth $\pm 67.5^\circ$). This collapses the
+left/right axis and asks whether gaze can distinguish eccentricity. Pooled
+gaze-only accuracy $= \mathbf{0.690}$ (vs 0.500 chance; 13/16 above
+chance). A secondary spatial signal is present but substantially weaker
+than the hemisphere task.
+
+\subsection{Task C --- 4-class speaker identity}
+
+4-way classification over the full speaker set (chance $= 0.25$). Pooled
+accuracy $= \mathbf{0.547}$, 16/16 subjects above chance. Effect size
+relative to chance ($+30$\,pp) is comparable to Task A's $+27$\,pp --- the
+binary hemisphere task just happens to have a higher absolute chance.
+
+\section{Observations}
+
+\begin{enumerate}
+  \item \textbf{Gaze carries the dominant signal for the attended
+        hemisphere (Task A)}: 6/16 subjects reach $\geq 0.83$ gaze-only
+        accuracy; S3 and S15 reach \textbf{1.000} with early fusion. Gaze
+        is substantially weaker on within-hemisphere distinctions (Task
+        B: 0.690 pooled).
+  \item \textbf{Linear EEG-only AAD on the binary hemisphere task is at
+        chance.} The backward TRF / CCA extracts per-trial
+        envelope-tracking correlation, not a lateralised spatial
+        signature --- so collapsing four speakers into two hemispheres
+        loses the signal the decoder is most sensitive to.
+  \item \textbf{Fusion does not yet improve pooled accuracy} because the
+        EEG contribution is near-chance. The pipeline is wired end-to-end
+        and ready to benefit from a stronger EEG model.
+  \item \textbf{Per-subject heterogeneity is informative}. The five
+        subjects below $0.70$ gaze-only (S1, S6, S8, S11, S12) are the
+        ones whose gaze does not reliably fixate the attended source. These
+        are the subjects for whom a non-gaze decoder is actually useful.
+  \item \textbf{Subject 1} is an outlier: below-chance gaze (0.40) and
+        near-chance EEG. The recording has 100\,\% flat M1 and 100\,\%
+        saturated M2 --- a real hardware/electrode issue, not an analysis
+        artefact. It survives the pipeline only because the robust
+        referencing and spherical interpolation prevent the bad channels
+        from corrupting the other 30.
+\end{enumerate}

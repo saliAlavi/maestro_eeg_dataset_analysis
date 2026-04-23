@@ -1,0 +1,19 @@
+[S4] processed 10 trials  (19s)
+[S4] processed 20 trials  (39s)
+[S4] processed 30 trials  (58s)
+[S4] processed 40 trials  (76s)
+[S4] processed 50 trials  (96s)
+[S4] processed 60 trials  (115s)
+[S4] processed 70 trials  (134s)
+[S4] processed 80 trials  (153s)
+[S4] processed 90 trials  (172s)
+[S4] processed 100 trials  (192s)
+[S4] 100 trials × 13 video features
+[S4] done in 197s
+ subject        task classifier  chance  acc
+       4  hemisphere     logreg    0.50 0.82
+       4  hemisphere   lightgbm    0.50 0.69
+       4 inner_outer     logreg    0.50 0.89
+       4 inner_outer   lightgbm    0.50 0.90
+       4      4class     logreg    0.25 0.83
+       4      4class   lightgbm    0.25 0.76

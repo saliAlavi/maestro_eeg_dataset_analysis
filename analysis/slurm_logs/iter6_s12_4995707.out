@@ -1,0 +1,25 @@
+[S12/raw] done in 53s
+ subject        task condition  chance  acc
+      12  hemisphere       raw    0.50 0.60
+      12 inner_outer       raw    0.50 0.57
+      12      4class       raw    0.25 0.33
+[S12/ica_eog] done in 113s
+ subject        task condition  chance  acc
+      12  hemisphere   ica_eog    0.50 0.56
+      12 inner_outer   ica_eog    0.50 0.53
+      12      4class   ica_eog    0.25 0.33
+[S12/regress_gaze] done in 43s
+ subject        task    condition  chance  acc
+      12  hemisphere regress_gaze    0.50 0.58
+      12 inner_outer regress_gaze    0.50 0.51
+      12      4class regress_gaze    0.25 0.35
+[S12/regress_gaze_imu] done in 41s
+ subject        task        condition  chance  acc
+      12  hemisphere regress_gaze_imu    0.50 0.58
+      12 inner_outer regress_gaze_imu    0.50 0.63
+      12      4class regress_gaze_imu    0.25 0.40
+[S12/drop_eog_emg] done in 40s
+ subject        task    condition  chance  acc
+      12  hemisphere drop_eog_emg    0.50 0.52
+      12 inner_outer drop_eog_emg    0.50 0.57
+      12      4class drop_eog_emg    0.25 0.31

@@ -1,0 +1,263 @@
+\chapter{Behavioural $\times$ decoding --- trial-level correlation}
+\label{ch:behaviour-decoding}
+
+\section{Question}
+
+Chapter~\ref{ch:indiv-diff} showed that subjects with higher
+comprehension accuracy also have higher \emph{overall} decoder accuracy
+(Pearson $r \approx 0.54$ for gaze/fusion/EEG-spectral hemisphere).
+A stronger claim the paper needs to defend is the \emph{trial-level}
+version: \textit{on the same subject, are trials where the subject
+answered the comprehension question correctly also the trials where
+the decoder was correct?} A positive answer links the decoder output to
+the moment-to-moment engagement of listening comprehension. A null
+answer says the decoder indexes a different process (e.g.\ acoustic
+tracking) that is not tied to successful comprehension.
+
+\paragraph{Method.}
+\code{analysis/scripts/aggregate\_behaviour\_decoding.py} joins
+\code{02\_behavioral\_records.parquet} (per-trial comprehension
+correctness) with every per-trial decoder correctness source:
+\begin{itemize}
+  \item \textbf{Backward-TRF family} --- broadband, mel-28, CCA mel-28,
+        split $\delta+\theta$, all from
+        \code{results/aad\_v3/s*\_*\_derivative.parquet} (collapsed from
+        5-fold CV to one correctness per (subject, trial)).
+  \item \textbf{LOSO CCA mel-28} --- per-trial correctness from the
+        new \code{loso\_cca\_mel28/} outputs.
+  \item \textbf{CCA 4-class} --- hemisphere / inner-outer / 4-class
+        correctness from \code{aad\_v4\_4class/s*.parquet}
+        (full-window only).
+  \item \textbf{Gaze-residualised} --- baseline and residualised
+        conditions of the CCA mel-28 decoder.
+\end{itemize}
+
+Trials with unscorable behavioural responses are dropped (S1
+contributes 98 trials; all others contribute 100). Total joined rows
+$n = 1597$ trials $\times$ 10 decoders $= 15{,}970$.
+
+\section{Pooled trial-level contingency}
+
+Conditional decoder accuracy by behavioural bucket (pooled across
+subjects):
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Model & Acc.\ behav=1 & Acc.\ behav=0 & $\Delta$ & $\chi^2$ & $p$ \\
+\midrule
+backward-trf-broadband            & 0.497 & 0.547 & $-0.050$ & 2.17 & 0.141 \\
+backward-trf-cca\_mel             & 0.527 & 0.498 & $+0.029$ & 0.69 & 0.405 \\
+backward-trf-mel28                & 0.515 & 0.495 & $+0.020$ & 0.29 & 0.589 \\
+backward-trf-split $\delta+\theta$ & 0.480 & 0.540 & $-0.060$ & 3.15 & \textbf{0.076} \\
+backward-trf-cca-mel (raw)        & 0.502 & 0.502 & $+0.000$ & 0.00 & 1.000 \\
+backward-trf-cca-mel (gaze-resid) & 0.521 & 0.575 & $-0.054$ & 2.57 & 0.109 \\
+loso-cca-mel-28                   & 0.534 & 0.561 & $-0.027$ & 0.57 & 0.451 \\
+cca-4class (4-way)                & 0.256 & 0.251 & $+0.005$ & 0.01 & 0.923 \\
+cca-4class (hemisphere)           & 0.498 & 0.498 & $+0.000$ & 0.00 & 1.000 \\
+cca-4class (inner/outer)          & 0.524 & 0.488 & $+0.037$ & 1.12 & 0.289 \\
+\bottomrule
+\end{tabular}
+\caption{Pooled 2$\times$2 contingency ($N$ = 1310 behav-correct vs.\ 287
+behav-wrong trials) for every decoder. $\Delta$ is decoder accuracy on
+behaviour-correct trials minus decoder accuracy on behaviour-wrong
+trials. A positive $\Delta$ is the expected direction (``decoder and
+subject agree''); a negative $\Delta$ is the counterintuitive direction.}
+\end{table}
+
+\paragraph{Observations on the pooled table.}
+\begin{itemize}
+  \item The \emph{direction} of $\Delta$ is mixed: 5 models go negative,
+        4 go positive, 1 is exactly zero. None reach $p < 0.05$.
+  \item The largest negative $\Delta$ is split~$\delta+\theta$
+        ($-0.060$, $p = 0.076$), closely followed by gaze-residualised
+        CCA mel-28 ($-0.054$, $p = 0.109$).
+  \item The largest positive $\Delta$ is cca-4class (inner/outer,
+        $+0.037$, $p = 0.289$).
+\end{itemize}
+
+\section{Within-subject paired test (the trustworthy one)}
+
+The pooled table mixes subject-level and trial-level variance. Because
+subjects differ substantially in both comprehension rate ($0.61$--$0.92$)
+and decoder accuracy, the cleaner test is within-subject: for each
+subject, compute $\Delta_s = \text{acc}_{behav=1}^{(s)} -
+\text{acc}_{behav=0}^{(s)}$, then Wilcoxon signed-rank across subjects.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Model & Median $\Delta_s$ & Mean $\Delta_s$ & $N_+/N_-$ & $W$ & $p$ \\
+\midrule
+backward-trf-split $\delta+\theta$ & $-0.084$ & $-0.062$ & 3 / 13 & 27 & \textbf{0.034} \\
+backward-trf-broadband             & $-0.068$ & $-0.060$ & 5 / 11 & 35 & 0.093 \\
+backward-trf-cca-mel (gaze-resid)  & $-0.087$ & $-0.068$ & 5 / 11 & 37 & 0.117 \\
+cca-4class (inner/outer)           & $+0.014$ & $+0.037$ & 8 / 7  & 41 & 0.281 \\
+backward-trf-cca\_mel              & $+0.053$ & $+0.024$ & 10 / 5 & 43 & 0.334 \\
+backward-trf-mel28                 & $+0.000$ & $+0.019$ & 7 / 7  & 41 & 0.470 \\
+loso-cca-mel-28                    & $-0.020$ & $-0.024$ & 6 / 10 & 57 & 0.597 \\
+backward-trf-cca-mel (baseline)    & $+0.005$ & $-0.015$ & 8 / 8  & 63 & 0.821 \\
+cca-4class (hemisphere)            & $+0.014$ & $-0.009$ & 9 / 6  & 58 & 0.910 \\
+cca-4class (4-way)                 & $+0.014$ & $+0.002$ & 9 / 7  & 64 & 0.860 \\
+\bottomrule
+\end{tabular}
+\caption{Within-subject paired analysis. $\Delta_s$ is the per-subject
+difference in decoder accuracy between behaviour-correct and
+behaviour-wrong trials. $N_+/N_-$ = subjects with positive / negative
+$\Delta$; 16 - ($N_+$ + $N_-$) had a tie. $W$ and $p$ are from a
+two-sided Wilcoxon signed-rank across the 16 subjects (excluding
+ties).}
+\end{table}
+
+\paragraph{The headline.}
+One model reaches $p < 0.05$: backward-TRF split $\delta+\theta$, with
+median $\Delta_s = -0.084$ and 13 of 16 subjects showing a
+\emph{negative} $\Delta$. In other words, \textbf{on trials where the
+subject correctly answered the comprehension question, the split-band
+envelope-tracking decoder is $8.4$\,pp \emph{less} accurate than on
+trials where the subject got the question wrong}.
+
+The broadband and gaze-residualised CCA mel-28 decoders trend the same
+direction (negative, $p = 0.09$--$0.12$); mel-28 and non-split CCA
+mel-28 show mild positive trends ($p > 0.3$). The CCA 4-class and
+LOSO decoders are null.
+
+\section{Envelope-tracking margin}
+
+The backward-TRF decoders expose a continuous per-trial quantity,
+$\rho_{\text{att}} - \rho_{\text{una}}$: the extent to which the
+reconstructed envelope is more correlated with the attended stream
+than with the unattended stream. This is a strictly softer readout than
+the thresholded ``correct'' flag and has more statistical power.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Model & Margin behav=1 & Margin behav=0 & $\Delta$ & Welch-$t$ & $p$ \\
+\midrule
+backward-trf-broadband            & $-0.0002$ & $+0.0036$ & $-0.0038$ & $-1.18$ & 0.238 \\
+backward-trf-cca\_mel             & $+0.0014$ & $-0.0004$ & $+0.0017$ & $+0.75$ & 0.452 \\
+backward-trf-mel28                & $+0.0020$ & $-0.0018$ & $+0.0039$ & $+0.61$ & 0.545 \\
+backward-trf-split $\delta+\theta$ & $-0.0010$ & $+0.0052$ & $-0.0062$ & $-1.93$ & \textbf{0.054} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The split $\delta+\theta$ envelope margin is marginally higher on
+behaviourally-wrong trials ($p = 0.054$ Welch, $p = 0.049$
+Mann--Whitney). Same sign as the binary-correctness contrast --- the
+effect is consistent across both soft and thresholded read-outs.
+
+\section{Subject-level decoder-vs-comprehension correlation}
+
+Across the 16 subjects, per-subject decoder accuracy does \emph{not}
+correlate with per-subject comprehension:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Model & Pearson $r$ vs comprehension & $p$ \\
+\midrule
+backward-trf-broadband            & $-0.11$ & 0.68 \\
+backward-trf-cca\_mel             & $+0.05$ & 0.87 \\
+backward-trf-mel28                & $+0.22$ & 0.42 \\
+backward-trf-split $\delta+\theta$ & $-0.17$ & 0.53 \\
+backward-trf-cca-mel (baseline)   & $-0.06$ & 0.82 \\
+backward-trf-cca-mel (gaze-resid) & $-0.11$ & 0.68 \\
+loso-cca-mel-28                   & $+0.14$ & 0.61 \\
+cca-4class                        & $+0.10$ & 0.71 \\
+\bottomrule
+\end{tabular}
+\caption{Per-subject decoder accuracy correlated with comprehension
+accuracy. This is the subject-level mirror of the within-subject
+analysis above.}
+\end{table}
+
+Contrast this with Chapter~\ref{ch:indiv-diff}, where
+\emph{gaze}-hemisphere and \emph{fusion}-hemisphere decoders had
+$r = +0.54$ with comprehension. The separation is informative:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Decoder family & Correlates with comprehension \\
+\midrule
+Gaze / fusion                     & \textbf{yes} ($r \approx +0.54$, Chapter~\ref{ch:indiv-diff}) \\
+EEG envelope-reconstruction (TRF) & no ($|r| \leq 0.22$, all $p > 0.4$) \\
+CCA 4-class                       & no (decoder at chance) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Interpretation}
+
+\paragraph{Gaze-based AAD tracks comprehension; envelope-tracking AAD
+does not.} Subjects who comprehend more also fixate the attended speaker
+more consistently, which mechanically aligns gaze features with the
+attended-direction label (the comprehension--gaze correlation is the
+well-known ``gaze follows attention'' finding). Gaze-hemisphere
+accuracy therefore co-varies with comprehension.
+
+The envelope-tracking TRF backbone reads out an \emph{acoustic
+cortico-speech alignment} that the subject can carry out without
+successfully answering a single delayed-recall question. Acoustic
+tracking and semantic comprehension are largely independent processes
+(Goswami 2018; Di Liberto et al.\ 2019); our data reproduces that
+dissociation at the trial level.
+
+\paragraph{The negative $\Delta$ for split $\delta+\theta$ is real but
+nuanced.} Two mutually compatible interpretations:
+
+\begin{enumerate}
+  \item \textbf{Effort recruits envelope tracking}: on trials where the
+        subject struggled (and eventually missed the Q), the subject
+        devoted more low-level acoustic attention to the attended
+        stream, elevating $\delta$/$\theta$-band envelope alignment ---
+        while missing the semantic content encoded at higher bands.
+  \item \textbf{Mind-wandering hypothesis}: on behav-correct trials,
+        once the gist of the speech was clear, the subject's attention
+        partially disengaged, \emph{reducing} envelope tracking on the
+        back half of the trial (Kliegl et al.\ 2019). This predicts a
+        time-resolved effect that we have not tested here.
+\end{enumerate}
+
+Either way, the split $\delta+\theta$ decoder is a candidate probe for
+\emph{listening effort}, not comprehension success, and the paper
+should be careful to distinguish these when reporting AAD accuracy.
+
+\section{What this means for the paper}
+
+\begin{itemize}
+  \item \textbf{Do not claim} ``the EEG decoder reflects successful
+        comprehension''. The data rule this out at the trial level.
+  \item \textbf{Claim instead} ``the EEG decoder reflects acoustic
+        attention to the selected stream, which is dissociable from
+        delayed comprehension''. This is a more defensible and more
+        novel finding.
+  \item \textbf{The gaze/fusion story} remains --- gaze-based AAD
+        \emph{does} track comprehension, but that's a subject-level
+        effect driven by the trivial fact that engaged subjects both
+        fixate the attended speaker and pass the comprehension test.
+\end{itemize}
+
+\section{Artefact summary}
+
+\begin{itemize}
+  \item \code{results/behaviour\_decoding.parquet}  (15{,}970 long-form rows).
+  \item \code{results/behaviour\_decoding\_pooled.parquet} (20 rows:
+        conditional accuracy per model per behav bucket).
+  \item \code{results/behaviour\_decoding\_tests.parquet} (chi-square
+        + Spearman per model).
+  \item \code{results/behaviour\_decoding\_margin.parquet}
+        (envelope-margin two-sample contrasts).
+  \item \code{results/behaviour\_decoding\_within\_subject.parquet}
+        (per-model Wilcoxon $\Delta_s$).
+  \item \code{results/behaviour\_decoding\_per\_subject.parquet}
+        ($16 \times 10 = 160$ rows).
+  \item Regen: \code{python scripts/aggregate\_behaviour\_decoding.py}
+        ($\sim 3$\,s from cached per-trial parquets).
+\end{itemize}

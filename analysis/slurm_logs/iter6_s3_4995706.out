@@ -1,0 +1,19 @@
+[S3] processed 10 trials  (20s)
+[S3] processed 20 trials  (39s)
+[S3] processed 30 trials  (59s)
+[S3] processed 40 trials  (79s)
+[S3] processed 50 trials  (98s)
+[S3] processed 60 trials  (117s)
+[S3] processed 70 trials  (137s)
+[S3] processed 80 trials  (157s)
+[S3] processed 90 trials  (176s)
+[S3] processed 100 trials  (195s)
+[S3] 100 trials × 13 video features
+[S3] done in 208s
+ subject        task classifier  chance  acc
+       3  hemisphere     logreg    0.50 0.71
+       3  hemisphere   lightgbm    0.50 0.72
+       3 inner_outer     logreg    0.50 0.62
+       3 inner_outer   lightgbm    0.50 0.51
+       3      4class     logreg    0.25 0.41
+       3      4class   lightgbm    0.25 0.41

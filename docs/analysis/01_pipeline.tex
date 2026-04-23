@@ -1,0 +1,92 @@
+\chapter{Analysis pipeline}
+\label{ch:pipeline}
+
+\section{Shared preprocessing}
+
+\begin{itemize}
+  \item EEG is loaded from \code{eeg\_data.p} (32\,ch, \SI{500}{\Hz}) and the
+        32 scalp channels are wrapped in an \code{mne.io.Raw} with the
+        ANT~Neuro 10--20 montage (Fp1, Fpz, Fp2, F7, F3, Fz, F4, F8, FC5,
+        FC1, FC2, FC6, M1, T7, C3, Cz, C4, T8, M2, CP5, CP1, CP2, CP6, P7,
+        P3, Pz, P4, P8, POz, O1, Oz, O2).
+  \item \textbf{Bad-channel detection} flags flat channels
+        (\code{std} < \num{1e-9}), saturated channels ($\geq 10\%$ samples at
+        the \num{0.0839} ADC clip), and AC-variance $|z| > 6$ outliers
+        against the median MAD of the remaining channels.
+  \item \textbf{Referencing} defaults to linked mastoids (average of
+        M1 and M2); when either mastoid is flagged bad, falls back to a
+        common-average reference over the good channels. Flagged channels
+        are then interpolated via spherical splines so every trial ends with
+        32 valid channels.
+  \item Notch filter at \SI{60}{\Hz}, band-pass 1--9\,Hz for speech-tracking
+        analyses, and a subsequent resample to 64\,Hz (common rate with
+        audio envelopes).
+  \item Optional ICA with automatic EOG-component identification using
+        Fp1/Fp2 as proxies (disabled by default because ablations showed
+        only a \num{0.3}\,pp gain at $3\times$ runtime cost).
+\end{itemize}
+
+\section{Modality alignment}
+
+All streams are clipped to the shared audio-playback window
+$[t_0, t_1]$ derived from the per-trial \code{audio\_timestamps.json}:
+
+\begin{itemize}
+  \item \textbf{EEG}: internal \code{eeg\_ts} is mapped to wall-clock unix
+        time via \code{first\_sample\_time} in \code{eeg\_time\_data.p}.
+  \item \textbf{Tobii streams} (gaze + IMU): recording-relative timestamps
+        are shifted so the first sample aligns to $t_0$, then clipped to
+        $[t_0, t_1]$.
+  \item \textbf{Audio envelopes}: computed from each device's stimulus file
+        and re-sampled to match the EEG rate.
+\end{itemize}
+
+\section{EEG linear-decoder backbones (iter-3 on all 16 subjects)}
+
+For each (subject $\times$ backbone) combination the pipeline:
+\begin{enumerate}
+  \item Loads 100 main trials, preprocessed as above at 64\,Hz.
+  \item Builds lagged regressors over $[-200, +500]\,\text{ms}$ (step 25\,ms).
+  \item Selects ridge $\alpha$ via an inner 5-fold CV on a 12-point
+        log-spaced grid $10^{-1}\ldots10^6$, scored by mean
+        $\rho_\text{att}-\rho_\text{una}$ on held-out trials.
+  \item Outer 5-fold CV for reported accuracy at decision windows
+        \{1, 2, 4, 8, 16, 30\,s\}.
+\end{enumerate}
+
+Four backbones:
+\begin{itemize}
+  \item \textbf{Broadband}: 1--9\,Hz Hilbert envelope derivative (half-wave
+        rectified) as the 1-D reconstruction target.
+  \item \textbf{Split $\delta$+$\theta$}: concatenated 1--4\,Hz and 4--8\,Hz
+        EEG lag features, reconstructing the same 1-D envelope.
+  \item \textbf{Mel-28}: 28-band gammatone-proxy mel envelope as the
+        multi-band reconstruction target (reduced to mean-band for the
+        scalar ridge).
+  \item \textbf{CCA mel-28}: canonical correlation between (EEG lags) and
+        (mel-28 envelope), retaining up to 5 components per trial.
+\end{itemize}
+
+\section{Multimodal fusion}
+
+Binary group-level task: attended speaker pair $\in \{\text{Device-1},
+\text{Device-2}\}$ (chance = 0.5). For each subject we compute:
+\begin{itemize}
+  \item \textbf{Gaze features} from the Tobii \code{gazedata.gz} stream ---
+        mean/std of scene-projected gaze, per-eye gaze-direction azimuth
+        and elevation, pupil diameter, saccade rate, 3-D gaze centroid,
+        and IMU head motion.
+  \item \textbf{EEG features} = the $(\rho_\text{att}, \rho_\text{una})$
+        pair from each EEG backbone, mapped through a sigmoid to a
+        per-trial probability.
+\end{itemize}
+Classifiers: logistic regression (gaze-only, EEG-only) and LightGBM
+(stacked / early-fusion). Evaluated with 5-fold stratified CV per subject.
+
+\section{SLURM design}
+
+Account: \code{PAS2966}. Array jobs on the \code{batch} partition, one task
+per (subject $\times$ backbone). Each task: 8 CPUs, 32\,GB memory, 2\,h wall
+limit. A single backbone sweep across 16 subjects occupies 16 tasks;
+iter-3's four backbones $=$ 64 tasks total, parallelised across compute
+nodes so the full sweep wall-clocks in roughly 15--20 minutes.

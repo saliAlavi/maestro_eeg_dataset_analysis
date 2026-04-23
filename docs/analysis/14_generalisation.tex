@@ -1,0 +1,168 @@
+\chapter{Generalisation stress tests}
+\label{ch:generalisation}
+
+\section{Motivation}
+
+A benchmark is only as trustworthy as its generalisation evidence.
+Three reviewer-facing questions drive this chapter:
+
+\begin{enumerate}
+  \item \textbf{Does the decoder collapse at low SNR?} (Listening-effort
+        regime)
+  \item \textbf{Is there a lateralisation bias in the per-direction
+        accuracy?} (Left vs right hemisphere; inner vs outer azimuth)
+  \item \textbf{Does the signal depend on the underlying audiobook
+        (story) text?} (Content-identity leakage)
+\end{enumerate}
+
+The per-trial predictions produced by iter-4's 4-class CCA decoder
+(\code{results/aad\_v4\_4class/s*.parquet}) let us answer the first
+two without retraining, by stratifying test-trial correctness against
+the trial's SNR bin and attended azimuth. True cross-SNR /
+cross-direction retraining (train on one bin, test on another) is the
+natural extension and requires a single SLURM array job that the
+pipeline is already configured to run.
+
+\paragraph{Aggregation.}
+\code{analysis/scripts/aggregate\_generalisation.py} reads per-trial
+predictions and emits:
+\begin{itemize}
+  \item \code{results/generalisation\_snr.parquet}
+  \item \code{results/generalisation\_direction.parquet}
+  \item \code{results/generalisation\_gaze\_resid\_snr.parquet}
+\end{itemize}
+
+\section{SNR stratification (4-class decoder)}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+SNR bin (dB) & 4-class acc.\ & Hemisphere & Inner/outer & $n$ trials \\
+\midrule
+$\leq 6$    & 0.250 & 0.464 & 0.545 & 112 \\
+$7$--$10$   & 0.269 & 0.487 & 0.524 & 431 \\
+$11$--$14$  & 0.235 & 0.499 & 0.503 & 736 \\
+$\geq 15$   & \textbf{0.284} & \textbf{0.525} & 0.538 & 320 \\
+\bottomrule
+\end{tabular}
+\caption{Pooled accuracy of the CCA 4-class decoder conditioned on the
+attended-trial SNR bin. Chance $= 0.250$ / $0.500$ / $0.500$.}
+\end{table}
+
+\paragraph{Read-out.}
+\begin{itemize}
+  \item The 4-class decoder is \emph{not} strongly SNR-dependent --- the
+        across-bin range is only $+5$\,pp ($0.235$ to $0.284$). This
+        matches the interpretation that linear envelope reconstruction
+        is chance-bound on within-device L/R regardless of how clean
+        the audio is.
+  \item The hemisphere view \emph{does} show the expected monotone
+        trend: from $0.464$ at the hardest SNR to $0.525$ at the easiest,
+        $+6$\,pp. This is the first-order reviewer-visible SNR signal
+        in the pipeline.
+  \item Inner/outer accuracy is flat --- eccentricity information is
+        carried by the head-orientation cue, not by speech intelligibility,
+        so SNR does not perturb it.
+\end{itemize}
+
+\section{Direction stratification}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Hemisphere & Eccentricity & 4-class acc.\ & Hemi acc.\ & Inner/outer & $n$ \\
+\midrule
+Left  & inner ($-22.5°$) & 0.216 & 0.476 & 0.471 & 399 \\
+Left  & outer ($-67.5°$) & 0.280 & 0.518 & 0.550 & 400 \\
+Right & inner ($+22.5°$) & 0.260 & 0.510 & 0.520 & 400 \\
+Right & outer ($+67.5°$) & 0.265 & 0.490 & 0.533 & 400 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Read-out.}
+\begin{itemize}
+  \item Outer (lateral) sources are decoded better than inner (near-midline)
+        sources on 4-class identity: $0.272$ vs $0.238$ pooled. A
+        $+3.4$\,pp eccentricity advantage is consistent with the
+        stronger lateralisation cues available at $\pm 67.5°$.
+  \item Left-inner ($-22.5°$) is the worst decoded position
+        ($0.216$; $-3$\,pp from chance). This is the configuration
+        where the attended speaker is closest to the unattended
+        speaker of the same hemisphere ($-67.5°$, lateralisation-cue
+        axis is short). The decoder systematically collapses on this
+        geometry.
+  \item The right hemisphere is symmetric to the left on eccentricity
+        but the bottom-left diagonal ($-22.5°$) is genuinely worse
+        than its mirror ($+22.5°$) by $+4.4$\,pp 4-class accuracy. This
+        is a candidate subject-level artefact (asymmetric EEG electrode
+        impedance, right-handed population) worth investigating with
+        the individual-differences regression of
+        Chapter~\ref{ch:indiv-diff}.
+\end{itemize}
+
+\section{Gaze-residualised decoder $\times$ SNR}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Condition & SNR $\leq 6$ & $7$--$10$ & $11$--$14$ & $\geq 15$ \\
+\midrule
+Baseline              & 0.473 & 0.527 & 0.514 & 0.456 \\
+Gaze-residualised EEG & \textbf{0.527} & \textbf{0.552} & \textbf{0.533} & \textbf{0.500} \\
+\bottomrule
+\end{tabular}
+\caption{Hemisphere AAD accuracy, baseline vs.\ gaze-residualised CCA
+mel-28 decoder, stratified by test-trial SNR.}
+\end{table}
+
+The $+2$--$5$\,pp advantage of gaze-residualised EEG persists in every
+SNR bin (Chapter~\ref{ch:iter4}). At $\geq 15$\,dB the baseline decoder
+falls below chance ($0.456$), and residualisation rescues it to chance
+($0.500$) --- an intuitive pattern: at the easiest SNR, the baseline
+decoder is over-fit to gaze-correlated features that happen to track
+attended-direction at low SNR but not at high SNR. Removing them
+stabilises the decoder at the cost of the lowest pooled accuracy.
+
+\section{Cross-story leakage (what remains to be run)}
+
+The trial metadata in \code{trials.csv} names the attended audiobook
+file per trial (\code{Device-1}, \code{Device-2}, \code{Device-3}).
+Every trial uses a unique speech file, so \emph{no} training trial
+shares its story with any test trial within a subject's 5-fold CV ---
+there is no content-identity leakage in the within-subject numbers.
+
+\emph{Across subjects} (the LOSO setting) the same 100 stories are
+replayed in different orders per subject. To test whether the
+cross-subject signal is story-dependent, a by-story LOSO protocol
+would re-split so that held-out test stories never appear in training
+for any subject. The \code{aad\_loso.py} script (Chapter
+\ref{ch:benchmark}) is the natural host for this extension; a
+\code{--hold-out-stories N} flag adds the story-partition to the LOSO
+array.
+
+\section{True cross-SNR retraining (outstanding)}
+
+The stratified numbers above condition on the \emph{test-trial} SNR
+only; the training set mixes all SNRs. A proper cross-SNR generalisation
+matrix (train-bin, test-bin) requires re-training per pair. The
+single-pass run is sized as:
+\begin{itemize}
+  \item 4 SNR bins $\times$ 4 train/test permutations $\times$ 16
+        subjects $= 256$ training runs.
+  \item Per-run cost at 8 CPU / 32 GB is $\sim 5$ min at 100-trial
+        scale; the full matrix is a 2-hour SLURM array.
+\end{itemize}
+A \code{aad\_crossbin.sbatch} follow-up is scoped but not launched in
+this iteration.
+
+\section{Artefact summary}
+
+\begin{itemize}
+  \item \code{generalisation\_snr.parquet}, \code{generalisation\_direction.parquet},
+        \code{generalisation\_gaze\_resid\_snr.parquet}.
+  \item Regen: \code{python scripts/aggregate\_generalisation.py}.
+\end{itemize}

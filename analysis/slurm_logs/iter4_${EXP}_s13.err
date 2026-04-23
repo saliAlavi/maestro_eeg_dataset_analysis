@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/scripts/aad_v4_4class.py", line 202, in <module>
+    main()
+  File "/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/scripts/aad_v4_4class.py", line 191, in main
+    df = fit_4class(trials)
+         ^^^^^^^^^^^^^^^^^^
+  File "/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/scripts/aad_v4_4class.py", line 123, in fit_4class
+    Xc, _ = cca.transform(Xt, t["envs"][t["attended"]][:, None])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/PAS2301/alialavi/miniconda3/envs/nips/lib/python3.11/site-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/PAS2301/alialavi/miniconda3/envs/nips/lib/python3.11/site-packages/sklearn/cross_decomposition/_pls.py", line 395, in transform
+    y = check_array(
+        ^^^^^^^^^^^^
+  File "/users/PAS2301/alialavi/miniconda3/envs/nips/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1099, in check_array
+    raise ValueError(
+ValueError: Found array with dim 3, while dim <= 2 is required.
