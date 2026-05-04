@@ -1,9 +1,0 @@
-[S14] 100 trials × 35 IMU features
-[S14] done in 211s
- subject        task classifier  chance  acc
-      14  hemisphere     logreg    0.50 0.48
-      14  hemisphere   lightgbm    0.50 0.46
-      14 inner_outer     logreg    0.50 0.53
-      14 inner_outer   lightgbm    0.50 0.47
-      14      4class     logreg    0.25 0.25
-      14      4class   lightgbm    0.25 0.22
