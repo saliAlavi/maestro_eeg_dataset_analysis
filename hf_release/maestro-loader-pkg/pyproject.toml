@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maestro-loader"
+version = "0.1.2"
+description = "Loader for the maestro-eeg-dataset (multimodal EEG/gaze/IMU/audio/video AAD dataset on HuggingFace)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Ali Alavi" },
+    { name = "N. Hasan" },
+    { name = "D. Williamson" },
+]
+keywords = ["eeg", "auditory-attention-decoding", "aad", "multimodal", "huggingface", "tobii", "gaze"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyarrow>=14",
+    "soundfile>=0.12",
+    "huggingface_hub>=0.23",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.0"]
+mne = ["mne>=1.6"]
+all = ["torch>=2.0", "mne>=1.6"]
+
+[project.urls]
+Homepage = "https://huggingface.co/datasets/aspire-osu/maestro-eeg-dataset"
+Repository = "https://github.com/sAliAlavi/maestro-loader"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["maestro_loader*"]

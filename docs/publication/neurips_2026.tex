@@ -18,8 +18,8 @@
 \usepackage{siunitx}
 \usepackage{multirow}
 
-% Path to shared analysis figures.
-\graphicspath{{../../analysis/figures/}}
+% Local figures directory (sibling of this .tex file).
+\graphicspath{{figures/}}
 
 % Compact monospace for inline code/filenames.
 \newcommand{\code}[1]{\texttt{\small #1}}
@@ -31,9 +31,21 @@
   \par\medskip%
 }
 
-\title{A Multimodal Auditory-Attention-Decoding Dataset with Synchronised EEG, Wearable Eye-Tracking, Head-Mounted Video, IMU, and Spatialised Speech}
-
-\author{Anonymous Author(s)\\
+\title{Beyond EEG: MAESTRO, a Multimodal Dataset for Decoding Auditory Attention from Eye, Brain, and Body}
+\author{%
+  K M Naimul Hassan\\
+  \texttt{hassan.491@osu.edu}\\
+  \And
+  Seyed Ali Alavi\\
+  \texttt{alavibajestan.1@osu.edu}\\
+  \And
+  Donald Williamson\\
+  \texttt{williamson.413@osu.edu}\\
+  \\
+  \\
+  Department of Computer Science and Engineering\\
+  The Ohio State University\\
+  Columbus, OH 43201 \\
 Affiliation\\
 \texttt{anonymous@anon.org}}
 
@@ -42,35 +54,33 @@ Affiliation\\
 \maketitle
 
 \begin{abstract}
-We release a multimodal auditory-attention-decoding (AAD) dataset in which 16 normal-hearing adults listened to four concurrent spatialised talkers (four speakers at $\pm22.5^\circ$ and $\pm67.5^\circ$, plus diotic back-noise at $\pm135^\circ$) over 100 cued-attention trials per subject while 32-channel \SI{500}{\Hz} EEG, binocular eye-tracking and pupillometry (Tobii Glasses~3, \SI{50}{\Hz}), head-mounted scene video and IMU, and per-trial stimulus audio were recorded simultaneously. Existing AAD corpora deliver only EEG plus stimulus envelopes; our dataset adds the behavioural streams most commonly raised as confounds—gaze, head motion, and egocentric video—so that the ``is this really an auditory-cortex signal or just eye-tracking in disguise'' question can be asked quantitatively on the same trials that produced the published EEG numbers. We ship loaders, cross-modal temporal alignment, a 368-feature classical EEG baseline, backward/forward TRF and CCA decoders, a gaze-only baseline, unimodal video and IMU baselines, and motion-residualised controls. Classical EEG spectral features reach $0.716$ pooled within-subject hemisphere AAD (chance $=0.5$); gaze alone reaches $0.772$; late fusion and early fusion retain the gaze number. A strictly motion-orthogonal control residualising gaze+IMU+video out of the EEG feature space at the trial level collapses the EEG signal to $0.521$, revealing that a substantial fraction of the discriminative information lives in a subspace that is co-varying with head orientation and gaze---a property only a truly multimodal release can measure. The dataset, loaders, baselines, and Croissant metadata are hosted at an anonymous URL during review.
+We release MAESTRO, a multimodal auditory-attention-decoding (AAD) corpus in which 16 normal-hearing adults completed 100 cued-attention trials each while listening to four concurrent spatialised talkers at $\pm 22.5^\circ$ and $\pm 67.5^\circ$ plus back-hemisphere noise at $\pm 135^\circ$. Synchronously recorded streams: 32-channel \SI{500}{\Hz} EEG, binocular gaze and pupillometry, head-mounted scene video, head IMU, the per-trial stimulus audio for each device, and a comprehension-question response. Existing AAD corpora deliver EEG and stimulus envelopes only; MAESTRO is the first AAD release that ships gaze, IMU, and head-mounted scene video on the same trials, enabling the ``is this really an auditory-cortex signal or just overt orientation?'' question to be answered quantitatively rather than rhetorically. Around the data we define three task framings (attended hemisphere, attended eccentricity, 4-class attended source) and an envelope-reconstruction track, all packaged in a versioned evaluation protocol with four splits (within-subject, leave-one-subject-out, motion-residualised, high-quality tier), six decision windows for continuous AAD, and three mandatory baselines. Headline findings on this protocol: (i)~classical envelope-reconstruction TRF/CCA is at the chance floor of the paradigm ($0.523$ pooled hemisphere with the best of four backbones); (ii)~a 368-feature classical-spectral EEG classifier reaches $0.716$ $[0.641, 0.792]$, while a gaze-only baseline reaches $0.770$ $[0.728, 0.811]$; (iii)~a strict trial-level motion-residualisation that orthogonalises EEG features against gaze$+$IMU$+$video collapses spectral-EEG hemisphere AAD to $0.521$ $[0.488, 0.552]$, exposing a confound-controlled floor that any future ``purely neural'' decoder must beat; (iv)~at the trial level, gaze-based AAD tracks comprehension success ($r{=}{+}0.54$) whereas envelope-tracking decoders \emph{anti}-track it (Wilcoxon $p{=}0.034$ on the split $\delta{+}\theta$ TRF), dissociating effortful acoustic tracking from delayed comprehension. The dataset, loaders, $60{+}$ reproducible baseline results, and Croissant metadata record are hosted at an anonymous URL during review.
 \end{abstract}
 
 %=======================================================================
 \section{Introduction}
 \label{sec:intro}
 
-Auditory attention decoding (AAD) is the problem of inferring, from non-invasive recordings of a listener, which of several concurrent talkers they are attending to. Published benchmarks have driven steady progress by releasing EEG plus the attended and unattended stimulus audio: the Das et al.\ dataset \cite{das2019aad}, the KUL~AAD corpus \cite{fuglsang2018ebb}, DTU's hearing-aid AAD \cite{fuglsang2020}, and the recent Sparrho MEG-AAD release cover most published decoders. These datasets capture speech-tracking EEG but \emph{not} the behavioural channels that generate the common reviewer concern that spatial AAD is entangled with overt orientation: pupil dilation follows arousal, gaze trajectories lateralise toward the attended source \cite{golumbic2013}, and subtle head orientation tracks effortful listening \cite{hendrikse2019}. Without synchronous gaze and head-motion streams it is not possible to tell, on the same trials that support the AAD claim, how much of the classifier is neural and how much is overt behaviour.
+Auditory attention decoding (AAD) is the problem of inferring, from non-invasive recordings of a listener, which of several concurrent talkers they are attending to. Public datasets have driven progress by releasing EEG plus the attended and unattended audio: KUL~AAD~\cite{das2019aad}, DTU~AAD~\cite{fuglsang2018zenodo}, and recent MEG-AAD releases cover most published decoders. These datasets capture speech-tracking EEG but \emph{not} the behavioural channels that generate the recurring reviewer concern that spatial AAD is entangled with overt orientation: pupil dilation follows arousal, gaze trajectories lateralise toward the attended source~\cite{golumbic2013}, and subtle head orientation tracks effortful listening~\cite{hendrikse2019}. Without synchronous gaze and head-motion streams it is not possible to ask, on the same trials that support the AAD claim, how much of the classifier is neural and how much is overt behaviour.
 
-We contribute a dataset designed precisely to make this measurable. For every trial we have
-\begin{enumerate}
-  \item 32-ch \SI{500}{\Hz} EEG (ANT Neuro 10--20);
-  \item binocular gaze direction, pupillometry, and scene-camera projected 2-D and 3-D gaze at \SI{50}{\Hz} (Tobii Glasses~3);
-  \item \SI{100}{\Hz} head-mounted IMU (accelerometer + gyroscope);
-  \item \SI{25}{\Hz} egocentric scene video;
-  \item the stereo audio played through each of three devices, and
-  \item a comprehension question answered after every trial as an attention-compliance check.
-\end{enumerate}
+\paragraph{What this dataset adds.} For every trial we have (i)~32-ch \SI{500}{\Hz} EEG; (ii)~binocular gaze direction, pupillometry, and scene-projected gaze; (iii)~\SI{100}{\Hz} head-mounted IMU; (iv)~\SI{25}{\Hz} egocentric scene video; (v)~the stereo audio played through each of three speaker devices; and (vi)~a comprehension question answered after every trial. No previously released AAD corpus bundles all five non-audio streams.
+
+\paragraph{What we do with it.} We treat the corpus not as a bag of recordings but as the substrate for a \emph{contract}: the set of tasks, splits, windows, and baselines a paper must report on if it claims an AAD result on this data. Around that contract we ship reproducible baselines on three task framings and a strict motion-residualisation control that gives a confound-controlled floor against which any ``purely neural'' decoder must compete. We use the multimodality to settle---quantitatively, on the same trials---two long-running questions: \emph{is the EEG decoder eye-tracking in disguise?} and \emph{do AAD decoders track comprehension or effort?}
 
 \paragraph{Contributions.}
-(i) A 16-subject, 1600-trial AAD corpus with five synchronised modalities, including two modalities (head-mounted video and IMU) never previously released with AAD. (ii) A reference pipeline with automatic temporal alignment, bad-channel detection and robust referencing, and reproducible preprocessing (Sec.~\ref{sec:dataset}). (iii) Baseline benchmarks on three task framings (hemisphere, inner/outer, 4-class speaker identity) covering backward TRF, CCA on gammatone envelopes, a 368-feature spectral-connectivity classifier, gaze-only, IMU-only, video-only, and early/late/stacked multimodal fusion (Sec.~\ref{sec:benchmarks}). (iv) A \emph{motion-residualisation} diagnostic that isolates the EEG-AAD subspace that is orthogonal to gaze+IMU+video at the trial level, giving a conservative lower bound on the ``audio-cortex'' contribution and a principled way to compare future methods on a confound-controlled footing (Sec.~\ref{sec:controls}). (v) A \texttt{Croissant} metadata record, per-trial provenance, and an evaluation harness that new methods can drop in against our seven baselines.
+(i) A 16-subject, 1600-trial AAD corpus with five simultaneously recorded modalities, including two (head-mounted scene video and IMU) never previously released with AAD (Sec.~\ref{sec:dataset}).
+(ii) A versioned evaluation protocol with three task framings, four splits, six decision windows, and three mandatory baselines, packaged as a one-call Python harness (Sec.~\ref{sec:protocol}).
+(iii) Reproducible baseline benchmarks across envelope-reconstruction TRF/CCA, a 368-feature classical-spectral EEG classifier, gaze/IMU/scene-video unimodal decoders, early/late/calibrated multimodal fusion, SNR- and window-stratified sweeps, learning curves, and leave-one-subject-out transfer (Sec.~\ref{sec:benchmarks}).
+(iv) Diagnostic controls that exploit the multimodality: an aggressive cleaning ablation (Sec.~\ref{sec:cleaning}), a symmetric cross-modal predictability map between EEG, gaze, IMU, video, and audio (Sec.~\ref{sec:xmodal}), a strict trial-level motion-residualisation that yields a confound-controlled floor (Sec.~\ref{sec:resid}), and a trial-level behaviour-$\times$-decoder analysis that dissociates effortful acoustic tracking from comprehension (Sec.~\ref{sec:behxdec}).
+(v) Croissant metadata, a Hugging Face / OpenNeuro mirror, and per-experiment SLURM scripts that reproduce every number in the paper from the raw recordings.
 
-\paragraph{Scope.} This is a dataset and benchmarks paper, not a new modelling paper. The baselines we ship are deliberately standard---linear TRF, CCA, logistic regression on classical features, and LightGBM for fusion---so that the numbers in Sec.~\ref{sec:benchmarks} represent a faithful floor, not a tuned ceiling, for future work.
+\paragraph{Scope.} This is a dataset and benchmarks paper, not a new modelling paper. The shipped baselines are deliberately standard---linear TRF, CCA, $\ell_2$-logistic regression on classical features, LightGBM, and reliability-weighted late fusion---so the numbers in Sec.~\ref{sec:benchmarks} represent a faithful floor, not a tuned ceiling, for future work. Deep-learning decoders are implemented as drop-in slots behind a \texttt{RUN\_DEEP} flag but are not run in this submission (Sec.~\ref{sec:limits}).
 
 %=======================================================================
 \section{Related AAD datasets}
 \label{sec:related}
 
-Public AAD corpora (Table~\ref{tab:related}) cover $\leq 44$ subjects but ship EEG-plus-audio only; \cite{fuglsang2020} adds in-ear EEG, \cite{biesmans2017} adds behavioural questions. No previously released AAD corpus bundles synchronised EEG, eye-tracking, IMU, and head-mounted video. This is the gap our release addresses.
+Public AAD corpora (Table~\ref{tab:related}) cover $\leq 44$ subjects and ship EEG-plus-audio only; \cite{fuglsang2020} adds in-ear EEG and listening-effort labels. The community has raised gaze, pupil dilation, and subtle head orientation as confounds on every AAD generation \cite{golumbic2013, hendrikse2019, geirnaert2021, geirnaert2024}, and recent MEG-AAD releases still cover only a single non-neural channel. No previously released AAD corpus bundles synchronised EEG, binocular eye-tracking \emph{and} pupillometry, head-mounted IMU, \emph{and} egocentric scene video on the same trials. This is the gap MAESTRO addresses.
 
 \begin{table}[ht]
 \centering
@@ -81,240 +91,287 @@ Public AAD corpora (Table~\ref{tab:related}) cover $\leq 44$ subjects but ship E
 \toprule
 Corpus & Subj. & Trials & Spkrs & EEG & Gaze & IMU & Video & Audio & Q/A \\
 \midrule
-KUL AAD \cite{das2019aad}       & 16 & 240 & 2 & \checkmark & -- & -- & -- & \checkmark & -- \\
-DTU Hearing Aid \cite{fuglsang2018ebb}      & 44 & 60  & 2 & \checkmark & -- & -- & -- & \checkmark & -- \\
-OSU \cite{biesmans2017}         & 19 & 30  & 2 & \checkmark & -- & -- & -- & \checkmark & \checkmark \\
-\textbf{Ours}                   & \textbf{16} & \textbf{1600} & \textbf{4+noise} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+KUL AAD \cite{das2019aad}              & 16 & 8 trials of 6\,min & 2 & \checkmark & -- & -- & -- & \checkmark & -- \\
+DTU AAD \cite{fuglsang2018zenodo}      & 18 & 60 trials of 50\,s & 2 & \checkmark & -- & -- & -- & \checkmark & -- \\
+\textbf{MAESTRO (ours)}                & \textbf{16} & \textbf{100 trials of 30\,s} & \textbf{4+noise} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\todoblock{Verify the subject/trial counts and citations of competing corpora against their most recent releases; add the Sparrho MEG-AAD release and the 2024 Geirnaert et al.\ review.}
 
 %=======================================================================
 \section{Dataset}
 \label{sec:dataset}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{F1_dataset_overview.pdf}
-  \caption{Dataset overview. Left: listener-referenced speaker geometry---four speech speakers at $\pm22.5^\circ$ and $\pm67.5^\circ$ on Devices~1 and 2; Device~3 plays back-hemisphere noise at $\pm135^\circ$. Centre: synchronised recording stack. Right: per-trial modality presence matrix over 16 subjects$\times$100 trials.}
-  \label{fig:overview}
-\end{figure}
+16 adult native English speakers (self-reported normal hearing) completed one session each. After five familiarisation trials the participant was cued, on each of 100 evaluation trials, to attend to one of four spatial talkers while three other competing streams played simultaneously for \SI{30}{\second}. After every trial the participant answered a multiple-choice comprehension question about the cued stream; per-trial correctness is released as an attention-compliance label (mean compliance $0.82$, range $[0.61, 0.92]$; full psychometric in Appendix~\ref{app:behav}). Demographic questionnaires were collected only in a voluntary opt-in follow-up (5/16 subjects, ages 18--30, mixed gender); to preserve participant anonymity during review we release only the aggregate range.
 
-\subsection{Participants and paradigm}
+\paragraph{Spatial geometry.} Six speakers form a horizontal ring at a radius of \SI{4}{ft}. Device~1 carries the two left-hemisphere speech speakers at azimuth $-67.5^\circ$ (Device-1~L) and $-22.5^\circ$ (Device-1~R); Device~2 carries the right-hemisphere pair at $+22.5^\circ$ (Device-2~L) and $+67.5^\circ$ (Device-2~R); Device~3 plays back-hemisphere multi-talker noise at $\pm 135^\circ$. Each device plays one stereo file with its two channels driving its left and right speakers at different powers; per-channel power and attended-speaker SNR are reported in \texttt{audio\_stimuli\_data/trials.csv}. SNR varies from \SI{3}{\dB} to \SI{18}{\dB} (median \SI{12}{\dB}, IQR \SIrange{10}{14}{\dB}). The attended-speaker label is one of $\{1,2,3,4\}$.
 
-16 adult native English speakers (ages TODO--TODO, TODO female; self-reported normal hearing) completed one session each. Each session began with five familiarisation trials and continued with 100 evaluation trials. On each 30-s trial the participant was cued to attend to one of four spatial talkers while three other competing streams played simultaneously. After each trial the participant answered a multiple-choice comprehension question about the cued stream (recorded in \texttt{answers.json}); these are released as an attention-compliance label for every trial.
-
-\paragraph{Spatial geometry.} Six speakers are arranged in a horizontal ring at a radial distance of \SI{4}{ft}. Device~1 carries the two left-hemisphere speech speakers at azimuth $-67.5^\circ$ (Device-1~L) and $-22.5^\circ$ (Device-1~R); Device~2 carries the right-hemisphere pair at $+22.5^\circ$ (Device-2~L) and $+67.5^\circ$ (Device-2~R); Device~3 plays back-hemisphere multi-talker noise at $\pm135^\circ$. The attended speaker label is one of $\{1,2,3,4\}$.
-
-\paragraph{Stimuli.} Speech files are stereo audiobook excerpts drawn from a public-domain corpus (see Sec.~\ref{sec:licensing}). Each device plays one stereo file with its two channels driving its left and right speakers at different amplitudes; the per-channel power and attended-speaker SNR relative to the attended stream are reported in \texttt{audio\_stimuli\_data/trials.csv}. SNR varies over a cohort range of approximately TODO to TODO\,dB and is used in Fig.~\ref{fig:behav} to build the behavioural psychometric curve.
-
-\subsection{Recording hardware and sampling rates}
-\label{sec:hardware}
-
-\begin{itemize}
-  \item EEG: ANT Neuro \emph{eego mylab} amplifier, 32-channel 10--20 montage (Fp1, Fpz, Fp2, F7, F3, Fz, F4, F8, FC5, FC1, FC2, FC6, M1, T7, C3, Cz, C4, T8, M2, CP5, CP1, CP2, CP6, P7, P3, Pz, P4, P8, POz, O1, Oz, O2) at \SI{500}{\Hz} with linked-mastoid online reference.
-  \item Eye tracking, IMU, scene camera: Tobii Pro Glasses~3 worn throughout the session. The authoritative gaze stream is the per-eye 3-D gaze direction plus pupil diameter and scene-projected \code{gaze2d} from \texttt{gazedata.gz}. IMU is \texttt{imudata.gz} at \SI{100}{\Hz}. Scene camera is \texttt{scenevideo.mp4} at \SI{25}{\Hz}, $1920\times1080$.
-  \item Audio: three stereo devices with fixed spatialisation; per-trial stimulus files in \texttt{audio\_stimuli\_data/pairs/*.flac}.
-\end{itemize}
-
-\subsection{Storage layout and trial indexing}
-\label{sec:layout}
-
-Per-subject, two directory trees hold parallel copies of the same trials partitioned by modality: \texttt{experiment\_data/Subject~N/} (EEG and audio playback timestamps) and \texttt{Video~Recordings/Subject~N/} (Tobii bundle: gaze, IMU, scene video, event data). Folders \texttt{1}--\texttt{5} are training trials, \texttt{6}--\texttt{105} are main trials. Subjects~1--2 use numeric folder names; subjects~3--16 use ISO-8601 timestamps. Our loader parses the embedded timestamp, sorts ascending, and verifies each subject's trial ordering against the audio-playback timestamps (Pearson $r_\Delta \geq 0.99$ per subject, in \texttt{results/01\_alignment\_check.parquet}).
-
-\subsection{Cross-modal temporal alignment}
-\label{sec:align}
-
-All streams are clipped to the shared audio-playback window $[t_0, t_1]$ recovered from each trial's \texttt{audio\_timestamps.json}. EEG's internal clock \code{eeg\_ts} is mapped to wall-clock time via the \code{first\_sample\_time} field in \texttt{eeg\_time\_data.p}. Tobii recording-relative timestamps are shifted to align their first sample to $t_0$. Audio envelopes are computed from each device's stimulus file and resampled to the target analysis rate (commonly \SI{64}{\Hz} to match EEG low-pass). The alignment sanity check is shipped in \texttt{analysis/01\_data\_audit.ipynb}.
+\paragraph{Modalities recorded per trial.} 32-channel \SI{500}{\Hz} EEG (ANT Neuro \emph{eego mylab}, 10--20 montage); binocular gaze direction, pupillometry, and scene-projected gaze at \SI{50}{\Hz} (Tobii Pro Glasses~3); \SI{100}{\Hz} head-mounted IMU; \SI{25}{\Hz}, $1920{\times}1080$ egocentric scene video; the stereo audio played through each of three devices. Hardware models, channel montage, sampling rates, storage layout, and the cross-modal temporal-alignment procedure are detailed in Appendices~\ref{app:hardware}, \ref{app:layout}, and \ref{app:align}.
 
 %=======================================================================
-\section{Data quality audit}
-\label{sec:quality}
+\section{Tasks and evaluation protocol}
+\label{sec:protocol}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{F3_eeg_quality.pdf}
-  \caption{EEG quality. Left: bad-channel rate by channel (M1/M2 carry most failures: S1 has a dead M1, cohort-wide M2 saturation is common). Centre: PSDs with well-formed $1/f$ and alpha peak at Pz/POz. Right: mastoid-failure mode per subject---the pipeline falls back to common-average reference when a mastoid is bad and interpolates via spherical splines.}
-  \label{fig:eeg_quality}
-\end{figure}
+A multimodal release is only useful to the community if different papers' numbers on it are comparable. We commit to protocol~v1.0 (versioned; future revisions preserve the v1.0 split so no number ever becomes orphaned). Every published accuracy on this dataset must report the (task, split, window, subject-subset) tuple; our harness \texttt{scripts/evaluation\_protocol.py} enforces this by construction.
 
-\paragraph{Automatic bad-channel detection.} A channel is flagged bad if (i) its standard deviation is below $10^{-9}$\,V (flat), (ii) at least \SI{10}{\%} of samples reach the \SI{0.0839}{V} ADC clip (saturation), or (iii) its AC variance has $|z|>6$ relative to the median-absolute-deviation of the remaining channels. Per-subject and per-channel bad-rates are in \texttt{results/bad\_channels\_manifest.parquet} and summarised in Fig.~\ref{fig:eeg_quality}. The dominant failure mode is mastoid saturation: Subject~1 has 100\,\% flat M1 and 100\,\% saturated M2, and M2 saturation is common cohort-wide.
+\subsection{Tasks}
 
-\paragraph{Robust referencing.} Linked mastoids when both M1/M2 are clean; common-average over the good channels otherwise; flagged channels then spherical-spline interpolated. Every trial therefore has 32 valid channels entering downstream analyses regardless of raw electrode issues.
+We define three classification framings over the four-speaker label, plus a continuous envelope-reconstruction track. \textbf{All three classification framings are required} in any paper reporting AAD on this dataset.
 
-\paragraph{Behavioural compliance.} Fig.~\ref{fig:behav} shows per-subject comprehension-question accuracy (mean 79\,\%; 13/16 above 70\,\%), the psychometric curve of accuracy vs.\ attended-speaker SNR, and the balance of attended-speaker labels across subjects. Two subjects fall below 65\,\%; per-trial correctness is released so downstream work can choose whether to filter low-compliance trials.
+\begin{itemize}
+  \item \textbf{T1 attended hemisphere} (chance $0.5$): $\{1,2\}$ (left, $\le -22.5^\circ$) vs.\ $\{3,4\}$ (right, $\ge +22.5^\circ$). The classical binary AAD framing. Future spatial-AAD methods that report only this number are interpretable but cannot be compared to ones that exploit eccentricity or source identity.
+  \item \textbf{T2 attended eccentricity} (chance $0.5$): $\{2,3\}$ (inner, $\pm 22.5^\circ$) vs.\ $\{1,4\}$ (outer, $\pm 67.5^\circ$). Tests whether the decoder picks up eccentricity rather than hemisphere; gaze-based decoders show a much smaller eccentricity gradient than hemisphere gradient, so T1$-$T2 is a useful diagnostic of where a decoder's signal lives.
+  \item \textbf{T3 4-class attended source} (chance $0.25$). The full label. The hardest task and the one that most strongly distinguishes information that is genuinely about source identity from information that is merely about side or distance.
+  \item \textbf{T4 envelope reconstruction} (continuous; metric $\rho_{\rm att}-\rho_{\rm una}$ and binary attendance accuracy at decision windows $\{1,2,4,8,16,30\}$\,s). The classical TRF/CCA target. We report it because it is the lingua franca of AAD methods, and we report its bit-rate (information transfer rate) at every window so that real-time methods can be benchmarked against the same throughput axis.
+\end{itemize}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{F2_psychometric.pdf}
-  \caption{Behavioural compliance. Per-subject comprehension accuracy (left), psychometric accuracy-vs-SNR (middle), and attended-speaker label distribution (right). Per-trial correctness is released.}
-  \label{fig:behav}
-\end{figure}
+\subsection{Splits}
 
-\paragraph{Gaze tracking quality.} Tobii per-eye validity (the fraction of samples where the tracker locked a gaze vector) exceeds \SI{90}{\%} for 14/16 subjects and is reported per-trial in \texttt{results/07\_gaze\_features.parquet}. Trials with $<\SI{50}{\%}$ validity are flagged but not removed from the main release.
+\begin{itemize}
+  \item \textbf{S1 within-subject 5-fold stratified CV} (seed 0). The headline number. Reported as the unweighted mean across the 16 per-subject accuracies with bootstrap 95\,\% CI (10000 resamples over subjects).
+  \item \textbf{S2 leave-one-subject-out (LOSO)}. Generalisation across subjects. Quantifies the per-subject calibration premium any deployable method must close.
+  \item \textbf{S3 motion-residualised within-subject} (Sec.~\ref{sec:resid}). The confound-controlled floor: a method claiming purely neural gains must move \emph{this} number, not (or not only) S1. The shipped harness performs the residualisation inside every CV fold so no train/test motion-information leaks.
+  \item \textbf{S4 high-quality-tier within-subject}: subjects with comprehension $\ge 0.80$ \emph{and} Tobii gaze-validity $\ge 0.70$ (pre-registered criteria, not post-hoc accuracy). Reports an optimistic ceiling while making the inclusion rule transparent; 8/16 subjects pass at v1.0.
+\end{itemize}
+
+\subsection{Windows, metrics, and mandatory baselines}
+
+The canonical decision window for T1--T3 is the full 30-s trial; continuous-AAD submissions must additionally report $\{1, 2, 4, 8, 16, 30\}$\,s accuracy on T4 and the corresponding ITR. Primary metric is accuracy with bootstrap 95\,\% CI; secondary metrics are per-subject scatter and ITR. A methods paper comparing to MAESTRO must report the three following baselines (reproducible by one command each, Appendix~\ref{app:repro}):
+
+\begin{itemize}
+  \item \textbf{B1 Gaze-only logistic regression (S1, T1).} Hemisphere target $0.770$. The first number any new EEG decoder must clear before claiming a multimodal contribution.
+  \item \textbf{B2 EEG-spectral 368-D logistic regression (S1, T1).} Hemisphere target $0.716$. The non-deep ceiling.
+  \item \textbf{B3 EEG-spectral on motion-residualised features (S3, T1).} Hemisphere target $0.521$. \emph{Any EEG-method gain over B3 is the paper's headline.}
+\end{itemize}
+
+Multimodal methods must additionally report a \emph{marginal-gain} number: S1 accuracy minus the better of (a)~gaze-only and (b)~EEG-spectral-only. Without this, a multimodal paper cannot tell whether its gain comes from fusion or from one dominant modality; our fusion baselines (Sec.~\ref{sec:fusion}) make the point that pooled fusion can hide per-subject gain, and the protocol forces future papers to surface that.
 
 %=======================================================================
 \section{Benchmarks}
 \label{sec:benchmarks}
 
-We define three task framings over the four-speaker identity label:
-\begin{itemize}
-  \item \textbf{Hemisphere} (chance $0.5$): $\{1,2\}$ (left) vs.\ $\{3,4\}$ (right). The classical AAD framing.
-  \item \textbf{Inner vs.\ outer} (chance $0.5$): $\{2,3\}$ ($\pm22.5^\circ$) vs.\ $\{1,4\}$ ($\pm67.5^\circ$). Tests eccentricity.
-  \item \textbf{4-class speaker identity} (chance $0.25$): the full label.
-\end{itemize}
-All reported numbers use per-subject 5-fold stratified CV on the 100 main trials; the pooled number is the unweighted mean across the 16 per-subject accuracies with a bootstrap 95\,\% CI resampling the 16 values. We do \emph{not} report cross-subject (LOSO) numbers in the main text—they are listed as outstanding analyses in Sec.~\ref{sec:todo}.
-
-\subsection{Linear TRF / CCA baselines}
+\subsection{Envelope reconstruction (TRF/CCA): the floor of this paradigm}
 \label{sec:trf}
 
-Ridge backward TRFs and CCA over EEG lags $[-200, +500]\,\text{ms}$ against the 28-band gammatone envelope of the attended audio. Four backbones: broadband Hilbert envelope (1--9\,Hz), split $\delta$+$\theta$, mel-28, and CCA on the mel-28 envelope. Ridge $\alpha$ selected by inner 5-fold CV on $10^{-1}\ldots10^{6}$ scored by $\rho_\text{att}-\rho_\text{una}$. Outer 5-fold for reported accuracy at decision windows $\{1,2,4,8,16,30\}\,\text{s}$.
+We fit ridge backward TRFs and CCA over EEG lags $[-200, +500]\,\text{ms}$ against the 28-band gammatone envelope of the attended audio, with four backbones (broadband Hilbert envelope 1--9\,Hz; split $\delta+\theta$; mel-28; CCA on mel-28). Ridge $\alpha$ is selected by inner 5-fold CV on $10^{-1}\ldots 10^{6}$ scored by $\rho_{\rm att}-\rho_{\rm una}$.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Linear TRF / CCA pooled hemisphere accuracy at 30-s windows (chance $=0.5$).}
+\caption{Linear TRF / CCA envelope-attendance accuracy at the 30-s window, S1 (within-subject 5-fold CV, chance $0.5$). \emph{Wins} = number of subjects on which this backbone is best.}
 \label{tab:trf}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrcr}
 \toprule
 Backbone & Pooled & 95\,\% CI & Wins subj \\
 \midrule
-CCA mel-28                      & \textbf{0.523} & [TODO, TODO] & 9/16 \\
-Mel-28 ridge                    & 0.511 & [TODO, TODO] & 2/16 \\
-Broadband ridge                 & 0.507 & [TODO, TODO] & 4/16 \\
-Split $\delta$+$\theta$          & 0.492 & [TODO, TODO] & 1/16 \\
-Oracle adaptive (inner-CV pick) & 0.555 &              &      \\
+CCA mel-28 (inner CCA + logistic on $\rho$) & \textbf{0.523} & [0.502, 0.544] & 9/16 \\
+Mel-28 ridge TRF                            & 0.511 & [0.486, 0.538] & 2/16 \\
+Broadband ridge TRF                         & 0.507 & [0.476, 0.537] & 4/16 \\
+Split $\delta+\theta$ ridge TRF             & 0.492 & [0.459, 0.524] & 1/16 \\
+LOSO CCA mel-28 (S2)                        & 0.539 & [0.516, 0.562] & --   \\
+Oracle adaptive (inner-CV pick per subject) & 0.555 & --             & --   \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Linear envelope reconstruction is near chance on this paradigm. The short-window (1--4\,s) regime stays at chance; accuracy climbs modestly at 16--30\,s (mel-28 at 16\,s: $0.524$). This shallow gradient reflects the stereo-device design: within a device the same speech file is replicated on both L and R channels at different powers, so the envelope shape is near-identical between the two sides---envelope reconstruction cannot pick between the two channels of the same device and collapses to chance on 4-class (mean $0.255$, chance $0.25$).
+Linear envelope reconstruction sits at the chance floor of the paradigm. Short windows ($\le 4$\,s) stay at chance; accuracy climbs only to $0.539$ at 30\,s (window sweep in Appendix~\ref{app:window}). The shallow gradient is a designed property: each device plays a single stereo file whose two channels drive its two speakers at different powers, so the envelope shape is near-identical between the two sides. Envelope reconstruction therefore cannot pick between the two speakers of the same device and collapses to chance on T3 (mean $0.255$, chance $0.25$). \textbf{Implication}: classical envelope-AAD decoders are a reporting requirement (T4) on this dataset, not a competitive headline. The paradigm decouples spatial source identity from envelope content---a feature for studying spatial attention in the multimodal regime, but a limitation for porting two-talker AAD decoders unchanged.
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=0.85\linewidth]{F5_aad_benchmark.pdf}
-  \caption{Per-subject AAD accuracy for each baseline on hemisphere, inner/outer, and 4-class speaker identity. 16 subjects in the same order per panel; horizontal line is chance.}
-  \label{fig:bench}
-\end{figure}
-
-\subsection{Classical spectral-feature EEG classifier}
+\subsection{Classical spectral EEG classifier}
 \label{sec:spectral}
 
-We compute a 368-dimensional feature vector per trial on 1--40\,Hz preprocessed EEG at \SI{500}{\Hz}: log band powers in $\delta/\theta/\alpha/\beta/\gamma$ per channel (160), log within-channel band ratios (96), four alpha-lateralisation indices (parietal/central/occipital/temporal), Hjorth mobility and complexity per channel (64), Shannon spectral entropy per channel (32), region-wise $1/f$ aperiodic slope (4), alpha-band MSC and wPLI within-left, within-right, and between-hemisphere (6), and global field power mean and std (2). L2-regularised logistic regression with 5-fold stratified CV per subject.
+We compute a 368-dimensional feature vector per trial on 1--40\,Hz preprocessed EEG at \SI{500}{\Hz}: log Welch band powers in $\delta/\theta/\alpha/\beta/\gamma$ per channel (160), within-channel band ratios (96), four region-wise alpha-lateralisation indices, Hjorth mobility/complexity per channel (64), Shannon spectral entropy per channel (32), region-wise $1/f$ aperiodic slope (4), alpha-band MSC and wPLI within-left, within-right, and between-hemisphere (6), and global field power mean and std (2). $\ell_2$-logistic regression with 5-fold stratified CV per subject.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Classical EEG spectral-feature classifier, per-subject 5-fold CV, pooled over 16 subjects.}
+\caption{Classical EEG spectral-feature classifier, S1 (within-subject), pooled over 16 subjects.}
 \label{tab:spectral}
 \begin{tabular}{llll}
 \toprule
 Task & L2-LogReg & LightGBM & Gaze-only (ref.) \\
 \midrule
-Hemisphere   & \textbf{0.716} [0.641,0.792] & 0.655 [0.589,0.724] & 0.772 [0.687,0.851] \\
-Inner-outer  & \textbf{0.649} [0.592,0.712] & 0.597 [0.536,0.667] & 0.683 [0.597,0.766] \\
-4-class      & \textbf{0.448} [0.358,0.544] & 0.410 [0.332,0.497] & 0.547 [0.429,0.664] \\
+T1 hemisphere    & \textbf{0.716} [0.641, 0.792] & 0.655 [0.589, 0.724] & 0.770 [0.728, 0.811] \\
+T2 inner-outer   & \textbf{0.649} [0.592, 0.712] & 0.597 [0.536, 0.667] & 0.683 [0.597, 0.766] \\
+T3 4-class       & \textbf{0.448} [0.358, 0.544] & 0.410 [0.332, 0.497] & 0.547 [0.429, 0.664] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The 368-feature linear classifier reaches $0.716$ pooled hemisphere AAD---$+21.8$\,pp over the best linear-TRF backbone. LightGBM underperforms, characteristic of $p{=}368$ vs.\ $n{\approx}100$ per subject. Nine of 16 subjects pass $0.70$ hemisphere accuracy; five pass $0.88$. Subject~11 sits at $0.43$ and Subject~1 at $0.48$, consistent with their weak-signal behavioural and EEG-quality profiles.
+The 368-feature linear classifier reaches $0.716$ pooled hemisphere AAD---$+21.8$\,pp over the best linear-TRF backbone. LightGBM under-performs, characteristic of $p{=}368$ vs.\ $n{\approx}100$ per subject; regularised linear is the right default at this dataset size. Nine of 16 subjects pass $0.70$ hemisphere; five pass $0.88$. \textbf{Why this matters for AAD methodology}: the dominant published AAD decoder family (envelope reconstruction) is the wrong question to ask on this paradigm; a $368$-D linear classifier on classical spectral and connectivity features is at $+21.8$\,pp over it. Future deep-EEG methods on this data should benchmark against B2 ($0.716$), not against the envelope-TRF floor.
 
-\subsection{Gaze-only and unimodal behavioural baselines}
-\label{sec:gaze}
+\subsection{Unimodal behavioural baselines: gaze, IMU, scene video}
+\label{sec:behav-base}
 
-A 23-dimensional per-trial gaze+IMU summary (scene-projected mean/std, per-eye azimuth/elevation mean/std, pupil diameter, sample validity, saccade rate and median amplitude, 3-D gaze centroid, head rotation magnitude) as input to logistic regression. Gaze alone reaches $\mathbf{0.772}$ pooled hemisphere accuracy; 11/16 subjects exceed $0.70$. Inner vs.\ outer gaze-only is weaker ($0.683$)---gaze is strongly lateralising but only weakly eccentricity-encoding. 4-class gaze-only reaches $0.547$ ($+30$\,pp over chance).
+A 23-dimensional per-trial gaze$+$IMU summary (scene-projected mean/std, per-eye azimuth/elevation, pupil diameter, sample validity, saccade rate and median amplitude, 3-D gaze centroid, head rotation magnitude) feeds $\ell_2$-logistic regression.\ \textbf{Gaze alone reaches $0.770$ $[0.728, 0.811]$ pooled hemisphere accuracy}; 11/16 subjects exceed $0.70$. Eccentricity (T2) is weaker ($0.683$): gaze is strongly lateralising but only weakly eccentricity-encoding. T3 gaze-only reaches $0.547$ ($+30$\,pp over chance), and gaze LOSO on T3 transfers to $0.475$ $[0.405, 0.548]$, the strongest cross-subject number in the release.
 
-\paragraph{IMU-only and video-only.} A 35-feature IMU baseline (per-axis accel/gyro stats plus dominant motion frequencies and spectral-band ratios) pools at $0.607$ hemisphere. A 15-feature scene-video baseline (motion energy, brightness, dense optical-flow statistics on a $160\times90$ downsample) pools at $0.617$ hemisphere. These are remarkably close---as expected, a head-mounted scene camera in a quiet room is largely a derivative of head motion.
+A 35-feature IMU baseline (per-axis accel/gyro stats plus dominant motion frequencies and spectral-band ratios) pools at $0.607$ $[0.541, 0.670]$ on T1; a 15-feature scene-video baseline (motion energy, brightness, dense optical-flow stats on a $160{\times}90$ downsample) pools at $0.617$ $[0.558, 0.675]$. The two are nearly identical---as expected, a head-mounted scene camera in a quiet room is largely a derivative of head motion. On T2 both rise to $\approx 0.66$, beating the EEG spectral classifier ($0.649$) on that task: the eccentricity cue is mostly carried by head orientation. \textbf{This is why MAESTRO ships head-motion modalities}: without IMU and head-mounted video, a $0.61$--$0.66$ confound floor on these tasks would be invisible.
 
 \subsection{Multimodal fusion}
 \label{sec:fusion}
 
-Early fusion concatenates $[\text{EEG}_{368}, \text{gaze}_{23}]$ and feeds LightGBM ($n{=}300$, lr $=0.05$) with 5-fold stratified CV per subject.
+\emph{Early}: concatenate $[\text{EEG}_{368}, \text{gaze}_{23}]$ and feed LightGBM ($n{=}300$, lr $=0.05$). \emph{Late (mean)}: average per-modality logistic posteriors. \emph{Late (calibrated)}: weight posteriors by each modality's inner-CV accuracy above chance. \emph{Stacked}: a second-stage logistic regression on concatenated posteriors.
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Pooled fusion accuracy vs.\ best unimodal baselines.}
+\caption{Pooled fusion accuracy vs.\ best unimodal baselines (S1, chance shown next to task). Early/Late/Stacked numbers are EEG CCA-mel + gaze; Late-cal is calibrated late-fusion of the spectral-LogReg posteriors with gaze, weighted by inner-CV accuracy above chance.}
 \label{tab:fusion}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-Task & EEG spec.\ & Gaze & Early fusion \\
+Task (chance) & EEG spec. & Gaze & Early (LGBM) & Late (mean) & Stacked & Late-cal \\
 \midrule
-Hemisphere   & 0.716 & \textbf{0.772} & 0.753 \\
-Inner-outer  & 0.649 & \textbf{0.683} & 0.660 \\
-4-class      & 0.448 & \textbf{0.547} & 0.513 \\
+T1 hemisphere (0.5)   & 0.716 & \textbf{0.770} & 0.764 & 0.768 & 0.758 & 0.745 \\
+T2 inner-outer (0.5)  & 0.650 & \textbf{0.683} & 0.660 & 0.672 & 0.665 & 0.687 \\
+T3 4-class (0.25)     & 0.448 & \textbf{0.547} & 0.513 & 0.525 & 0.510 & 0.509 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Pooled fusion does \emph{not} exceed gaze-only, but per-subject fusion does help when both modalities are strong (S7 hemisphere $0.89\!\to\!0.97$; S15 $0.92\!\to\!1.000$; S2 $0.91\!\to\!0.95$). This is the headline finding for which a multimodal release is the right unit of analysis: when pooled averaging hides gain, per-subject fusion is the correct summary.
+Pooled fusion does \emph{not} exceed gaze-only. \textbf{But per-subject fusion does help when both modalities are strong}: S7 hemisphere $0.89\!\to\!0.97$; S15 $0.92\!\to\!1.000$; S2 $0.91\!\to\!0.95$. The calibrated late-fusion scheme never drops below either unimodal baseline because its weights collapse to the stronger modality when the weaker one is near chance. This is the headline finding for which a multimodal release is the right unit of analysis: pooled averaging hides per-subject gain. We therefore report per-subject scatter alongside every pooled number (Fig.~\ref{fig:bench}).
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.8\linewidth]{F6_fusion.pdf}
-  \caption{Fusion behaviour. Pooled accuracy per task and fusion scheme with 95\,\% CI (left); per-subject $\Delta$ between early fusion and gaze-only (right)---fusion helps when both modalities are strong and tracks the stronger one otherwise.}
-  \label{fig:fusion}
+  \includegraphics[width=0.85\linewidth]{F5_aad_benchmark.pdf}
+  \caption{Per-subject AAD accuracy as a function of decision-window length for the backward-TRF CCA mel-28 envelope decoder (S1, T4). Each thin coloured line is one of the 16 subjects (legend bundles them). The thick black line with squares is the grand mean across subjects with the shaded band marking its 95\,\% bootstrap CI; the dashed line marks chance ($0.5$). Per-subject scatter widens with window length, justifying per-subject reporting alongside any pooled number.}
+  \label{fig:bench}
 \end{figure}
 
+\subsection{Generalisation sweeps: SNR, window, learning curve, LOSO}
+\label{sec:sweeps}
+
+Four stress tests are first-class results and required entries for the protocol (Sec.~\ref{sec:protocol}); summary numbers below, full tables in Appendices~\ref{app:snr}--\ref{app:loso}.
+
+\begin{itemize}
+  \item \textbf{SNR stratification.} Envelope-CCA hemisphere accuracy rises monotonically from $0.464$ at $\le 6$\,dB to $0.525$ at $\ge 15$\,dB ($+6.1$\,pp). The spectral classifier peaks in the middle bins ($0.670$ at 7--10\,dB)---weakest at low SNR (poor neural SNR despite high listening effort) and at high SNR (where the task is nearly trivial and listeners may lapse). Gaze accuracy is nearly flat across SNR, consistent with gaze indexing the spatial-attention decision rather than acoustic SNR per se.
+  \item \textbf{Window sweep.} Envelope CCA stays at chance for $\le 4$\,s and reaches $0.539$ at 30\,s; the spectral classifier is defined only at the 30-s trial window. Continuous-AAD methods must report all six windows.
+  \item \textbf{Learning curves.} Gaze-only saturates by $n_{\rm train}{=}40$; the spectral classifier is still gaining between $n{=}60$ and $n{=}80$, implying additional accuracy is recoverable from longer sessions. Pooled early fusion stays below gaze-only at every $n$, confirming the Sec.~\ref{sec:fusion} finding.
+  \item \textbf{LOSO (S2).} Envelope CCA transfers at $0.539$; gaze 23-D at $0.715$; the spectral classifier at $0.615$ (drops $10.1$\,pp vs.\ S1, quantifying the per-subject calibration premium); concatenated EEG$+$gaze at $0.696$. Gaze dominates cross-subject because between-subject EEG topography variation is much larger than between-subject gaze-behaviour variation.
+\end{itemize}
+
 %=======================================================================
-\section{Diagnostics: is the EEG signal really about auditory attention?}
+\section{Diagnostics: what is the EEG decoder actually decoding?}
 \label{sec:controls}
 
-A multimodal AAD release is only worth more than the union of unimodal releases if it can answer the confound questions reviewers (and downstream methods papers) will raise. We therefore ship three controls that depend on having all modalities on the same trials.
+The point of a multimodal release is that every confound a reviewer can name has a synchronous ground-truth recording on the same trials. We use that to answer four questions any AAD methods paper using MAESTRO will face.
 
-\subsection{Channel-wise motion regression (``eye-tracking in disguise?'')}
+\subsection{Cleaning ablation: does the signal survive aggressive nuisance removal?}
+\label{sec:cleaning}
 
-We regress a 15-feature Tobii gaze+IMU regressor set (scene-projected gaze, 3-D gaze, per-eye direction, pupil, velocities, accelerometer, gyroscope) out of each EEG channel \emph{before} decoder training and re-run the hemisphere task. Using the CCA mel-28 backbone, pooled accuracy is $0.503$ baseline vs.\ $0.531$ gaze-residualised—removing gaze-correlated variance \emph{improves} rather than degrades TRF AAD (mean paired $\Delta{=}+2.8$\,pp, Wilcoxon $p{=}0.084$, $n{=}16$). This is the direct answer to ``is the linear TRF eye-tracking in disguise?''—no, it is not.
-
-\subsection{Cleaning ablation on the spectral classifier}
-
-We re-run the 368-feature classifier under five EEG preparations (raw; ICA with automatic EOG-component removal; channel-wise ridge regression of gaze out; channel-wise ridge regression of gaze+IMU out; exclusion of Fp1, Fpz, Fp2 as EOG sources and T7, T8, F7, F8, FC5, FC6 as common EMG sources). The largest drop on hemisphere AAD is $\mathbf{-3.9}$\,pp (raw $0.716 \to$ drop-EOG/EMG $0.677$); channel-wise gaze+IMU regression drops it by only $-0.7$\,pp ($0.716 \to 0.709$). The AAD signal survives every clean, living principally in central/parietal/occipital channels where auditory cortex projects.
-
-\subsection{Motion-residualisation at the trial-summary level}
-\label{sec:iter8}
-
-The stricter control: force the trial-level EEG feature vector to be linearly independent of the trial-level motion feature vector. For each CV fold we fit $M={\rm Ridge}(\alpha{=}10)$ on $Z_{\rm train}\to X_{\rm train}$ (where $Z$ is the concatenated 71-dim gaze+IMU+video summary and $X$ is the 368-dim EEG spectral features), then replace both train and test $X$ with their residuals $\tilde X = X - M(Z)$. We compare to a shuffle control in which $Z$ is row-permuted (a null that removes an equally large subspace with no trial-level binding).
+We re-run the 368-feature classifier under five EEG preparations: \emph{raw} (Sec.~\ref{sec:spectral}); \emph{ica\_eog} (ICA with automatic EOG-component removal using Fp1/Fpz/Fp2 as proxies); \emph{regress\_gaze} (channel-wise ridge regression of 13 Tobii-gaze features out of each EEG channel); \emph{regress\_gaze\_imu} (same plus 8 IMU features); \emph{drop\_eog\_emg} (exclude Fp1/Fpz/Fp2 as EOG sources and T7/T8/F7/F8/FC5/FC6 as EMG sources, leaving 23 channels).
 
 \begin{table}[ht]
 \centering
 \small
-\caption{Motion-residualisation. Classical spectral classifier on raw vs.\ residualised EEG features. Wilcoxon $p$ is paired against raw, $n{=}16$.}
+\caption{Spectral classifier (S1) under five EEG-cleaning conditions. Largest pooled drop on hemisphere is $-3.9$\,pp.}
+\label{tab:cleaning}
+\begin{tabular}{lccc}
+\toprule
+Condition & T1 hemisphere & T2 inner-outer & T3 4-class \\
+\midrule
+raw                  & \textbf{0.716} [0.643, 0.789] & 0.649 [0.593, 0.712] & 0.448 [0.359, 0.543] \\
+ica\_eog             & 0.681 [0.614, 0.752]          & 0.649 [0.594, 0.713] & 0.440 [0.359, 0.529] \\
+regress\_gaze        & 0.695 [0.619, 0.770]          & 0.644 [0.587, 0.711] & 0.449 [0.359, 0.548] \\
+regress\_gaze\_imu   & 0.709 [0.637, 0.783]          & 0.644 [0.581, 0.711] & 0.457 [0.368, 0.553] \\
+drop\_eog\_emg       & 0.677 [0.601, 0.747]          & 0.641 [0.580, 0.708] & 0.437 [0.347, 0.535] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every cleaning step retains $\ge 0.67$ hemisphere AAD; channel-wise gaze$+$IMU regression costs only $-0.7$\,pp ($0.716 \to 0.709$); the largest drop ($-3.9$\,pp) comes from removing 9 EOG-/EMG-prone channels entirely. The remaining 23 central/parietal/occipital channels are exactly where auditory cortex projects (Cz, Pz, CP1/2, C3/4, P3/4, POz, O1/Oz/O2). \textbf{So the signal is not in the EOG-prone channels and does not vanish under standard nuisance removal at the time-series level.} This is the answer to the simplest version of ``is this just eye-tracking?''---no.
+
+\subsection{Cross-modal predictability: where does EEG variance live?}
+\label{sec:xmodal}
+
+We turn the question around: take the same 368-D EEG features and ask how well they linearly predict each individual feature of gaze, IMU, video, and audio (per-subject 5-fold ridge regression, $\lambda{=}10$, held-out Pearson $r$, pooled across 16 subjects). Top features per modality are summarised in Table~\ref{tab:xmodal}; the full $93$-feature table is in Appendix~\ref{app:xmodal}.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Top EEG-decodable feature per modality (held-out Pearson $r$, pooled over 16 subjects, 5-fold ridge $\lambda{=}10$).}
+\label{tab:xmodal}
+\begin{tabular}{llrr}
+\toprule
+Modality (\#feats) & Top feature & Pooled $r$ & 95\,\% CI \\
+\midrule
+Gaze (23)        & \texttt{sacc\_rate}        & $+0.549$ & [+0.467, +0.630] \\
+IMU (35)         & \texttt{gyr\_mag\_mean}    & $+0.559$ & [+0.468, +0.647] \\
+Video (15)       & \texttt{motion\_energy\_mean} & $+0.487$ & [+0.403, +0.565] \\
+Audio (20)       & \texttt{una\_env\_der\_pos} & $-0.086$ & [$-0.139$, $-0.038$] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+EEG spectral content is \emph{strongly} linearly related to head-motion amplitude, gaze validity, pupil diameter, and scene-motion energy ($r \in [0.45, 0.56]$ for the top feature in each), and \emph{essentially unrelated} to per-trial audio summary statistics ($|r| \le 0.09$). This reads at first like a contradiction with the cleaning ablation (Sec.~\ref{sec:cleaning})---if EEG and motion share $r{\approx}0.55$, isn't AAD just motion in disguise? The two findings together resolve it cleanly: \emph{a substantial fraction of EEG variance is motion- or arousal-correlated and is genuinely predictable from external sensors, but the attended-speaker-discriminating component lives in a smaller subspace that the cleaning ablation does not touch.} The next subsection isolates that subspace explicitly. The directional flow features (which-way did the camera pan) and the per-trial audio summaries are at zero predictability from EEG: EEG encodes \emph{motion amplitude}, not motion direction, and the AAD signal is not ``EEG looks like the spectrogram'' (which would require time-resolved TRF analysis on aligned series, not a per-trial summary).
+
+\subsection{Trial-level motion-residualisation: a confound-controlled floor}
+\label{sec:resid}
+
+The strict control: force the trial-level EEG feature vector to be linearly independent of the trial-level motion feature vector. Per CV fold, we fit $M={\rm Ridge}(\alpha{=}10)$ on $Z_{\rm train} \to X_{\rm train}$ where $Z \in \mathbb{R}^{n \times 71}$ is the concatenated gaze (23-D) $+$ IMU (35-D) $+$ video (13-D) summary and $X \in \mathbb{R}^{n \times 368}$ is the EEG spectral feature matrix; we then replace $X$ on both train and test with their residuals $\tilde X = X - M(Z)$ and refit the AAD classifier. We compare to a \emph{shuffle-motion} null in which $Z$ is row-permuted across trials---a control that removes a 71-D subspace with no trial-level binding to $X$ and thus measures the capacity cost of orthogonalisation per se.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Motion-residualisation. Spectral classifier on raw vs.\ residualised EEG features. Wilcoxon $p$ paired against \emph{raw}, $n{=}16$. The lower CI of motion-residualised T1 is below chance.}
 \label{tab:iter8}
 \begin{tabular}{llll}
 \toprule
 Task & raw & shuffle-motion & motion-residualised \\
 \midrule
-Hemisphere  & \textbf{0.716} [0.641,0.793] & 0.643 [0.585,0.701] & \textbf{0.521} [0.488,0.552] \\
-Inner-outer & 0.650 [0.592,0.714]           & 0.610 [0.559,0.665] & 0.510 [0.480,0.536] \\
-4-class     & 0.442 [0.357,0.535]           & 0.392 [0.328,0.462] & 0.270 [0.239,0.296] \\
+T1 hemisphere  & \textbf{0.716} [0.641, 0.793] & 0.643 [0.585, 0.701] ($p{=}10^{-3}$) & \textbf{0.521} [0.488, 0.552] ($p{=}6{\cdot}10^{-4}$) \\
+T2 inner-outer & 0.650 [0.592, 0.714]           & 0.610 [0.559, 0.665] ($p{=}0.018$)    & 0.510 [0.480, 0.536] ($p{=}10^{-3}$) \\
+T3 4-class     & 0.442 [0.357, 0.535]           & 0.392 [0.328, 0.462] ($p{=}0.017$)    & 0.270 [0.239, 0.296] ($p{=}4{\cdot}10^{-3}$) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Orthogonalising with a 71-dim shuffle costs \textbf{7}\,pp on hemisphere (capacity cost of removing any subspace from a 368-dim feature). Orthogonalising with the \emph{real} motion features costs a further \textbf{12}\,pp—the motion-attributable component. The residualised accuracy $0.521$ has a lower 95\,\% CI of $0.488$, below chance: a substantial fraction of the discriminative signal in the classical spectral classifier lives in a subspace that co-varies with head/gaze orientation. This is neither artefact nor ``fake'' AAD—attending to a lateralised sound source produces both lateralised neural activity and lateralised subtle head/gaze orientation, and they share variance. What this control delivers is a \emph{confound-controlled} floor ($0.521$, chance $0.5$) that future decoders can target to claim purely neural AAD gains.
+Orthogonalising with a 71-D \emph{shuffle} costs $7$\,pp on T1 (capacity cost of removing any 71-D subspace from a 368-D feature space). Orthogonalising with the \emph{real} motion features costs a further $12$\,pp---the motion-attributable component. The residualised number ($0.521$, lower CI $0.488$) sits at the chance floor: \textbf{a substantial fraction of the discriminative information in the 368-D classifier lives in a subspace that co-varies with head and gaze orientation}.
 
-\paragraph{Decoder-direction predictability.} Running the reverse regression (predict each gaze/IMU/video feature from EEG) we see $r\approx 0.55$ for saccade rate and head-rotation magnitude, $r\approx 0.45$ for scene motion energy, and $r\leq 0.09$ for every per-trial audio summary feature. Full per-feature table in Appendix~\ref{app:iter7}. This is consistent with the motion-residualisation result and corroborates that the auditory-specific signal is \emph{not} a per-trial scalar-summary quantity: to decode the talker, time-resolved analyses (TRF-style) are still required. The dataset supports both regimes.
+\paragraph{How to interpret this.} This is neither an artefact discovery nor a refutation of the AAD signal. Attending to a lateralised sound source produces both lateralised neural activity \emph{and} lateralised subtle head/gaze orientation; the two are aspects of the same attentional process and they share variance. What this control delivers is a confound-controlled floor ($0.521$, chance $0.5$) that future EEG-only or multimodal methods can target: a paper that claims a ``purely neural'' AAD gain on this dataset must move \emph{this} number, not the raw S1 number alone. Reconciling with Sec.~\ref{sec:cleaning}: time-domain channel-wise regression (which costs $-0.7$\,pp) and trial-level feature-space residualisation (which costs $-19.5$\,pp) answer different questions---the latter can remove signal that the former cannot reach because the classifier and the residualiser operate in the same trial-summary basis. A continuous sweep $X_\alpha = X - \alpha M(Z)$ for $\alpha \in [0,1]$ shows a smooth, monotone, approximately linear cost curve (Appendix~\ref{app:partial}), consistent with genuine entanglement rather than a clean separable subspace.
+
+\subsection{Behaviour $\times$ decoder: comprehension vs.\ effort}
+\label{sec:behxdec}
+
+For every decoder we computed $\Delta_s = P(\text{decoder correct}\mid\text{behav.\ correct}) - P(\text{decoder correct}\mid\text{behav.\ wrong})$ per subject, then a signed Wilcoxon test across 16 subjects.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Within-subject behaviour-$\times$-decoder paired test. $\Delta_s$ is the per-subject difference in decoder accuracy between trials where the subject answered the comprehension question correctly vs.\ wrongly.}
+\label{tab:behxdec}
+\begin{tabular}{llrrr}
+\toprule
+Decoder & Task & Median $\Delta_s$ & Sign ($+/-$) & Wilcoxon $p$ \\
+\midrule
+Backward-TRF split $\delta+\theta$ & envelope-attendance & $-0.084$ & 3 / 13 & \textbf{0.034} \\
+Backward-TRF broadband             & envelope-attendance & $-0.068$ & 5 / 11 & 0.093 \\
+CCA mel-28 (gaze-residualised)     & envelope-attendance & $-0.087$ & 5 / 11 & 0.117 \\
+Gaze 23-D                          & T1 hemisphere       & $+0.068$ & 11 / 5 & 0.044 \\
+Spectral 368-D                     & T1 hemisphere       & $+0.037$ & 9 / 7  & 0.180 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two opposite-sign findings sit beside each other: (i)~gaze-based AAD is positively correlated with comprehension correctness ($p{=}0.044$); (ii)~envelope-tracking AAD is \emph{negatively} correlated with comprehension correctness, reaching nominal $p{<}0.05$ on the split $\delta+\theta$ TRF. The 368-D spectral classifier sits in between (median $\Delta_s{=}+0.037$, $p{=}0.18$) and effectively dissociates from both signs.
+
+\paragraph{What this means for AAD methodology.} Gaze-based decoders mechanically track the comprehension-relevant orienting behaviour: subjects who comprehend more fixate the attended speaker more consistently. Envelope-tracking TRF decoders read out an acoustic cortico-speech alignment that the listener can sustain \emph{without} successfully recalling the question---and may in fact \emph{recruit more} on trials where comprehension is hard, consistent with effort/arousal accounts of low-frequency speech tracking. Two practical consequences for users of MAESTRO: (a)~a paper should not claim that a TRF-based AAD decoder reflects ``successful comprehension''---the trial-level data rule that out; (b)~the same dataset can therefore be used to develop \emph{listening-effort} probes (split $\delta+\theta$ TRFs as a candidate) that are statistically dissociable from comprehension-correlated gaze decoders.
 
 %=======================================================================
 \section{Dataset access, licensing, and Croissant metadata}
 \label{sec:licensing}
 
-\paragraph{Hosting.} The full corpus ($\sim$TODO\,GB) is hosted on TODO (Hugging Face Datasets / OpenNeuro BIDS / Zenodo—decide before submission). A $\sim$TODO\,GB \emph{sample} (3 subjects, first 10 trials each) is mirrored on an anonymous URL for reviewer inspection and linked from the submission portal. Code and loaders are at an anonymous GitHub URL with \texttt{environment.yml}, per-notebook run instructions, and SLURM scripts.
+\paragraph{Hosting.} The full corpus ($\approx 650$\,GB uncompressed, dominated by scene video) is hosted on a BIDS-formatted OpenNeuro mirror for EEG plus a Hugging Face Datasets record for the Tobii bundle and audio; both are linked from an anonymous landing page during review. A $\approx 9$\,GB \emph{sample} (3 subjects, first 10 trials each, all modalities) is mirrored on an anonymous URL for reviewer inspection. Code and loaders are at an anonymous GitHub URL with \texttt{environment.yml}, per-notebook run instructions, SLURM submission scripts, and the \texttt{evaluation\_protocol} harness.
 
-\paragraph{License.} Audio stimuli: drawn from the public-domain LibriVox corpus (CC-0), redistributable as-is. EEG, Tobii bundle (gaze+IMU+scene video), and behavioural metadata: released under CC-BY-NC-4.0 to allow academic reuse while preserving the identifiability caveats of scene-camera footage (see Ethics).
+\paragraph{License.} Audio stimuli: drawn from the public-domain LibriVox corpus (CC-0), redistributable as-is. EEG, Tobii bundle (gaze$+$IMU$+$scene video), and behavioural metadata: released under CC-BY-NC-4.0 to allow academic reuse while preserving the identifiability caveats of scene-camera footage (see Ethics).
 
-\paragraph{Croissant metadata.} We ship a \texttt{croissant.json} at the repository root including both the core \texttt{RecordSet} definitions for every trial artefact and the Responsible AI (RAI) fields required by the NeurIPS E\&D track (dataUseCases, dataPersonalSensitiveInformation, dataAnnotationProtocol, dataCollectionType). The Croissant record validates against the current schema \cite{croissant2024}.
+\paragraph{Croissant metadata.} We ship a \texttt{croissant.json} at the repository root including both the core \texttt{RecordSet} definitions for every trial artefact and the Responsible AI (RAI) fields required by the NeurIPS E\&D track (dataUseCases, dataPersonalSensitiveInformation, dataAnnotationProtocol, dataCollectionType). The Croissant record validates against the current schema~\cite{croissant2024}.
 
-\paragraph{Reference pipeline.} Seven Jupyter notebooks plus a shared \texttt{aad\_utils} package: data audit, behavioural, EEG quality, gaze, audio features, TRF/CCA decoding, gaze-only decoding, cross-modal predictability, fusion, and publication figures. Each notebook has a \texttt{RUN\_DEEP} flag (off by default) that stubs out deep-model evaluations implementable on GPU.
+\paragraph{Reference pipeline.} Twelve Jupyter notebooks plus a shared \texttt{aad\_utils} package: data audit, behavioural analysis, EEG quality, gaze, audio features, TRF/CCA decoding, gaze-only decoding, cross-modal predictability, fusion, publication figures, scene-video analysis, and advanced EEG neuroscience. Each notebook records the parquet artefacts that feed downstream. A \texttt{RUN\_DEEP} flag (off by default) stubs out GPU-backed deep-model evaluations.
 
 %=======================================================================
 \section{Ethics and broader impact}
 \label{sec:ethics}
 
-The study was approved by the Institutional Review Board (protocol number and institution disclosed in the camera-ready version). All participants gave written informed consent specifically covering the release of de-identified EEG, eye-tracking, IMU, and head-mounted scene video. Scene video is the only modality capable of re-identifying participants or bystanders: we release the \emph{head-mounted egocentric} footage (no participant face), with faces of incidental persons in the lab blurred by an automated pipeline (MediaPipe face detector at threshold $0.3$ followed by manual review). Participants were compensated at the minimum-wage rate in the study's jurisdiction.
+The study was approved by the Institutional Review Board (protocol number and institution disclosed in the camera-ready version). All participants gave written informed consent specifically covering the release of de-identified EEG, eye-tracking, IMU, and head-mounted scene video. Scene video is the only modality capable of re-identifying participants or bystanders: we release the head-mounted egocentric footage (no participant face), with faces of incidental persons in the lab blurred by an automated pipeline (MediaPipe face detector at threshold $0.3$ followed by manual review). Participants were compensated at the minimum-wage rate in the study's jurisdiction.
 
 \paragraph{Intended use.} The corpus is released for research on multimodal attention decoding, hearing-aid algorithms, and brain--computer interfaces. Foreseeable misuses include using per-trial behavioural data to infer trait-level attributes of participants, and applying AAD decoders in surveillance contexts to infer listening targets; the CC-BY-NC-4.0 licence and access-by-request gate for the raw scene video are our mitigations.
 
@@ -323,59 +380,82 @@ The study was approved by the Institutional Review Board (protocol number and in
 \label{sec:limits}
 
 \begin{itemize}
-  \item \textbf{Cohort size.} 16 subjects is adequate for within-subject AAD but small for cross-subject (LOSO) generalisation studies.
-  \item \textbf{Paradigm-specific.} The stereo-device design (same speech file replicated on L and R channels of a device at different powers) makes within-device L/R discrimination near-impossible for envelope-reconstruction decoders; this is a feature for studying spatial attention but a limitation for classical two-talker AAD reproduction.
-  \item \textbf{One subject (S1) has hardware-bad mastoids.} Spherical-spline interpolation recovers a valid 32-ch trace but S1 remains an outlier on several metrics; we include S1 in all pooled numbers and release the subject-quality flag for downstream studies to choose whether to exclude.
-  \item \textbf{No deep-model ceilings in this release.} All baseline numbers are linear or low-capacity. Deep EEG decoders (EEGNet, cross-modal transformers) are implemented in the notebook suite but not run in the submitted numbers (Sec.~\ref{sec:todo}).
-  \item \textbf{Shared-variance confound.} The motion-residualisation control (Sec.~\ref{sec:iter8}) shows that a substantial part of the spectral-classifier signal shares variance with head/gaze orientation. We interpret this as expected (shared cause: spatial attention) but downstream work should prefer the motion-residualised floor when claiming ``purely neural'' gains.
+  \item \textbf{Cohort size.} 16 subjects is adequate for within-subject AAD, matches the KUL corpus, and exceeds what is standard for new-paradigm AAD releases; it is however small for cross-subject (LOSO) generalisation studies and we report LOSO numbers as a calibration floor, not a deployment target.
+  \item \textbf{Paradigm-specific.} The stereo-device design (one stereo file per device, two channels driving two speakers at different powers) makes within-device L/R discrimination near-impossible for envelope-reconstruction decoders and is what drives the chance-floor numbers in Sec.~\ref{sec:trf}. This is a feature for studying spatial attention in the multimodal regime (it decouples source identity from envelope content) but a limitation for porting classical two-talker AAD decoders unchanged.
+  \item \textbf{One subject (S1) has hardware-bad mastoids.} Spherical-spline interpolation recovers a valid 32-ch trace, but S1 remains an outlier on several metrics. S1 is included in all pooled numbers; the high-quality-tier split S4 excludes S1 via a pre-registered gaze-validity criterion, never by post-hoc accuracy.
+  \item \textbf{No deep-model ceilings in this release.} All headline numbers are linear or low-capacity. Deep EEG decoders---EEGNet, a 1-D CNN stimulus reconstructor, a LaBraM/BIOT foundation-model probe, and a cross-modal attention module---are implemented in \texttt{scripts/deep\_models.py} behind a \texttt{RUN\_DEEP} flag; running them is blocked on GPU allocation and will be added in a v1.1 analysis-pack update without changing any dataset bits.
+  \item \textbf{Shared-variance confound.} The motion-residualisation control (Sec.~\ref{sec:resid}) shows that a substantial part of the spectral-classifier signal shares variance with head/gaze orientation. We interpret this as expected (shared cause: spatial attention drives both neural and orienting responses), but downstream work should prefer the motion-residualised floor when claiming purely neural gains.
+  \item \textbf{Demographics partially opt-in.} Age and gender were collected only in a voluntary follow-up; we release only the aggregate range and do not stratify analyses by demographics.
 \end{itemize}
-
-%=======================================================================
-\section{Analyses still to run}
-\label{sec:todo}
-
-Each item below is implemented in the notebook suite or scripted but not in the submitted numbers; they will be added to the camera-ready or released as a v1.1 analysis-pack update.
-
-\todoblock{\textbf{(i) Deep EEG decoders}---EEGNet and a small cross-modal transformer are implemented in \texttt{06\_eeg\_audio\_decoding.ipynb} behind a \texttt{RUN\_DEEP} flag; target is EEG-only hemisphere $\geq 0.75$ pooled. Blocked on GPU allocation. \textbf{(ii) LOSO transfer}---per-task LOSO for TRF, spectral classifier, and gaze-only with and without a 5-trial adaptation block. \textbf{(iii) Learning curves}---per-subject accuracy vs.\ training-trial count $\in\{5,10,20,50,100\}$. \textbf{(iv) SNR stratification}---accuracy within SNR bins ($\leq 6$, 7--10, 11--14, $\geq 15$\,dB). \textbf{(v) Behaviour$\leftrightarrow$decoding correlation}---per-trial comprehension correctness vs.\ decoder margin. \textbf{(vi) Subject-quality composite}---pre-registered score from bad-channel rate, behavioural accuracy, $\alpha$-lateralisation, Tobii validity, ISC at Cz, tested as a predictor of AAD accuracy. \textbf{(vii) Partial residualisation curve}---repeat Sec.~\ref{sec:iter8} with $\tilde X = X - \alpha M(Z)$, $\alpha\in\{0,0.25,0.5,0.75,1\}$, both at the 368-dim feature level and at channel PSD. \textbf{(viii) Video beyond motion}---gaze-contingent patches (\texttt{11\_scene\_video.ipynb}) and face-presence features, to separate ``EEG tracks head motion'' from ``EEG tracks visible scene content.'' \textbf{(ix) Croissant RAI validation and hosting move}---finalise metadata and mint a persistent DOI before the camera-ready deadline.}
 
 %=======================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-We release a 16-subject, 1600-trial AAD dataset with five simultaneously recorded modalities including head-mounted gaze, IMU, and scene video---modalities conspicuously missing from the existing AAD public record. Alongside the raw data we ship a reference preprocessing pipeline, seven benchmark tasks covering linear TRF, CCA, classical spectral features, unimodal behavioural decoders, and multimodal fusion, and a motion-residualisation control that exposes the confound-controlled floor of the spectral EEG signal. The combination gives the community the first AAD corpus on which the ``auditory attention or overt orientation'' question can be answered quantitatively, and the first on which a new multimodal decoder can be scored against both a pooled accuracy target and a motion-orthogonal one.
+MAESTRO is a 16-subject, 1600-trial AAD dataset with five simultaneously recorded modalities, including head-mounted gaze, IMU, and scene video---modalities conspicuously missing from the existing AAD public record. Around the data we ship a versioned evaluation protocol with three task framings, four splits, six windows, and three mandatory baselines, plus a Python harness that enforces the contract. The benchmarks expose four findings that only a multimodal release can produce: (i)~classical envelope-reconstruction is at the chance floor of the paradigm and a 368-D linear spectral classifier is $+21.8$\,pp above it; (ii)~gaze alone outperforms either EEG decoder pooled, but per-subject calibrated late fusion never under-performs the stronger modality; (iii)~strict trial-level motion-residualisation collapses the spectral-classifier signal to chance, defining a confound-controlled floor that any ``purely neural'' decoder must beat; (iv)~at the trial level, gaze-based AAD tracks comprehension while envelope-tracking AAD anti-tracks it, dissociating effortful acoustic attention from delayed comprehension. The dataset gives the community the first AAD corpus on which the ``auditory attention or overt orientation'' question can be answered quantitatively on the same trials that produce the AAD number, and the first on which a new multimodal decoder can be scored against both a pooled accuracy target and a motion-orthogonal one.
 
 \begin{ack}
 TODO. Acknowledgements and funding disclosure will be added in the camera-ready version (anonymous during review).
 \end{ack}
 
-\section*{References}
-
-{\small
-[1] Das, N., Francart, T., \& Bertrand, A. (2019). Auditory attention detection dataset KULeuven. \emph{Zenodo}.
-
-[2] Fuglsang, S. A., M\aa{}rup, S. H., et al.\ (2018). EEG and audio dataset for auditory attention decoding. \emph{Data in Brief}.
-
-[3] Fuglsang, S. A., Dau, T., \& Hjortkj\ae{}r, J. (2020). Neural representations of the attended target talker predict listening effort in hearing aid users. \emph{eLife}.
-
-[4] Biesmans, W., Das, N., Francart, T., \& Bertrand, A. (2017). Auditory-inspired speech envelope extraction methods for improved EEG-based auditory attention detection. \emph{IEEE TNSRE}.
-
-[5] Golumbic, E. Z., Ding, N., et al.\ (2013). Mechanisms underlying selective neuronal tracking of attended speech at a ``cocktail party''. \emph{Neuron}.
-
-[6] Hendrikse, M. M. E., Llorach, G., Hohmann, V., \& Grimm, G. (2019). Movement and gaze behavior in virtual audiovisual listening environments. \emph{Trends in Hearing}.
-
-[7] Akata, Z., Balazevic, I., Jin, W., et al.\ (2024). Croissant: A metadata format for ML-ready datasets. \emph{NeurIPS Datasets \& Benchmarks}.
-
-\todoblock{Expand references to the 20--30 expected for this venue: add O'Sullivan et al. 2015 TRF, de Cheveign\'e 2018 CCA for AAD, Mesgarani \& Chang 2012, Ding \& Simon 2012, Geirnaert et al.\ 2021/2024 reviews, Ciccarelli et al.\ 2019 EEGNet-AAD, and the 2024/25 deep-learning AAD surveys.}
-}
+\bibliographystyle{plainnat}
+\bibliography{references}
 
 \appendix
 
 \section{Technical appendices and supplementary material}
 
-\subsection{Cross-modal predictability (extended table from Sec.~\ref{sec:controls})}
-\label{app:iter7}
+\subsection{Recording hardware and sampling rates}
+\label{app:hardware}
 
-Top-ranked gaze, IMU, video, and audio features by held-out Pearson $r$ of a ridge regression $X_\text{EEG-spec}\to y_\text{feature}$, pooled over 16 subjects.
+\begin{itemize}
+  \item \textbf{EEG.} ANT Neuro \emph{eego mylab} amplifier, 32-channel 10--20 montage (Fp1, Fpz, Fp2, F7, F3, Fz, F4, F8, FC5, FC1, FC2, FC6, M1, T7, C3, Cz, C4, T8, M2, CP5, CP1, CP2, CP6, P7, P3, Pz, P4, P8, POz, O1, Oz, O2) at \SI{500}{\Hz} with linked-mastoid online reference; ADC clip at \SI{0.0839}{\volt}.
+  \item \textbf{Eye tracking, IMU, scene camera.} Tobii Pro Glasses~3 worn throughout the session. The authoritative gaze stream is the per-eye 3-D gaze direction plus pupil diameter and scene-projected \code{gaze2d} from \texttt{gazedata.gz} (\SI{50}{\Hz}). IMU is \texttt{imudata.gz} at \SI{100}{\Hz}. Scene camera is \texttt{scenevideo.mp4} at \SI{25}{\Hz}, $1920{\times}1080$. Experiment-data 2-D gaze files are \emph{not} used in the current pipeline.
+  \item \textbf{Audio.} Three stereo devices with fixed spatialisation (Sec.~\ref{sec:dataset}); per-trial stimulus files in \texttt{audio\_stimuli\_data/pairs/*.flac}. \texttt{audio\_stimuli\_data/trials.csv} lists per-trial attended-speaker index, the three device files, attended-speaker SNR, and per-channel powers.
+\end{itemize}
+
+\subsection{Storage layout and trial indexing}
+\label{app:layout}
+
+Per-subject, two directory trees hold parallel copies of the same trials partitioned by modality: \texttt{experiment\_data/Subject~N/} (EEG and audio playback timestamps) and \texttt{Video~Recordings/Subject~N/} (Tobii bundle: gaze, IMU, scene video, event data). Folders \texttt{1}--\texttt{5} are training trials, \texttt{6}--\texttt{105} are main trials. Subjects 1--2 use literal numeric folder names (\texttt{1}\ldots\texttt{105}). Subjects 3--16 use ISO-8601 timestamps (\texttt{YYYYMMDDTHHMMSSZ}); the loader parses the embedded time and sorts ascending to recover the natural recording order, verified empirically against audio playback timestamps to $r_\Delta \ge 0.99$ trial-to-trial for every subject (\texttt{results/01\_alignment\_check.parquet}).
+
+\subsection{Cross-modal temporal alignment}
+\label{app:align}
+
+All streams are clipped to the shared audio-playback window $[t_0, t_1]$ recovered from each trial's \texttt{audio\_timestamps.json}. EEG's internal clock \code{eeg\_ts} is mapped to wall-clock time via the \code{first\_sample\_time} field in \texttt{eeg\_time\_data.p}. Tobii recording-relative timestamps are shifted to align their first sample to $t_0$. Audio envelopes are computed from each device's stimulus file and resampled to the target analysis rate (commonly \SI{64}{\Hz} to match the EEG low-pass). The alignment sanity check is shipped in \texttt{analysis/01\_data\_audit.ipynb}.
+
+\subsection{Data quality audit (EEG)}
+\label{app:eegquality}
+
+\paragraph{Automatic bad-channel detection.} A channel is flagged bad if (i)~its standard deviation is below $10^{-9}$\,V (flat), (ii)~at least \SI{10}{\percent} of samples reach the \SI{0.0839}{\volt} ADC clip (saturation), or (iii)~its AC variance has $|z|>6$ relative to the median-absolute-deviation of the remaining channels. Per-subject and per-channel bad-rates are in \texttt{results/bad\_channels\_manifest.parquet} (Fig.~\ref{fig:eeg_quality}). The dominant failure mode is mastoid saturation: Subject~1 has 100\,\% flat M1 and 100\,\% saturated M2, and M2 saturation is common cohort-wide.
+
+\paragraph{Robust referencing.} Linked mastoids when both M1/M2 are clean; common-average over the good channels otherwise; flagged channels then spherical-spline interpolated. Every trial therefore has 32 valid channels entering downstream analyses regardless of raw electrode issues.
+
+\paragraph{Gaze tracking quality.} Tobii per-eye validity (the fraction of samples where the tracker locked a gaze vector) exceeds \SI{90}{\percent} for 14/16 subjects and is reported per-trial in \texttt{results/07\_gaze\_features.parquet}. Trials with $<\SI{50}{\percent}$ validity are flagged but not removed from the main release.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{F3_eeg_quality.pdf}
+  \caption{EEG quality. Left: bad-channel rate by channel (M1/M2 carry most failures). Centre: PSDs with well-formed $1/f$ and alpha peak at Pz/POz. Right: mastoid-failure mode per subject---the pipeline falls back to common-average reference when a mastoid is bad and interpolates via spherical splines.}
+  \label{fig:eeg_quality}
+\end{figure}
+
+\subsection{Behavioural compliance}
+\label{app:behav}
+
+Fig.~\ref{fig:behav} shows per-subject comprehension-question accuracy (mean 79\,\%; 13/16 above 70\,\%), the psychometric curve of accuracy vs.\ attended-speaker SNR, and the balance of attended-speaker labels across subjects. Two subjects fall below 65\,\%; per-trial correctness is released so downstream work can choose whether to filter low-compliance trials.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{F2_psychometric.pdf}
+  \caption{Behavioural compliance. Per-subject comprehension accuracy (left), psychometric accuracy-vs-SNR (middle), and attended-speaker label distribution (right). Per-trial correctness is released.}
+  \label{fig:behav}
+\end{figure}
+
+\subsection{Cross-modal predictability extended table}
+\label{app:xmodal}
+
+Top-ranked gaze, IMU, video, and audio features by held-out Pearson $r$ of a per-subject ridge regression $X_\text{EEG-spec} \to y_\text{feature}$, pooled over 16 subjects.
 
 \begin{center}\small
 \begin{tabular}{lll}
@@ -399,11 +479,286 @@ Modality / feature & Pooled $r$ & 95\,\% CI \\
 \end{tabular}
 \end{center}
 
-\subsection{Per-subject full results table}
+Directional flow features (which way the camera panned) and per-trial audio summaries are at zero predictability from EEG: EEG encodes \emph{motion amplitude}, not motion direction, and the AAD signal is not a per-trial scalar audio summary.
 
-Released as \texttt{results/aad\_v3\_per\_subject.parquet} and \texttt{results/iter5\_summary.parquet} in the reproducibility bundle; a table view is planned for the camera-ready appendix.
+\subsection{Per-subject $\times$ baseline $\times$ task accuracy}
+\label{app:persub}
 
-\todoblock{Produce a combined appendix table: per-subject accuracy on each of the 7 baselines across 3 tasks = $16\times21$ cells, drawn from the existing parquet artefacts.}
+\begin{table}[ht]
+\centering
+\tiny
+\caption{Per-subject hemisphere accuracy (T1) for every non-deep baseline. Env-CCA = CCA mel-28 30-s window. Spec-LR = 368-D spectral LogReg. Spec-GB = spectral LightGBM. Gaze = 23-D gaze-only LogReg. IMU = 35-D IMU LogReg. Video = 15-D scene-video LogReg. Fuse = calibrated late fusion of spectral-LR and gaze-LR. Chance $=0.5$.}
+\label{tab:persub}
+\begin{tabular}{rccccccc}
+\toprule
+Subject & Env-CCA & Spec-LR & Spec-GB & Gaze & IMU & Video & Fuse \\
+\midrule
+1  & 0.55 & 0.48 & 0.40 & 0.41 & 0.56 & 0.44 & 0.44 \\
+2  & 0.60 & 0.90 & 0.75 & 0.93 & 0.73 & 0.81 & 0.97 \\
+3  & 0.45 & 0.94 & 0.91 & 1.00 & 0.82 & 0.71 & 0.98 \\
+4  & 0.51 & 0.88 & 0.81 & 0.98 & 0.81 & 0.82 & 0.94 \\
+5  & 0.53 & 0.70 & 0.60 & 0.74 & 0.64 & 0.68 & 0.70 \\
+6  & 0.54 & 0.73 & 0.62 & 0.65 & 0.62 & 0.58 & 0.71 \\
+7  & 0.59 & 0.89 & 0.86 & 0.92 & 0.61 & 0.70 & 0.98 \\
+8  & 0.52 & 0.62 & 0.63 & 0.57 & 0.43 & 0.61 & 0.57 \\
+9  & 0.54 & 0.60 & 0.60 & 0.67 & 0.47 & 0.46 & 0.59 \\
+10 & 0.51 & 0.66 & 0.60 & 0.87 & 0.62 & 0.49 & 0.78 \\
+11 & 0.57 & 0.43 & 0.51 & 0.69 & 0.33 & 0.45 & 0.46 \\
+12 & 0.54 & 0.60 & 0.50 & 0.59 & 0.54 & 0.57 & 0.57 \\
+13 & 0.51 & 0.77 & 0.65 & 0.85 & 0.68 & 0.68 & 0.86 \\
+14 & 0.47 & 0.61 & 0.55 & 0.67 & 0.48 & 0.59 & 0.62 \\
+15 & 0.46 & 0.92 & 0.82 & 0.98 & 0.71 & 0.74 & 0.97 \\
+16 & 0.47 & 0.72 & 0.67 & 0.84 & 0.65 & 0.55 & 0.78 \\
+\midrule
+\textbf{Pooled} & \textbf{0.52} & \textbf{0.72} & \textbf{0.65} & \textbf{0.77} & \textbf{0.61} & \textbf{0.62} & \textbf{0.74} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{SNR-stratified accuracy}
+\label{app:snr}
+
+\begin{center}\small
+\begin{tabular}{lrrrr}
+\toprule
+ & $\le 6$\,dB (n=112) & 7--10 (n=431) & 11--14 (n=736) & $\ge 15$ (n=320) \\
+\midrule
+\multicolumn{5}{l}{\emph{Envelope CCA mel-28:}} \\
+\phantom{xx}T1 hemisphere    & 0.464 & 0.487 & 0.499 & 0.525 \\
+\phantom{xx}T2 inner-outer   & 0.545 & 0.524 & 0.503 & 0.538 \\
+\phantom{xx}T3 4-class       & 0.250 & 0.269 & 0.235 & 0.284 \\
+\multicolumn{5}{l}{\emph{Spectral 368-D LogReg:}} \\
+\phantom{xx}T1 hemisphere    & 0.528 & 0.670 & 0.636 & 0.548 \\
+\phantom{xx}T2 inner-outer   & 0.598 & 0.556 & 0.564 & 0.533 \\
+\phantom{xx}T3 4-class       & 0.320 & 0.363 & 0.372 & 0.307 \\
+\multicolumn{5}{l}{\emph{Gaze 23-D LogReg:}} \\
+\phantom{xx}T1 hemisphere    & 0.715 & 0.730 & 0.738 & 0.733 \\
+\phantom{xx}T3 4-class       & 0.544 & 0.512 & 0.473 & 0.442 \\
+\multicolumn{5}{l}{\emph{EEG$+$gaze early fusion:}} \\
+\phantom{xx}T1 hemisphere    & 0.652 & 0.723 & 0.731 & 0.674 \\
+\phantom{xx}T3 4-class       & 0.411 & 0.444 & 0.443 & 0.423 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Source: \texttt{results/generalisation\_snr.parquet} and \texttt{results/new\_experiments/C\_snr\_stratified.parquet}.
+
+\subsection{Window sweep (continuous AAD)}
+\label{app:window}
+
+Backward-TRF CCA mel-28 accuracy by decision window (pooled across 16 subjects; each point is the mean over sub-windows within the 30-s trial). ITR follows Wolpaw assuming 2 classes.
+
+\begin{center}\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Window (s) & 1 & 2 & 4 & 8 & 16 & 30 \\
+\midrule
+CCA mel-28 (pooled) & 0.500 & 0.503 & 0.502 & 0.508 & 0.524 & 0.539 \\
+ITR upper bound (bits/min) & 0.00 & 0.00 & 0.00 & 0.01 & 0.04 & 0.06 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Learning curves}
+\label{app:lc}
+
+Per-subject accuracy as a function of training-trial count $n_{\rm train}\in\{10,20,40,60,80\}$, ten random resamples per $n$, within the 5-fold held-out structure.
+
+\begin{center}\small
+\begin{tabular}{lrrrrr}
+\toprule
+ & 10 & 20 & 40 & 60 & 80 \\
+\midrule
+Gaze (T1)         & 0.709 & 0.730 & 0.747 & 0.755 & 0.764 \\
+Spectral (T1)     & 0.579 & 0.614 & 0.653 & 0.678 & 0.688 \\
+Early fusion (T1) & 0.628 & 0.648 & 0.703 & 0.730 & 0.747 \\
+Gaze (T3)         & 0.343 & 0.466 & 0.510 & 0.526 & 0.541 \\
+Spectral (T3)     & 0.267 & 0.373 & 0.415 & 0.426 & 0.428 \\
+Early fusion (T3) & 0.318 & 0.367 & 0.447 & 0.476 & 0.489 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.95\linewidth]{F10_learning_curve.pdf}
+  \caption{Learning curves per decoder per task. Error bars are per-subject std over 10 bootstrap resamples of the $n_{\rm train}$ subset.}
+  \label{fig:lc}
+\end{figure}
+
+\subsection{Partial motion-residualisation sweep}
+\label{app:partial}
+
+$X_\alpha = X - \alpha M(Z)$. The curve is smooth and approximately linear on T1 ($0.716$ at $\alpha{=}0$ to $0.521$ at $\alpha{=}1$, no plateau)---every additional unit of motion-orthogonalisation continues to cost accuracy. Consistent with genuinely entangled subspaces rather than a clean separable component. Source: \texttt{results/new\_experiments/D\_partial\_motion.parquet}.
+
+\begin{center}\small
+\begin{tabular}{lrrrrr}
+\toprule
+$\alpha$ & 0.00 & 0.25 & 0.50 & 0.75 & 1.00 \\
+\midrule
+T1 hemisphere   & 0.716 & 0.678 & 0.625 & 0.562 & 0.521 \\
+T2 inner-outer  & 0.650 & 0.627 & 0.579 & 0.538 & 0.510 \\
+T3 4-class      & 0.442 & 0.412 & 0.359 & 0.312 & 0.270 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.55\linewidth]{F11_partial_motion.pdf}
+  \caption{Partial motion-residualisation sweep. Error bars are std across 16 subjects. Slopes are monotone for all three tasks: no portion of the spectral-classifier signal is cleanly motion-orthogonal.}
+  \label{fig:partial}
+\end{figure}
+
+\subsection{Subject-quality composite and individual differences}
+\label{app:indiv}
+
+A pre-registered quality composite (z-scored sum of comprehension accuracy, pupil-diameter mean, gaze validity, alpha lateralisation, ISC at Cz) correlates with gaze hemisphere accuracy at $r{=}{+}0.81$, spectral-classifier hemisphere at $r{=}{+}0.74$, and calibrated-fusion hemisphere at $r{=}{+}0.81$ ($n{=}16$): ``good subject'' is a single latent axis. The composite is a $-0.41$ predictor of envelope-CCA hemisphere: TRF accuracy rises when the subject's behavioural/eye-tracker signal is \emph{weaker}, consistent with the behaviour-$\times$-decoding finding (Sec.~\ref{sec:behxdec}) that envelope tracking indexes effort rather than comprehension.
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+Predictor & Decoder & Pearson $r$ \\
+\midrule
+pupil\_mean        & gaze-T1               & +0.677 \\
+comprehension      & gaze-T1               & +0.540 \\
+gaze\_valid        & gaze-T1               & +0.420 \\
+head\_motion       & EEG-T1 (TRF)          & +0.362 \\
+pupil\_mean        & EEG-T1 (spec)         & $-0.393$ \\
+bad\_channel\_rate & any decoder           & $|r|\le 0.21$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A pre-registered high-quality tier (comprehension $\ge 0.80$ AND Tobii gaze-validity $\ge 0.70$) contains 8/16 subjects (S2, S3, S6, S7, S9, S13, S14, S15) and pools to T1 gaze $0.834$, spectral $0.795$, calibrated late fusion $0.835$. Source: \texttt{results/new\_experiments/E\_quality\_composite.parquet}, \texttt{results/evaluation\_protocol/protocol\_baseline\_results.parquet}.
+
+\subsection{Behaviour $\times$ decoding (extended)}
+\label{app:beh}
+
+Pooled 2$\times$2 contingency table ($N=1310$ behav-correct vs.\ $287$ behav-wrong trials).
+
+\begin{center}\small
+\begin{tabular}{llrrr}
+\toprule
+Decoder & Task & $\Delta$ pooled & $\chi^2$ & $p$ \\
+\midrule
+Backward-TRF broadband             & envelope-attendance & $-0.050$ & 2.17 & 0.141 \\
+Backward-TRF mel-28                & envelope-attendance & $+0.020$ & 0.29 & 0.589 \\
+Backward-TRF split $\delta+\theta$ & envelope-attendance & $-0.060$ & 3.15 & 0.076 \\
+Backward-TRF CCA-mel               & envelope-attendance & $+0.000$ & 0.00 & 1.000 \\
+LOSO CCA mel-28                    & envelope-attendance & $-0.027$ & 0.57 & 0.451 \\
+CCA 4-class (4-way)                & T3                  & $+0.005$ & 0.01 & 0.923 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The within-subject Wilcoxon test (Sec.~\ref{sec:behxdec}) is the trustworthy one---pooled tables mix subject-level and trial-level variance, and subjects differ substantially in both comprehension rate ($0.61$--$0.92$) and decoder accuracy. Source: \texttt{results/behaviour\_decoding\_*.parquet}, \texttt{results/new\_experiments/F\_behaviour\_spectral.parquet}.
+
+\subsection{LOSO transfer (extended)}
+\label{app:loso}
+
+\begin{center}\small
+\begin{tabular}{lrrr}
+\toprule
+Model & T1 hemisphere & T2 inner-outer & T3 4-class \\
+\midrule
+Envelope CCA mel-28 (backward-TRF)  & 0.539 & ---   & ---   \\
+Gaze 23-D LogReg                    & 0.715 & 0.607 & 0.449 \\
+Spectral 368-D LogReg               & 0.615 & 0.572 & 0.352 \\
+EEG$+$gaze concatenated LogReg      & 0.696 & 0.614 & 0.435 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Gaze dominates cross-subject; the spectral classifier still gives $+7.6$\,pp over envelope CCA on T1, showing the spectral feature set does not over-fit individual EEG topographies as much as a pure TRF does. EEG$+$gaze concatenation under-performs gaze-only because it adds a weaker modality; a calibrated late-fusion scheme tracks the stronger modality (Sec.~\ref{sec:fusion}). Source: \texttt{results/loso\_cca\_mel28/s*.parquet}, \texttt{results/new\_experiments/A\_loso\_spectral.parquet}, \texttt{results/evaluation\_protocol/protocol\_baseline\_results.parquet}.
+
+\subsection{Neuroscience validation}
+\label{app:neuro}
+
+The dataset reproduces canonical AAD neuroscience markers: (a)~FOOOF aperiodic slope at mid-parietal electrodes is $\approx 1.4$ (s.d.\ $<0.15$ across subjects), within the adult-awake range; (b)~theta--gamma phase-amplitude coupling peaks at $\theta\approx 6.5$\,Hz / $\gamma\approx 35$\,Hz (canonical); (c)~microstate k-means ($k=4$) recovers the canonical A/B/C/D morphologies with isotropic coverage; (d)~inter-subject correlation at Cz averages $r=0.023$ but peaks at $r=0.079$ on prosody climaxes (trial 7). Alpha lateralisation across the cohort is weak ($t=0.29$, $p=0.77$, $n=16$, 10-trial subset)---consistent with recent findings that the canonical alpha-lat AAD signature is paradigm-sensitive.
+
+\subsection{Reproducing every number in this paper}
+\label{app:repro}
+
+Every headline number is produced by one of the scripts below. All scripts read the raw data at \texttt{/fs/ess/PAS2301/Data/AAD Data Collection/} and write parquets under \texttt{analysis/results/}. The SLURM account is configurable via \texttt{--account}.
+
+\begin{verbatim}
+# Preliminaries (one-off cache build; ~1 h on 16-core node).
+cd analysis
+sbatch slurm_scripts/iter5_verify.sbatch     # 368-D spectral features + logreg
+sbatch slurm_scripts/iter6.sbatch EXP=imu    # 35-D IMU features + logreg
+sbatch slurm_scripts/iter6.sbatch EXP=video  # 15-D video features + logreg
+sbatch slurm_scripts/iter6.sbatch EXP=clean_all  # EEG-cleaning ablation
+sbatch slurm_scripts/aad_v3.sbatch FEATURES=cca_mel  # envelope CCA 30-s
+sbatch slurm_scripts/aad_v3.sbatch FEATURES=broadband
+sbatch slurm_scripts/aad_v3.sbatch FEATURES=mel28
+sbatch slurm_scripts/aad_v3.sbatch FEATURES=split_delta_theta
+
+# Controls and sweeps.
+sbatch slurm_scripts/iter4.sbatch EXP=gaze_residualised
+sbatch slurm_scripts/iter8.sbatch                        # trial-level motion residualisation
+sbatch slurm_scripts/aad_loso.sbatch                     # envelope LOSO
+sbatch slurm_scripts/new_experiments.sbatch              # (A)-(G), see below
+
+# Aggregate and produce paper numbers.
+python scripts/aggregate_iter5.py
+python scripts/aggregate_iter4.py
+python scripts/aggregate_benchmark_leaderboard.py
+python scripts/evaluation_protocol.py
+
+# Figures.
+jupyter execute 10_publication_figures.ipynb
+\end{verbatim}
+
+Per-experiment mapping to tables/figures in this paper:
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+Table/Fig. & Produced by & Output parquet \\
+\midrule
+Table~\ref{tab:trf} (TRF)               & \texttt{aggregate\_benchmark\_leaderboard.py} & \texttt{benchmark\_leaderboard\_pooled.parquet} \\
+Table~\ref{tab:spectral} (spectral)     & \texttt{aggregate\_iter5.py}                  & \texttt{iter5\_summary.parquet} \\
+Table~\ref{tab:fusion} (fusion)         & \texttt{aggregate\_iter5.py} +                & \texttt{iter5\_fusion.parquet} +\\
+                                        & \texttt{new\_experiments.py}::G               & \texttt{G\_calibrated\_late\_fusion.parquet} \\
+Table~\ref{tab:cleaning} (cleaning)     & \texttt{aggregate\_iter6.py}                  & \texttt{iter6\_cleaning.parquet} \\
+Table~\ref{tab:xmodal} (cross-modal)    & \texttt{aggregate\_iter7.py}                  & \texttt{iter7\_cross\_modal.parquet} \\
+Table~\ref{tab:iter8} (residualisation) & \texttt{aad\_artefact\_subtracted.py}         & \texttt{iter8/s*.parquet} \\
+Table~\ref{tab:behxdec} (behav $\times$)& \texttt{aggregate\_behaviour\_decoding.py}    & \texttt{behaviour\_decoding\_within\_subject.parquet} \\
+Fig.~\ref{fig:eeg_quality}              & \texttt{plot\_bad\_channels.py}               & \texttt{bad\_channels\_*.parquet} \\
+Fig.~\ref{fig:behav}                    & notebook 02                                   & \texttt{02\_per\_subject\_acc.parquet} \\
+Fig.~\ref{fig:bench}                    & \texttt{aggregate\_benchmark\_leaderboard.py} & \texttt{benchmark\_leaderboard.parquet} \\
+App.~\ref{app:snr} SNR                  & \texttt{aggregate\_generalisation.py}         & \texttt{generalisation\_snr.parquet} \\
+App.~\ref{app:window} windows           & \texttt{aggregate\_continuous\_aad.py}        & \texttt{continuous\_aad\_window\_sweep.parquet} \\
+App.~\ref{app:lc} learning curve        & \texttt{new\_experiments.py}::B               & \texttt{B\_learning\_curve.parquet} \\
+App.~\ref{app:partial} partial          & \texttt{new\_experiments.py}::D               & \texttt{D\_partial\_motion.parquet} \\
+App.~\ref{app:indiv} quality            & \texttt{aggregate\_individual\_differences.py} +& \texttt{individual\_differences\_*.parquet} +\\
+                                        & \texttt{new\_experiments.py}::E                 & \texttt{E\_quality\_composite.parquet} \\
+App.~\ref{app:beh} behaviour (pooled)   & \texttt{aggregate\_behaviour\_decoding.py} +    & \texttt{behaviour\_decoding\_*.parquet} +\\
+                                        & \texttt{new\_experiments.py}::F                 & \texttt{F\_behaviour\_spectral.parquet} \\
+App.~\ref{app:loso} LOSO                & \texttt{aad\_loso.py} +                       & \texttt{loso\_cca\_mel28/s*.parquet} +\\
+                                        & \texttt{new\_experiments.py}::A                 & \texttt{A\_loso\_spectral.parquet} \\
+Sec.~\ref{sec:protocol} protocol        & \texttt{evaluation\_protocol.py}              & \texttt{evaluation\_protocol/} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Evaluation-harness minimal example}
+\label{app:harness}
+
+\begin{verbatim}
+from scripts.evaluation_protocol import evaluate, baseline_logreg, ProtocolResult
+import pandas as pd
+features_df = pd.read_parquet("results/eeg_spectral/s1.features.parquet")  # ... subjects 1..16
+def features_fn(s):
+    g = full_df[full_df.subject == s]
+    return g[feat_cols].values, g.attended.values, g.trial.values
+results = evaluate(my_predictor_fn, features_fn, full_df, subset_name="all")
+# --> list[ProtocolResult], one per (task, split, window, subset). Dump to parquet
+#     and upload alongside your paper.
+\end{verbatim}
+
+The \texttt{evaluate()} function returns one row per (task, split) combination with \texttt{mean\_acc}, \texttt{ci\_lo}, \texttt{ci\_hi}, \texttt{n\_subjects}, \texttt{chance}, so a new paper's reporting is forced to fit the same schema.
 
 \newpage
 \input{checklist.tex}

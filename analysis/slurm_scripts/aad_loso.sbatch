@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --account=PAS2301
+#SBATCH --account=PAS2966
 #SBATCH --job-name=aad_loso
 #SBATCH --output=/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/slurm_logs/aad_loso_s%a_%A.out
 #SBATCH --error=/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/slurm_logs/aad_loso_s%a_%A.err

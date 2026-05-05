@@ -35,12 +35,12 @@
 \item {\bf Experiment statistical significance}
     \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
     \item[] Answer: \answerYes{}
-    \item[] Justification: All pooled accuracies are accompanied by 95\,\% bootstrap CIs (resampling the 16 per-subject accuracies with replacement). Sec.~\ref{sec:iter8} reports paired Wilcoxon signed-rank $p$-values against the raw condition.
+    \item[] Justification: All pooled accuracies are accompanied by 95\,\% bootstrap CIs (resampling the 16 per-subject accuracies with replacement). Sec.~\ref{sec:resid} reports paired Wilcoxon signed-rank $p$-values against the raw condition.
 
 \item {\bf Experiments compute resources}
     \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
     \item[] Answer: \answerYes{}
-    \item[] Justification: All submitted baselines run CPU-only on an OSC SLURM \texttt{batch} partition, one task per (subject$\times$backbone), 8 CPUs and 32\,GB memory per task, 2\,h wall-time limit. A full benchmark sweep of the 16 subjects $\times$ 4 TRF backbones $+$ spectral $+$ gaze $+$ IMU $+$ video fits in $\sim$20 minutes wall-clock when parallelised across nodes. Deep-model baselines listed under Sec.~\ref{sec:todo} are GPU-bound and not included in the submitted numbers.
+    \item[] Justification: All submitted baselines run CPU-only on an OSC SLURM \texttt{cpu} partition, one task per (subject$\times$backbone), 8 CPUs and 32\,GB memory per task, 2\,h wall-time limit. A full benchmark sweep of 16 subjects $\times$ 4 TRF backbones $+$ spectral $+$ gaze $+$ IMU $+$ video fits in $\sim$20 minutes wall-clock when parallelised across nodes. Deep-model baselines listed in Sec.~\ref{sec:limits} are GPU-bound and not included in the submitted numbers.
 
 \item {\bf Code of ethics}
     \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics?
@@ -65,7 +65,7 @@
 \item {\bf New assets}
     \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
     \item[] Answer: \answerYes{}
-    \item[] Justification: The dataset is packaged with a Croissant \texttt{RecordSet}, a per-trial provenance manifest (\texttt{results/*.parquet}), loader code with Jupyter notebook demos for every task in Sec.~\ref{sec:benchmarks}, and a README describing the directory layout and trial-index conventions (Sec.~\ref{sec:layout}).
+    \item[] Justification: The dataset is packaged with a Croissant \texttt{RecordSet}, a per-trial provenance manifest (\texttt{results/*.parquet}), loader code with Jupyter notebook demos for every task in Sec.~\ref{sec:benchmarks}, and a README describing the directory layout and trial-index conventions (App.~\ref{app:layout}).
 
 \item {\bf Crowdsourcing and research with human subjects}
     \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?

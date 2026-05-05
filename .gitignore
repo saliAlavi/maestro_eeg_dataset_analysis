@@ -1,0 +1,88 @@
+# ---------- Claude / agent harness ----------
+.claude/
+CLAUDE.md
+.claude.json
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+*.whl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# ---------- Jupyter ----------
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+.virtual_documents/
+
+# ---------- LaTeX build artifacts ----------
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+# LaTeX *.log everywhere (SLURM logs are *.out/*.err and live under analysis/slurm_logs/, already ignored)
+*.log
+
+# ---------- Project-specific large / regenerable artifacts ----------
+
+# 41.7 GB HuggingFace release tree + 422 MB sample — never track
+hf_release/maestro-eeg-dataset/
+hf_release/maestro-eeg-dataset-sample/
+
+# Generated analysis outputs (regenerable from scripts in analysis/scripts/)
+analysis/cache/
+analysis/results/
+
+# SLURM job logs — clutter, regeneratable
+analysis/slurm_logs/
+
+# Any local data symlinks or copies (the real data lives at /fs/ess/PAS2301/)
+data/
+local_data/
+
+# Notebooks export pdfs are regenerable
+docs/notebook_pdfs/
+
+# ---------- Editor / OS / scratch ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.scratch/
+
+# Loader build dir was created during pypi push
+hf_release/maestro-loader-pkg/dist/
+hf_release/maestro-loader-pkg/build/
+hf_release/maestro-loader-pkg/*.egg-info/
+
+# ---------- Secrets / credentials (defense-in-depth) ----------
+.env
+.env.local
+*.pem
+*.key
+.huggingface/
+~/.pypirc

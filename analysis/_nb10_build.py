@@ -141,18 +141,25 @@ loso = load_parquet('06_loso_backward.parquet')
 if win is not None:
     import seaborn as sns
     agg = win.groupby(['subject','window_s'])['correct'].mean().reset_index()
-    fig, ax = plt.subplots(figsize=(5, 3.2))
+    fig, ax = plt.subplots(figsize=(5.5, 3.4))
     sns.lineplot(data=agg, x='window_s', y='correct', hue='subject',
-                 marker='o', palette='tab10', ax=ax, legend=False)
+                 marker='o', palette='tab20', ax=ax, legend=False, alpha=0.55,
+                 linewidth=1.0)
     # Grand mean + bootstrap CI
     xs = sorted(agg['window_s'].unique()); means = []; los = []; his = []
     for w in xs:
         d = agg[agg['window_s']==w]['correct'].values
         m, lo, hi = bootstrap_ci(d)
         means.append(m); los.append(lo); his.append(hi)
-    ax.plot(xs, means, color='k', lw=2, label='grand mean')
-    ax.fill_between(xs, los, his, color='k', alpha=0.15)
-    ax.axhline(0.5, color=COLORS['chance'], ls='--')
+    ax.plot(xs, means, color='k', lw=2.5, marker='s', label='Grand mean (n=16)')
+    ax.fill_between(xs, los, his, color='k', alpha=0.15, label='95% bootstrap CI')
+    ax.axhline(0.5, color=COLORS['chance'], ls='--', label='Chance (0.5)')
+    # Proxy artist for the per-subject lines so they show in the legend
+    from matplotlib.lines import Line2D
+    proxy = Line2D([0], [0], color='tab:blue', alpha=0.55, lw=1.0,
+                   marker='o', label='Per-subject (n=16, one line/subject)')
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=[proxy] + handles, loc='lower right', fontsize=8, frameon=True)
     ax.set_xscale('log'); ax.set_xlabel('decision window (s)'); ax.set_ylabel('AAD accuracy')
     ax.set_title('F5 · Backward-model AAD · within-subject')
     save_fig(fig, 'F5_aad_benchmark', FIGURES_DIR); plt.show()
