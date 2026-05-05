@@ -46,6 +46,8 @@ env/
 
 # ---------- Project-specific large / regenerable artifacts ----------
 
+docs
+
 # 41.7 GB HuggingFace release tree + 422 MB sample — never track
 hf_release/maestro-eeg-dataset/
 hf_release/maestro-eeg-dataset-sample/
