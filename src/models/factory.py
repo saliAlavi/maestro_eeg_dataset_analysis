@@ -22,6 +22,7 @@ _PACKAGES = {
     "recon_mm": "recon_mm",
     "recon_mm_gaze": "recon_mm_gaze",
     "recon_mix": "recon_mix",
+    "multipath_mm": "multipath_mm",
     "eeg_spatial": "eeg_spatial",
     "eeg_spatial_gaze": "eeg_spatial_gaze",
     "source_fusion": "source_fusion",

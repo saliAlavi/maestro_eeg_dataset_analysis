@@ -49,7 +49,7 @@ def _train(cfg: DictConfig) -> None:
     from .runner.factory import build_runner
     paths = ProjectPaths(cfg.project).ensure()
     wandb = WandbLogger.init(
-        project=cfg.project, model_version=cfg.model.name,
+        project=cfg.project, model_version=f"{cfg.model.name}{cfg.model.get('tag', '')}",
         config=OmegaConf.to_container(cfg, resolve=True),
         mode=cfg.wandb.get("mode", "online"),
         entity=cfg.wandb.get("entity", None),

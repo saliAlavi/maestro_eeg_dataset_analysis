@@ -1,0 +1,16 @@
+name: multipath_mm
+tag: ""               # appended to the wandb run name / scratch dir to label ablations
+d_model: 128
+dropout: 0.2
+paths: [env, w2v, sem, dir]   # any subset of {env, w2v, sem, dir}
+w_aux: 1.0           # per-path cross-entropy (trains each branch / stage 1)
+w_recon: 1.0         # EEG -> attended-representation reconstruction (content paths)
+w_fuse: 1.0          # fusion cross-entropy on DETACHED branch scores (trains only the mixture)
+train:
+  epochs: 40
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20
