@@ -1,0 +1,14 @@
+name: eeg_spatial_gaze
+d_model: 64
+dropout: 0.3
+F1: 16
+D: 2
+gaze_dropout: 0.2    # train-time gaze modality dropout -> keeps EEG path honest, fair no_gaze eval
+train:
+  epochs: 60
+  lr: 0.001
+  weight_decay: 0.001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

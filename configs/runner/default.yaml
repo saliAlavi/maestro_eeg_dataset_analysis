@@ -1,0 +1,5 @@
+name: aad
+device: auto          # auto | cpu | cuda
+protocols: [within, loso]
+max_folds: null       # if set, only run folds [0, max_folds) per within-subject split (quick eval)
+val_frac: 0.0         # if >0, carve this chronological tail of train as val for best-model selection

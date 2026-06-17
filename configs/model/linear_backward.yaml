@@ -1,0 +1,5 @@
+name: linear_backward
+n_lags: 16
+alpha: 1000.0
+max_train_samples: 200000
+seed: 0

@@ -1,0 +1,11 @@
+name: transfer_ssl
+h: 64                  # encoder width
+mask_frac: 0.3         # masked-channel fraction for SSL
+ssl_epochs: 60         # masked-channel SSL pretrain
+pretrain_epochs: 25    # pooled cross-subject supervised pretrain
+finetune_epochs: 25    # per-subject fine-tune (transfer/combo)
+scratch_epochs: 60     # from-scratch / ssl-finetune epochs
+seeds: [0, 1, 2]
+# NOTE: run with runner.name=transfer_ssl data=aad_source (whole-trial; uses dm.by_subject)
+train:                 # present for harness compatibility; this runner ignores it
+  epochs: 60

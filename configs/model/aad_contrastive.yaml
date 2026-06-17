@@ -1,0 +1,19 @@
+name: aad_contrastive
+K: 16              # auditory spatial filters
+D: 32             # spatio-temporal components / embedding dim
+trf: 27           # TRF temporal kernel (~420 ms @ 64 Hz)
+env_k: 17         # envelope encoder kernel
+max_lag: 24       # ±375 ms lag search
+lag_temp: 0.5
+temp: 0.1         # InfoNCE temperature
+in_batch_negs: true
+permute_candidates: true
+dropout: 0.2
+train:
+  epochs: 80
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

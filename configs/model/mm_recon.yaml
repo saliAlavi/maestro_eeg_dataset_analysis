@@ -1,0 +1,18 @@
+name: mm_recon
+K: 16            # match components
+ksize: 17       # temporal filter length (~265 ms @ 64 Hz)
+lag_min: -32    # -500 ms
+lag_max: 160    # +2500 ms  -> covers the systematic ~+1 s EEG<->audio offset + per-trial jitter
+lag_temp: 0.5   # soft-max-over-lags temperature
+d_recon: 64     # reconstruction decoder width
+dropout: 0.2
+w_route: 0.3    # deep-supervision weight on the recon & direct routes
+w_recon: 0.5    # lag-robust envelope reconstruction loss weight
+train:
+  epochs: 80
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

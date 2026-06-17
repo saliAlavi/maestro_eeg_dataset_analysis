@@ -1,0 +1,16 @@
+name: source_azi
+d_model: 96
+dropout: 0.3
+F1: 12            # CSP temporal filters per scale branch
+D: 2             # spatial filters per band
+gaze_dropout: 0.2
+label_smoothing: 0.05
+nll_weight: 0.5  # weight on per-observer heteroscedastic azimuth NLL
+train:
+  epochs: 80
+  lr: 0.001
+  weight_decay: 0.001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

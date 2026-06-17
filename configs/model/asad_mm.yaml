@@ -1,0 +1,21 @@
+name: asad_mm
+d_model: 96
+dropout: 0.3
+F1: 12
+D: 2
+label_smoothing: 0.05
+aux_weight: 0.3
+gaze_dropout: 0.2
+augment:
+  noise_std: 0.1
+  t_mask_frac: 0.2
+  n_chan_mask: 2
+  p: 0.5
+train:
+  epochs: 100
+  lr: 0.001
+  weight_decay: 0.001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

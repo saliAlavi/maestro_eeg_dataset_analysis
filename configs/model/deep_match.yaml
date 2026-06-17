@@ -1,0 +1,14 @@
+name: deep_match
+K: 8              # spatial-temporal components (CCA-like)
+ksize: 17        # temporal filter length (~265 ms @ 64 Hz)
+max_lag: 32      # lag search window in samples (±32 = ±500 ms) -> jitter robust
+lag_temp: 0.5    # soft-max-over-lags temperature
+dropout: 0.2
+train:
+  epochs: 60
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

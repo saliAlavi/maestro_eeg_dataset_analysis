@@ -1,0 +1,23 @@
+defaults:
+  - data: aad
+  - model: maestro
+  - runner: default
+  - _self_
+
+project: multimodal_aad
+seed: 0
+mode: train          # train | prepare | selftest
+log_level: INFO
+
+wandb:
+  mode: online       # online | offline | disabled
+  entity: null
+  group: null
+
+hydra:
+  run:
+    dir: /fs/scratch/PAS2301/alialavi/projects/multimodal_aad/runs/hydra/${now:%Y%m%d-%H%M%S}
+  sweep:
+    dir: /fs/scratch/PAS2301/alialavi/projects/multimodal_aad/runs/hydra_sweep/${now:%Y%m%d-%H%M%S}
+  job:
+    chdir: false

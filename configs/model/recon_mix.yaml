@@ -1,0 +1,13 @@
+name: recon_mix
+d_model: 128
+dropout: 0.2
+w_recon: 1.0        # EEG->attended reconstruction in each space (MSE + 1-corr)
+w_aux: 0.3          # per-space auxiliary classification (keeps each space discriminative)
+train:
+  epochs: 40
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20
