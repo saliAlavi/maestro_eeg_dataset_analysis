@@ -33,6 +33,8 @@ Paths (enable any subset via cfg.paths):
 """
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -43,8 +45,10 @@ from ..base import TorchModel
 from ..components import EEGEncoder, SpectralSpatialEncoder
 from ..factory import MODEL_REGISTRY
 
+log = logging.getLogger("model")
+
 CONTENT_PATHS = ("env", "w2v", "sem")
-ALL_PATHS = ("env", "w2v", "sem", "dir")
+ALL_PATHS = ("env", "w2v", "sem", "dir", "gaze")
 # EEG band each content path reads (broadband = no filter).
 PATH_BAND = {"env": "dt", "w2v": "broad", "sem": "dt", "dir": "alpha"}
 
@@ -134,6 +138,23 @@ class _DirPath(nn.Module):
         return torch.gather(pos_logits, 1, cand_pos)              # (B, S) in candidate-slot order
 
 
+class _GazePath(nn.Module):
+    """The prior best signal: overt orienting. Gaze stats + trajectory -> physical
+    position -> re-indexed into candidate slots (gaze points at the attended speaker)."""
+
+    def __init__(self, gaze_dim: int, traj_dim: int, n_cand: int, dropout: float):
+        super().__init__()
+        self.head = nn.Sequential(
+            nn.Linear(gaze_dim + traj_dim, 64), nn.ELU(), nn.Dropout(dropout),
+            nn.Linear(64, 64), nn.ELU(), nn.Dropout(dropout),
+            nn.Linear(64, n_cand),
+        )
+
+    def forward(self, gaze: torch.Tensor, gaze_traj: torch.Tensor, cand_pos: torch.Tensor):
+        pos_logits = self.head(torch.cat([gaze, gaze_traj], -1))
+        return torch.gather(pos_logits, 1, cand_pos)
+
+
 class _MultiPath(nn.Module):
     def __init__(self, fd: dict, paths, d_model: int = 128, dropout: float = 0.2):
         super().__init__()
@@ -148,6 +169,8 @@ class _MultiPath(nn.Module):
             for p in self.paths if p in CONTENT_PATHS
         })
         self.dir = _DirPath(n_chans, n_cand, dropout) if "dir" in self.paths else None
+        self.gaze = (_GazePath(fd["gaze_dim"], fd.get("gaze_traj_dim", 0), n_cand, dropout)
+                     if "gaze" in self.paths else None)
         self.mix = nn.Parameter(torch.zeros(len(self.paths)))     # learned softmax fusion
 
     def _eeg(self, eeg: torch.Tensor, band: str) -> torch.Tensor:
@@ -157,11 +180,13 @@ class _MultiPath(nn.Module):
             return self.alpha(eeg)
         return eeg                                                # broadband
 
-    def forward(self, eeg, cand: dict, cand_pos):
+    def forward(self, eeg, cand: dict, cand_pos, gaze=None, gaze_traj=None):
         per, recon = {}, {}
         for p in self.paths:
             if p == "dir":
                 per[p] = self.dir(self._eeg(eeg, "alpha"), cand_pos)
+            elif p == "gaze":
+                per[p] = self.gaze(gaze, gaze_traj, cand_pos)
             else:
                 s, g = self.content[p](self._eeg(eeg, PATH_BAND[p]), cand[p])
                 per[p], recon[p] = s, g
@@ -200,11 +225,15 @@ class MultiPathMMModel(TorchModel):
             c["sem"] = batch["cand_sem"]
         return c
 
+    def _run(self, batch):
+        """Forward the module from a batch dict (routes gaze tensors to the gaze path)."""
+        return self.module(batch["eeg"], self._cand(batch), batch["cand_pos"],
+                           gaze=batch.get("gaze"), gaze_traj=batch.get("gaze_traj"))
+
     def compute_loss(self, batch):
         att = batch["attended"]
         cand = self._cand(batch)
-        per, recon, fused_detached, fused, mw = self.module(
-            batch["eeg"], cand, batch["cand_pos"])
+        per, recon, fused_detached, fused, mw = self._run(batch)
         idx = torch.arange(att.shape[0], device=att.device)
 
         aux = sum(F.cross_entropy(per[p], att) for p in self.paths) / len(self.paths)
@@ -228,5 +257,119 @@ class MultiPathMMModel(TorchModel):
         return total, logs
 
     def predict_logits(self, batch, present_override=None):
-        _, _, _, fused, _ = self.module(batch["eeg"], self._cand(batch), batch["cand_pos"])
+        _, _, _, fused, _ = self._run(batch)
         return fused
+
+    def evaluate(self, view, ctx, prefix="test/", present_override=None) -> dict:
+        """Window-level slot accuracy PLUS trial-level PHYSICAL-speaker accuracy.
+
+        Each window has its own candidate permutation, so window 'slot' posteriors
+        are not directly averagable. We map each window's slot-softmax back to the 4
+        PHYSICAL speakers via cand_pos, accumulate per trial, then argmax -> one
+        physical-speaker decision per trial. This matches the published 4-class
+        baselines (which decide once per ~30 s trial) and lets us report hemisphere /
+        inner-outer (meaningful only on physical-speaker indices)."""
+        import collections
+
+        import numpy as np
+        from ..base import compute_aad_metrics
+
+        self.module.eval()
+        device = ctx.device
+        loader = view.as_torch_loader(self.batch_size, shuffle=False,
+                                      num_workers=self.num_workers)
+        slot_pred, slot_true, phys_post = [], [], []
+        with torch.no_grad():
+            for batch in loader:
+                batch = self._to_device(batch, device)
+                logits = self.predict_logits(batch, present_override=present_override)
+                logits = logits.masked_fill(~batch["cand_mask"].bool(), float("-inf"))
+                soft = torch.softmax(logits, 1)                       # (B, S) over slots
+                pp = torch.zeros_like(soft).scatter(1, batch["cand_pos"], soft)  # (B,4) physical
+                phys_post.append(pp.cpu().numpy())
+                slot_pred.append(logits.argmax(1).cpu().numpy())
+                slot_true.append(batch["attended"].cpu().numpy())
+        if not slot_true:
+            return {f"{prefix}n": 0}
+        phys_post = np.concatenate(phys_post)
+        out = compute_aad_metrics(np.concatenate(slot_pred), np.concatenate(slot_true),
+                                  prefix=prefix, task_type="match", n_cand=4)
+        # trial-level aggregation (windows materialise in view-index order, shuffle=False)
+        recs, idxs = view.records, view.indices
+        agg = collections.defaultdict(lambda: np.zeros(4, np.float64))
+        att = {}
+        for k, wi in enumerate(idxs):
+            r = recs[wi.rec_ptr]
+            key = (int(r.subject), int(r.trial_k))
+            agg[key] += phys_post[k]
+            att[key] = int(r.attended) - 1
+        keys = list(agg)
+        tr_pred = np.array([agg[t].argmax() for t in keys])
+        tr_true = np.array([att[t] for t in keys])
+        out.update(compute_aad_metrics(tr_pred, tr_true, prefix=f"{prefix}trial_",
+                                       task_type="speaker", n_cand=4))
+        # export per-trial physical-speaker posteriors (test only) for late fusion with
+        # the gaze-logreg baseline. Each trial is out-of-sample in its CV fold.
+        if prefix == "test/" and getattr(ctx, "model_dir", None) is not None:
+            import pandas as pd
+            recs2 = []
+            for (subj, tr) in keys:
+                v = agg[(subj, tr)]
+                v = v / max(v.sum(), 1e-9)
+                recs2.append(dict(subject=subj, trial=tr, attended=att[(subj, tr)],
+                                  p0=v[0], p1=v[1], p2=v[2], p3=v[3]))
+            ctx.model_dir.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame(recs2).to_parquet(ctx.model_dir / f"post_{ctx.split_name}.parquet")
+        return out
+
+    # ---- two-stage training: branches first, then OUT-OF-FOLD fusion ----------
+    def fit(self, train_view, val_view, ctx) -> dict:
+        # Phase 1: train the per-path matchers only (fusion disabled). The mixture
+        # gets no gradient here, so it stays uniform; branches are selected by
+        # best-on-val (early stop), which guards against the memorisation that made
+        # the joint-trained fusion trust overfit content paths.
+        saved = self.w_fuse
+        self.w_fuse = 0.0
+        try:
+            best = super().fit(train_view, val_view, ctx)
+        finally:
+            self.w_fuse = saved
+        # Phase 2: refit the softmax mixture on the held-out val split with the
+        # branches FROZEN. The fusion now sees per-path posteriors on data the
+        # branches did not train their weights on -> it can down-weight paths that
+        # only memorised (the documented "tune fusion out-of-fold" fix).
+        if val_view is not None and len(val_view) and len(self.paths) > 1:
+            self._fit_fusion_oof(val_view, ctx)
+        return best
+
+    def _fit_fusion_oof(self, view, ctx, steps: int = 400, lr: float = 0.05) -> None:
+        self.module.eval()
+        device = ctx.device
+        loader = view.as_torch_loader(self.batch_size, shuffle=False,
+                                      num_workers=self.num_workers)
+        Z = {p: [] for p in self.paths}
+        Y = []
+        with torch.no_grad():
+            for batch in loader:
+                batch = self._to_device(batch, device)
+                per, _, _, _, _ = self._run(batch)
+                for p in self.paths:
+                    Z[p].append(_zc(per[p]).detach())
+                Y.append(batch["attended"])
+        if not Y:
+            return
+        Zc = {p: torch.cat(Z[p], 0) for p in self.paths}     # (N, S) per path
+        y = torch.cat(Y, 0)
+        mix = self.module.mix.detach().clone().requires_grad_(True)
+        opt = torch.optim.Adam([mix], lr=lr)
+        for _ in range(steps):
+            opt.zero_grad()
+            mw = torch.softmax(mix, 0)
+            fused = sum(mw[i] * Zc[p] for i, p in enumerate(self.paths))
+            F.cross_entropy(fused, y).backward()
+            opt.step()
+        with torch.no_grad():
+            self.module.mix.copy_(mix.detach())
+        mw = torch.softmax(self.module.mix, 0).tolist()
+        log.info("[%s] %s: OOF fusion mix = %s", self.name, ctx.split_name,
+                 {p: round(float(mw[i]), 3) for i, p in enumerate(self.paths)})

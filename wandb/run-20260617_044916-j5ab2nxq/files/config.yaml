@@ -1,0 +1,202 @@
+_wandb:
+    value:
+        cli_version: 0.25.0
+        e:
+            oleiit6uvckq7m7w6aie7twv9v218lix:
+                args:
+                    - mode=train
+                    - model=multipath_mm
+                    - data=aad_multipath
+                    - runner.protocols=[within]
+                    - runner.val_frac=0.2
+                    - model.paths=[env,w2v,sem,dir,gaze]
+                    - model.tag=-allgaze
+                    - model.dropout=0.2
+                    - model.train.weight_decay=0.0001
+                    - data.window.overlap=0.875
+                cpu_count: 128
+                cpu_count_logical: 128
+                cudaVersion: "13.0"
+                disk:
+                    /:
+                        total: "204010946560"
+                        used: "49597513728"
+                executable: /users/PAS2301/alialavi/miniconda3/envs/nips/bin/python
+                git:
+                    commit: 59b28d91041cdfd60c8599caee35f1974aba1db2
+                    remote: https://github.com/saliAlavi/multimodal_aad_dataset_osu.git
+                gpu: NVIDIA A100-PCIE-40GB
+                gpu_count: 2
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 6912
+                      memoryTotal: "42949672960"
+                      name: NVIDIA A100-PCIE-40GB
+                      uuid: GPU-3280a062-4401-b1cd-64b9-193ac4935956
+                    - architecture: Ampere
+                      cudaCores: 6912
+                      memoryTotal: "42949672960"
+                      name: NVIDIA A100-PCIE-40GB
+                      uuid: GPU-64946408-faef-d927-5153-e205042cdc27
+                host: a0149.ten.osc.edu
+                memory:
+                    total: "540581806080"
+                os: Linux-5.14.0-570.119.1.el9_6.x86_64-x86_64-with-glibc2.34
+                program: -m src.main
+                python: CPython 3.11.14
+                root: /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu
+                slurm:
+                    cluster_name: ascend
+                    conf: /var/spool/slurmd/conf-cache/slurm.conf
+                    cpus_on_node: "17"
+                    cpus_per_task: "17"
+                    gpus_on_node: "1"
+                    gpus_per_node: "1"
+                    gtids: "0"
+                    job_account: pas2966
+                    job_cpus_per_node: "17"
+                    job_end_time: "1781714945"
+                    job_gid: "7645"
+                    job_gpus: "0"
+                    job_gres: gres/gpu:1
+                    job_id: "5676737"
+                    job_name: mp3_allg
+                    job_nodelist: a0149
+                    job_num_nodes: "1"
+                    job_partition: nextgen
+                    job_qos: ascend-default
+                    job_start_time: "1781686145"
+                    job_uid: "39172"
+                    job_user: alialavi
+                    jobid: "5676737"
+                    localid: "0"
+                    mem_per_node: "65536"
+                    nnodes: "1"
+                    nodeid: "0"
+                    nodelist: a0149
+                    oom_kill_step: "1"
+                    prio_process: "0"
+                    procid: "0"
+                    script_context: prolog_task
+                    submit_dir: /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu
+                    submit_host: ascend-login01.hpc.osc.edu
+                    task_pid: "1935138"
+                    tasks_per_node: "1"
+                    time_limit: "28800"
+                    topology_addr: a0149
+                    topology_addr_pattern: node
+                    tres_per_task: cpu=8
+                startedAt: "2026-06-17T08:49:16.896876Z"
+                writerId: oleiit6uvckq7m7w6aie7twv9v218lix
+        m: []
+        python_version: 3.11.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 50
+                - 53
+            "2":
+                - 1
+                - 5
+                - 50
+                - 53
+            "3":
+                - 2
+                - 13
+                - 16
+                - 61
+                - 62
+            "4": 3.11.14
+            "5": 0.25.0
+            "8":
+                - 2
+            "10":
+                - 20
+            "12": 0.25.0
+            "13": linux-x86_64
+data:
+    value:
+        cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__multipath
+        kind: main
+        n_folds: 5
+        name: aad
+        overwrite_cache: false
+        seed: 0
+        split_mode: chrono_forward
+        subjects:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+            - 10
+            - 11
+            - 12
+            - 13
+            - 14
+            - 15
+            - 16
+        window:
+            audio_feats: true
+            audio_level_norm: false
+            audio_norm: table_power
+            eeg_lp_hz: 0
+            hp_hz: 1
+            lp_hz: 10
+            mm_task: match
+            n_bands: 28
+            norm_cand: true
+            norm_eeg: true
+            overlap: 0.875
+            sr: 64
+            w2v_pca_dim: 64
+            win_s: 5
+log_level:
+    value: INFO
+mode:
+    value: train
+model:
+    value:
+        d_model: 128
+        dropout: 0.2
+        name: multipath_mm
+        paths:
+            - env
+            - w2v
+            - sem
+            - dir
+            - gaze
+        tag: -allgaze
+        train:
+            batch_size: 64
+            epochs: 30
+            grad_clip: 1
+            log_every: 20
+            lr: 0.001
+            num_workers: 4
+            weight_decay: 0.0001
+        w_aux: 1
+        w_fuse: 1
+        w_recon: 1
+project:
+    value: multimodal_aad
+runner:
+    value:
+        device: auto
+        max_folds: null
+        name: aad
+        protocols:
+            - within
+        val_frac: 0.2
+seed:
+    value: 0
+wandb:
+    value:
+        entity: null
+        group: null
+        mode: online

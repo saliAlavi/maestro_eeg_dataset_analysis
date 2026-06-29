@@ -1,0 +1,15 @@
+name: content_trf
+tag: ""
+hidden: 64
+dropout: 0.2
+band: broad           # broad | dt  (broadband beat restricted bands for content)
+w_recon: 1.0
+shuffle_eeg: false    # true = EEG-shuffle NULL control (must collapse to chance)
+train:
+  epochs: 40
+  lr: 0.001
+  weight_decay: 0.001
+  batch_size: 64
+  num_workers: 4
+  grad_clip: 1.0
+  log_every: 20

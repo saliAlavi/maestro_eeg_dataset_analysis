@@ -1,0 +1,190 @@
+_wandb:
+    value:
+        cli_version: 0.25.0
+        e:
+            achw867i82abssh0ciug6m1nm5ix3mr8:
+                args:
+                    - mode=train
+                    - model=content_trf
+                    - data=aad_multipath
+                    - runner.protocols=[within]
+                    - runner.val_frac=0.2
+                    - data.window.overlap=0.875
+                    - model.band=broad
+                    - model.tag=-broadnull
+                    - model.shuffle_eeg=true
+                cpu_count: 128
+                cpu_count_logical: 128
+                cudaVersion: "13.0"
+                disk:
+                    /:
+                        total: "204010946560"
+                        used: "47025553408"
+                executable: /users/PAS2301/alialavi/miniconda3/envs/nips/bin/python
+                git:
+                    commit: 59b28d91041cdfd60c8599caee35f1974aba1db2
+                    remote: https://github.com/saliAlavi/multimodal_aad_dataset_osu.git
+                gpu: NVIDIA A100-PCIE-40GB
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 6912
+                      memoryTotal: "42949672960"
+                      name: NVIDIA A100-PCIE-40GB
+                      uuid: GPU-bfd842c3-3757-332f-7712-733c514490a8
+                host: a0232.ten.osc.edu
+                memory:
+                    total: "540581801984"
+                os: Linux-5.14.0-570.119.1.el9_6.x86_64-x86_64-with-glibc2.34
+                program: -m src.main
+                python: CPython 3.11.14
+                root: /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu
+                slurm:
+                    cluster_name: ascend
+                    conf: /var/spool/slurmd/conf-cache/slurm.conf
+                    cpus_on_node: "17"
+                    cpus_per_task: "17"
+                    gpus_on_node: "1"
+                    gpus_per_node: "1"
+                    gtids: "0"
+                    job_account: pas2966
+                    job_cpus_per_node: "17"
+                    job_end_time: "1781856110"
+                    job_gid: "7645"
+                    job_gpus: "1"
+                    job_gres: gres/gpu:1
+                    job_id: "5707213"
+                    job_name: ctrf_broadN
+                    job_nodelist: a0232
+                    job_num_nodes: "1"
+                    job_partition: nextgen
+                    job_qos: ascend-default
+                    job_start_time: "1781834510"
+                    job_uid: "39172"
+                    job_user: alialavi
+                    jobid: "5707213"
+                    localid: "0"
+                    mem_per_node: "65536"
+                    nnodes: "1"
+                    nodeid: "0"
+                    nodelist: a0232
+                    oom_kill_step: "1"
+                    prio_process: "0"
+                    procid: "0"
+                    script_context: prolog_task
+                    submit_dir: /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu
+                    submit_host: ascend-login01.hpc.osc.edu
+                    task_pid: "2283021"
+                    tasks_per_node: "1"
+                    time_limit: "21600"
+                    topology_addr: a0232
+                    topology_addr_pattern: node
+                    tres_per_task: cpu=8
+                startedAt: "2026-06-19T02:02:03.495447Z"
+                writerId: achw867i82abssh0ciug6m1nm5ix3mr8
+        m: []
+        python_version: 3.11.14
+        t:
+            "1":
+                - 1
+                - 5
+                - 50
+                - 53
+            "2":
+                - 1
+                - 5
+                - 50
+                - 53
+            "3":
+                - 2
+                - 13
+                - 16
+                - 61
+                - 62
+            "4": 3.11.14
+            "5": 0.25.0
+            "8":
+                - 2
+            "10":
+                - 20
+            "12": 0.25.0
+            "13": linux-x86_64
+data:
+    value:
+        cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__multipath
+        kind: main
+        n_folds: 5
+        name: aad
+        overwrite_cache: false
+        seed: 0
+        split_mode: chrono_forward
+        subjects:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+            - 10
+            - 11
+            - 12
+            - 13
+            - 14
+            - 15
+            - 16
+        window:
+            audio_feats: true
+            audio_level_norm: false
+            audio_norm: table_power
+            eeg_lp_hz: 0
+            hp_hz: 1
+            lp_hz: 10
+            mm_task: match
+            n_bands: 28
+            norm_cand: true
+            norm_eeg: true
+            overlap: 0.875
+            sr: 64
+            w2v_pca_dim: 64
+            win_s: 5
+log_level:
+    value: INFO
+mode:
+    value: train
+model:
+    value:
+        band: broad
+        dropout: 0.2
+        hidden: 64
+        name: content_trf
+        shuffle_eeg: true
+        tag: -broadnull
+        train:
+            batch_size: 64
+            epochs: 40
+            grad_clip: 1
+            log_every: 20
+            lr: 0.001
+            num_workers: 4
+            weight_decay: 0.001
+        w_recon: 1
+project:
+    value: multimodal_aad
+runner:
+    value:
+        device: auto
+        max_folds: null
+        name: aad
+        protocols:
+            - within
+        val_frac: 0.2
+seed:
+    value: 0
+wandb:
+    value:
+        entity: null
+        group: null
+        mode: online

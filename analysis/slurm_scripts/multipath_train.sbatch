@@ -21,10 +21,11 @@ PY=/users/PAS2301/alialavi/miniconda3/envs/nips/bin/python
 
 PATHS="${1:-[env,w2v,sem,dir]}"
 TAG="${2:--full}"
+EXTRA="${3:-}"                               # optional extra hydra overrides
 export WANDB_MODE="${WANDB_MODE:-offline}"   # compute nodes have no internet; sync after
 
-echo "multipath_mm  paths=${PATHS}  tag=${TAG}"
+echo "multipath_mm  paths=${PATHS}  tag=${TAG}  extra=${EXTRA}"
 $PY -m src.main mode=train \
     model=multipath_mm data=aad_multipath \
-    runner.protocols=[within] \
-    model.paths="${PATHS}" model.tag="${TAG}"
+    runner.protocols=[within] runner.val_frac=0.2 \
+    model.paths="${PATHS}" model.tag="${TAG}" ${EXTRA}

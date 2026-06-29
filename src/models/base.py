@@ -176,7 +176,8 @@ class TorchModel(AbstractModel):
                  self.name, ctx.split_name, n_params / 1e6, len(train_view),
                  self.epochs, device)
 
-        best = {"val/acc_4class": -1.0}
+        best = {}
+        best_acc = -1.0
         best_state = None
         for ep in range(self.epochs):
             self.module.train()
@@ -204,7 +205,9 @@ class TorchModel(AbstractModel):
             if val_view is not None and len(val_view):
                 vm = self.evaluate(val_view, ctx, prefix="val/")
                 ep_logs.update({f"{self.name}/{ctx.split_name}/{k}": v for k, v in vm.items()})
-                if vm.get("val/acc_4class", 0) > best["val/acc_4class"]:
+                cur = vm.get("val/acc", 0.0)        # 4-class accuracy; always present
+                if cur > best_acc:
+                    best_acc = cur
                     best = vm
                     best_state = {k: v.detach().cpu().clone()
                                   for k, v in self.module.state_dict().items()}
@@ -217,8 +220,8 @@ class TorchModel(AbstractModel):
         # restore best-on-val weights so test uses the selected model, not the last epoch.
         if best_state is not None:
             self.module.load_state_dict(best_state)
-            log.info("[%s] %s: restored best val model (val/acc_4class=%.4f)",
-                     self.name, ctx.split_name, best["val/acc_4class"])
+            log.info("[%s] %s: restored best val model (val/acc=%.4f)",
+                     self.name, ctx.split_name, best_acc)
         return best
 
     def predict(self, view, ctx, present_override=None) -> np.ndarray:

@@ -29,6 +29,8 @@ FEATS = os.environ.get("FEATS", "env,spec,w2v,sem,dir").split(",")
 FUSE = os.environ.get("FUSE", "avg")
 SHUF = os.environ.get("SHUFFLE_EEG", "0") == "1"          # break EEG<->label (content validation)
 SHUF_IN = os.environ.get("SHUFFLE_INPUT", "0") == "1"    # break EEG AND gaze<->label (full-pipeline null)
+PERMUTE = os.environ.get("PERMUTE", "0") == "1"          # per-trial candidate shuffle+relabel -> label
+#                                                          = attended STREAM, decoupled from position
 CONTENT = [f for f in FEATS if f != "dir"]
 
 
@@ -57,7 +59,18 @@ def load():
         E.append(eeg); [CD[k].append(cand[k]) for k in CONTENT]; G.append(g); Y.append(y); TK.append(tk); SB.append(np.full(N, s - 1))
     T = min(e.shape[-1] for e in E)
     E = np.concatenate([e[:, :, :T] for e in E]); CD = {k: np.concatenate([c[:, :, :, :T] for c in v]) for k, v in CD.items()}
-    return E, CD, np.concatenate(G), np.concatenate(Y), np.concatenate(TK), np.concatenate(SB)
+    G = np.concatenate(G); Y = np.concatenate(Y); TK = np.concatenate(TK); SB = np.concatenate(SB)
+    if PERMUTE:
+        # Per-trial PERMUTE of the 4 candidate streams + relabel to the attended stream's new
+        # slot. The label becomes "which STREAM" (pure content), DECOUPLED from physical speaker
+        # position/spatial identity -> content and the spatial-label task are not entangled.
+        rng = np.random.default_rng(20260619)
+        for i in range(len(Y)):
+            p = rng.permutation(4)
+            for k in CONTENT:
+                CD[k][i] = CD[k][i][p]
+            Y[i] = int(np.flatnonzero(p == Y[i])[0])
+    return E, CD, G, Y, TK, SB
 
 
 class FeatNet(nn.Module):                                  # temporal-corr matcher vs frozen candidate
@@ -104,36 +117,71 @@ def branch_inputs(E, CD, G, k, idx):
     return [E[idx], CD[k][idx]] if k != "dir" else [E[idx], G[idx]]
 
 
-def fit_branch(E, CD, G, Y, k, idx, ep):
+def fit_branch(E, CD, G, Y, k, idx, ep, init=None, lr=1e-3):
     inp = branch_inputs(E, CD, G, k, idx)
     m = FeatNet(CD[k].shape[2]) if k != "dir" else DirNet(G.shape[1])
-    return _train(m, inp, Y[idx], ep)
+    if init is not None:
+        m.load_state_dict(init)
+    return _train(m, inp, Y[idx], ep, lr=lr)
+
+
+def pretrain_content(E, CD, G, Y, SB, TK, s, ep_pre, exclude_tk=None):
+    """Supervised cross-subject pretrain of CONTENT branches on OTHER subjects.
+    TRIAL-DISJOINT: all subjects share the same clips + attended schedule, so the pool
+    MUST exclude the held-out subject's TEST trial_k's -- otherwise a learnable audio path
+    memorises the test clips (the w2v leak). dir stays per-subject. Returns init states."""
+    mask = (SB != s)
+    if exclude_tk is not None:
+        mask &= ~np.isin(TK, np.asarray(list(exclude_tk)))
+    pool = np.where(mask)[0]
+    states = {}
+    for k in CONTENT:
+        m = fit_branch(E, CD, G, Y, k, pool, ep_pre)
+        states[k] = {kk: v.detach().cpu().clone() for kk, v in m.state_dict().items()}
+    return states
 
 
 def post_branch(m, E, CD, G, k, idx):
     return _post(m, branch_inputs(E, CD, G, k, idx))
 
 
-def evaluate(E, CD, G, Y, tr, te, ep):
+def _bcfg(k, pre, ep, ft_ep):
+    """Per-branch (epochs, lr, init): pretrained content branches fine-tune (fewer ep,
+    lower lr) from the cross-subject init; everything else trains fresh."""
+    if pre and k in pre:
+        return ft_ep, 5e-4, pre[k]
+    return ep, 1e-3, None
+
+
+def evaluate(E, CD, G, Y, tr, te, ep, pre=None, ft_ep=12):
     yte = Y[te]
     test_post = {}; out = {}
     for k in FEATS:
-        m = fit_branch(E, CD, G, Y, k, tr, ep)
+        e_, lr_, init_ = _bcfg(k, pre, ep, ft_ep)
+        m = fit_branch(E, CD, G, Y, k, tr, e_, init=init_, lr=lr_)
         test_post[k] = post_branch(m, E, CD, G, k, te)
         out[k] = (test_post[k].argmax(1) == yte).mean()
     # stage-2 fusion of FROZEN branch posteriors
     avg = sum(test_post[k] for k in FEATS) / len(FEATS)
     out["avg"] = (avg.argmax(1) == yte).mean()
-    if FUSE == "logistic":
+    if FUSE in ("logistic", "rel"):
         oof = {k: np.zeros((len(tr), 4), np.float32) for k in FEATS}
-        for it, iv in StratifiedKFold(2, shuffle=True, random_state=0).split(tr, Y[tr]):
+        for it, iv in StratifiedKFold(3, shuffle=True, random_state=0).split(tr, Y[tr]):
             a, b = tr[it], tr[iv]
             for k in FEATS:
-                oof[k][iv] = post_branch(fit_branch(E, CD, G, Y, k, a, ep), E, CD, G, k, b)
-        Xtr = np.concatenate([np.log(oof[k] + 1e-9) for k in FEATS], 1)
-        Xte = np.concatenate([np.log(test_post[k] + 1e-9) for k in FEATS], 1)
-        lr = LogisticRegression(max_iter=1000).fit(Xtr, Y[tr])
-        out["fused"] = (lr.predict(Xte) == yte).mean()
+                e_, lr_, init_ = _bcfg(k, pre, ep, ft_ep)
+                oof[k][iv] = post_branch(fit_branch(E, CD, G, Y, k, a, e_, init=init_, lr=lr_), E, CD, G, k, b)
+        if FUSE == "logistic":
+            Xtr = np.concatenate([np.log(oof[k] + 1e-9) for k in FEATS], 1)
+            Xte = np.concatenate([np.log(test_post[k] + 1e-9) for k in FEATS], 1)
+            lr = LogisticRegression(max_iter=1000).fit(Xtr, Y[tr])
+            out["fused"] = (lr.predict(Xte) == yte).mean()
+        else:  # rel: weight each branch by its OOF accuracy EXCESS over chance (per subject)
+            w = {k: max(0.0, (oof[k].argmax(1) == Y[tr]).mean() - 0.25) for k in FEATS}
+            tot = sum(w.values()) or 1.0
+            fused = sum((w[k] / tot) * test_post[k] for k in FEATS)
+            out["fused"] = (fused.argmax(1) == yte).mean()
+            out["_relw"] = {k: w[k] / tot for k in FEATS}
     else:
         out["fused"] = out["avg"]
     return out
@@ -142,19 +190,28 @@ def evaluate(E, CD, G, Y, tr, te, ep):
 def main():
     torch.manual_seed(0); np.random.seed(0)
     E, CD, G, Y, TK, SB = load(); ep = int(os.environ.get("EPOCHS", "30"))
-    print(f"FEATS={FEATS} FUSE={FUSE} SHUF={SHUF} ep={ep} n={len(Y)}  (INTRA-SUBJECT 5-fold, chance 0.25)", flush=True)
-    rows = []
+    PRETRAIN = os.environ.get("PRETRAIN", "0") == "1"
+    pre_ep = int(os.environ.get("PRE_EPOCHS", "25")); ft_ep = int(os.environ.get("FT_EPOCHS", "12"))
+    print(f"FEATS={FEATS} FUSE={FUSE} SHUF={SHUF} ep={ep} PRETRAIN={PRETRAIN} "
+          f"pre_ep={pre_ep} ft_ep={ft_ep} n={len(Y)}  (INTRA-SUBJECT 5-fold, chance 0.25)", flush=True)
+    rows = []; relws = []
     for s in np.unique(SB):
         m_ = SB == s; idx = np.where(m_)[0]; Ys = Y[idx]
         accs = {k: [] for k in FEATS + ["avg", "fused"]}
         for tr_i, te_i in StratifiedKFold(5, shuffle=True, random_state=0).split(idx, Ys):
-            r = evaluate(E, CD, G, Y, idx[tr_i], idx[te_i], ep)
+            # TRIAL-DISJOINT pretrain: exclude this fold's test trial_k's from the pool
+            pre = (pretrain_content(E, CD, G, Y, SB, TK, s, pre_ep, exclude_tk=set(TK[idx[te_i]]))
+                   if PRETRAIN else None)
+            r = evaluate(E, CD, G, Y, idx[tr_i], idx[te_i], ep, pre=pre, ft_ep=ft_ep)
             for k in accs: accs[k].append(r[k])
+            if "_relw" in r: relws.append(r["_relw"])
         row = {k: float(np.mean(v)) for k, v in accs.items()}; rows.append(row)
         print("  S%2d  " % (int(s) + 1) + " ".join(f"{k}={row[k]:.3f}" for k in FEATS) + f"  avg={row['avg']:.3f} FUSED={row['fused']:.3f}", flush=True)
     print(f"\n=== 2-STAGE intra-subject (chance 0.25) {'<-- FULL-PIPELINE EEG-SHUFFLE NULL' if SHUF else ''} ===")
     for k in FEATS + ["avg", "fused"]:
         v = np.array([r[k] for r in rows]); print(f"  {k:6s} = {v.mean():.3f} +- {v.std():.3f}")
+    if relws:
+        print("  mean reliability weights: " + " ".join(f"{k}={np.mean([w[k] for w in relws]):.3f}" for k in FEATS))
 
 
 if __name__ == "__main__":
