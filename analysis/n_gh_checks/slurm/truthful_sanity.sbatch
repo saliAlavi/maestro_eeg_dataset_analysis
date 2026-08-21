@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --account=PAS2966
+#SBATCH --job-name=truth_san
+#SBATCH --output=/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/slurm_logs/truth_san_%A.out
+#SBATCH --error=/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/slurm_logs/truth_san_%A.err
+#SBATCH --time=00:45:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=96G
+#SBATCH --gpus-per-node=1
+#SBATCH --partition=debug-nextgen
+#SBATCH --requeue
+set -euo pipefail
+NIPS=/users/PAS2301/alialavi/miniconda3/envs/nips/bin/python
+echo "host=$(hostname) gpu=$(nvidia-smi -L 2>/dev/null|head -1)"
+echo "=== TRUTHFUL GH (their model, content-disjoint + null) ==="
+cd /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/n_gh_checks
+$NIPS truthful_gh.py --subject 1 --protocol within
+$NIPS truthful_gh.py --subject 1 --protocol loso
+echo "=== LEARNED-HEAD (our model) ==="
+cd /users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/baseline_model/models
+PROTOCOL=within NSEED=3 $NIPS learned_head_ablation.py 1
+PROTOCOL=loso   NSEED=3 $NIPS learned_head_ablation.py 1
+echo "TRUTH SANITY DONE"

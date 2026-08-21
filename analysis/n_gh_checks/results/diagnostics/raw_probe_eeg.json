@@ -1,0 +1,9 @@
+{
+  "n_windows": 1600,
+  "n_subjects": 16,
+  "subject_chance": 0.0625,
+  "attended_chance": 0.25,
+  "subject_from_RAW_eeg": 0.8995833333333332,
+  "subject_from_collapsed_brain_enc": 0.10083333333333333,
+  "attended_from_RAW_eeg": 0.3370833333333333
+}

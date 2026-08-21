@@ -183,6 +183,133 @@ def curve(tag="curve_vlaaimbmm_loso", label="VLAAI + multiband + margin, LOSO"):
     return "\n".join(L) + "\n"
 
 
+def fuse_curve(tag="curve_fusewin_within"):
+    """Fusion x decision-window curve: content + EEG-spatial fused (admissible OOF weight),
+    per window, vs the EEG-shuffle null, paired one-sided t across subjects."""
+    files = sorted(glob.glob(str(RUN_ROOT / "results" / tag / "s*.json")))
+    if not files:
+        return None
+    by_w = defaultdict(lambda: defaultdict(list))
+    for pj in files:
+        for r in json.load(open(pj)):
+            for k in ("content", "spatial", "fused_oof", "fused_b15", "null_four"):
+                if r.get(k) is not None:
+                    by_w[r["win_s"]][k].append(float(r[k]))
+    L = ["# Intra-subject fusion x decision-window curve (EEG content + EEG-spatial)\n",
+         "Within-subject, 5-fold pooled. **content** = VLAAI 28-band backward decoder (trained @5s, "
+         "5-seed reconstruction ensemble, early-stopped on inner-val); **spatial** = posterior alpha+beta band-power, "
+         "gaze-residualised covert-direction LDA (retrained per window); **fused_oof** = the two "
+         "fused with an **admissible out-of-fold-tuned** weight (never tuned on the scored fold). "
+         "Candidates are the four real talkers -> chance 0.25 at every window. `Δ` = fused_oof minus "
+         f"the EEG-shuffle null; paired one-sided t across {len(files)} subjects.\n",
+         "| window | content | spatial | **fused (OOF)** | fused (b=1.5) | null | Δ (neural) | t | p |",
+         "|---|---|---|---|---|---|---|---|---|"]
+    for w in sorted(by_w):
+        d = by_w[w]
+        fm, flo, fhi = _boot(d["fused_oof"])
+        nm = float(np.mean(d["null_four"]))
+        t, p = _ttest_rel(d["fused_oof"], d["null_four"])
+        L.append(f"| {w:g}s | {np.mean(d['content']):.3f} | {np.mean(d['spatial']):.3f} | "
+                 f"**{fm:.3f}** [{flo:.3f},{fhi:.3f}] | {np.mean(d['fused_b15']):.3f} | {nm:.3f} | "
+                 f"{fm - nm:+.3f} | {t:.2f} | {p:.1e} |")
+    L += ["\n- **Both EEG branches are honest:** content is loudness/schedule-free (scale-free "
+          "correlation + permuted slots); the spatial branch is **gaze-residualised**, so it reads "
+          "*covert* neural direction, not eye movements. The fusion weight is out-of-fold tuned.",
+          "- Fusion + window together carry the intra four-way well above either branch alone; the "
+          "EEG-shuffle null stays flat, so the gain is neural.\n"]
+    return "\n".join(L) + "\n"
+
+
+def fuse_curve_loso(tag="curve_fusewin_loso"):
+    """LOSO fusion x window. The per-subject JSONs carry the raw (content, spatial, label)
+    arrays, so the fusion weight b is tuned ADMISSIBLY across subjects: for held-out subject S,
+    b is chosen on the OTHER 15 subjects' pooled predictions, then applied to S."""
+    files = sorted(glob.glob(str(RUN_ROOT / "results" / tag / "s*.json")))
+    if not files:
+        return None
+    data = {}
+    for pj in files:
+        rs = json.load(open(pj)); data[rs[0]["test_subject"]] = {r["win_s"]: r for r in rs}
+    subs = sorted(data); wins = sorted({w for s in subs for w in data[s]}); BG = [0, .5, 1, 1.5, 2, 3, 4]
+    L = ["# Intra→LOSO fusion x decision-window curve (EEG content + EEG-spatial), cross-subject\n",
+         "Held-out TEST subject, train on the other 15. **content** = VLAAI 28-band (5-seed, "
+         "margin, content-disjoint early-stop); **spatial** = gaze-residualised covert-direction "
+         "LDA. **fused (OOF)** = fused with a weight tuned on the OTHER 15 subjects (admissible). "
+         f"Chance 0.25 every window. `Δ` = fused_oof − null; paired one-sided t across {len(subs)} subjects.\n",
+         "| window | content | spatial | **fused (OOF)** | fused (b=1.5) | null | Δ (neural) | t | p |",
+         "|---|---|---|---|---|---|---|---|---|"]
+    for w in wins:
+        foof, cont, spat, fb15, nul = [], [], [], [], []
+        for s in subs:
+            r = data[s].get(w)
+            if not r:
+                continue
+            oth = [ss for ss in subs if ss != s and w in data[ss]]
+            def bacc(b, oth=oth):
+                a = n = 0
+                for ss in oth:
+                    rr = data[ss][w]; sc = np.array(rr["csn"]) + b * np.array(rr["lsp"])
+                    yy = np.array(rr["y"]); a += int((sc.argmax(1) == yy).sum()); n += len(yy)
+                return a / max(1, n)
+            b = max(BG, key=bacc)
+            csn = np.array(r["csn"]); lsp = np.array(r["lsp"]); yy = np.array(r["y"])
+            foof.append(float(((csn + b * lsp).argmax(1) == yy).mean()))
+            cont.append(r["content"]); spat.append(r["spatial"]); fb15.append(r["fused_b15"]); nul.append(r["null_four"])
+        fm, flo, fhi = _boot(foof); nm = float(np.mean(nul)); t, p = _ttest_rel(foof, nul)
+        L.append(f"| {w:g}s | {np.mean(cont):.3f} | {np.mean(spat):.3f} | **{fm:.3f}** [{flo:.3f},{fhi:.3f}] | "
+                 f"{np.mean(fb15):.3f} | {nm:.3f} | {fm - nm:+.3f} | {t:.2f} | {p:.1e} |")
+    L += ["\n- Fusion weight is tuned across subjects (never on the scored subject); the spatial "
+          "branch is gaze-residualised (covert neural direction). Null stays flat ~0.25.\n"]
+    return "\n".join(L) + "\n"
+
+
+def video_curve(tag="video_curve"):
+    """Video (V-JEPA2) attended-DIRECTION over windows — the overt-orienting branch that
+    motivates the EEG covert controls (it is NOT fused into the EEG-only headline)."""
+    pj = RUN_ROOT / "results" / tag / "curve.json"
+    if not pj.exists():
+        return None
+    rows = json.load(open(pj))
+    L = ["# Video (V-JEPA2) attended-direction over the decision-window curve — overt-orienting branch\n",
+         "Frozen scene+fovea embeddings -> shrinkage-LDA, 4-way (chance .25). **DIRECTION** = attended "
+         "physical loudspeaker (how strong the *overt* orienting cue is); **CONTENT** = attended "
+         "permuted slot (must stay ~chance — vision carries orienting, not talker content). This branch "
+         "is reported to characterise the dataset and justify the EEG **covert** controls (gaze-"
+         "residualised spatial); it is **not** part of the EEG-only fusion headline.\n",
+         "| window | DIRECTION within | DIRECTION loso | CONTENT within | CONTENT loso |",
+         "|---|---|---|---|---|"]
+    for r in rows:
+        L.append(f"| {r['win_s']:g}s | **{r['dir_within']:.3f}** | **{r['dir_loso']:.3f}** | "
+                 f"{r['content_within']:.3f} | {r['content_loso']:.3f} |")
+    L += ["\n- **Direction decodes well** and rises with window (vision reveals *where* the listener "
+          "attends); **content stays at chance** — vision is orienting, not talker content.",
+          "- This is exactly why the EEG spatial branch is **gaze-residualised**: the overt cue is "
+          "strong, so the neural claim must survive removing it.\n"]
+    return "\n".join(L) + "\n"
+
+
+def imu_curve(tag="imu_curve"):
+    """Head IMU (accel+gyro) attended-direction over windows — the head-orienting branch."""
+    pj = RUN_ROOT / "results" / tag / "curve.json"
+    if not pj.exists():
+        return None
+    rows = json.load(open(pj))
+    L = ["# Head IMU (accel+gyro) attended-direction over the decision-window curve — head-orienting branch\n",
+         "Per-window IMU summary (pose + net head-turn) -> LDA/MLP, 4-way (chance .25). **DIRECTION** = "
+         "attended physical loudspeaker (does head pose/motion reveal *where* the listener attends); "
+         "**CONTENT** = attended permuted slot (must stay ~chance). Characterisation branch, **not** in "
+         "the EEG-only headline.\n",
+         "| window | DIRECTION within (lda) | DIRECTION loso (lda) | CONTENT within | CONTENT loso |",
+         "|---|---|---|---|---|"]
+    for r in rows:
+        L.append(f"| {r['win_s']:g}s | **{r['dir_within_lda']:.3f}** | **{r['dir_loso_lda']:.3f}** | "
+                 f"{r['content_within_lda']:.3f} | {r['content_loso_lda']:.3f} |")
+    L += ["\n- Head orienting is a **weaker** azimuth cue than gaze/scene video (the IMU has no "
+          "magnetometer, so absolute head yaw toward a speaker is only partly recoverable); "
+          "**content stays at chance** — head motion carries no talker content.\n"]
+    return "\n".join(L) + "\n"
+
+
 def main():
     rows = collect()
     REPORT.mkdir(parents=True, exist_ok=True)
@@ -203,6 +330,22 @@ def main():
     if cwd:
         (REPORT / "curve_within.md").write_text(cwd)
         print(cwd)
+    fcw = fuse_curve("curve_fusewin_within")
+    if fcw:
+        (REPORT / "curve_fuse_within.md").write_text(fcw)
+        print(fcw)
+    fcl = fuse_curve_loso("curve_fusewin_loso")
+    if fcl:
+        (REPORT / "curve_fuse_loso.md").write_text(fcl)
+        print(fcl)
+    vc = video_curve("video_curve")
+    if vc:
+        (REPORT / "video_curve.md").write_text(vc)
+        print(vc)
+    ic = imu_curve("imu_curve")
+    if ic:
+        (REPORT / "imu_curve.md").write_text(ic)
+        print(ic)
 
 
 if __name__ == "__main__":

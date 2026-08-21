@@ -1,0 +1,82 @@
+{
+  "mode": "gaze",
+  "tag": "w10_h5",
+  "loso": {
+    "real": {
+      "acc": 0.5149013083428144,
+      "acc_std": 0.03300440928636247,
+      "flip_vs_real": 0.0
+    },
+    "shuffle": {
+      "acc": 0.5153001570142806,
+      "acc_std": 0.03310567474710949,
+      "flip_vs_real": 0.0008675986755406484
+    },
+    "constant": {
+      "acc": 0.5155592020601034,
+      "acc_std": 0.034149729411284344,
+      "flip_vs_real": 0.0012828947510570288
+    },
+    "zeros": {
+      "acc": 0.5155592020601034,
+      "acc_std": 0.034149729411284344,
+      "flip_vs_real": 0.0012828947510570288
+    },
+    "noise": {
+      "acc": 0.5149013083428144,
+      "acc_std": 0.03300440928636247,
+      "flip_vs_real": 0.00039062499126885086
+    },
+    "embedding_diversity_mean": {
+      "mean_pairwise_cosine": 0.9963466078042984,
+      "emb_norm_cv": 0.054438138380646706
+    }
+  },
+  "within_fold0": {
+    "battery": {
+      "real": {
+        "acc": 0.44999998807907104,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "shuffle": {
+        "acc": 0.44999998807907104,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "shuffle_xsubj": {
+        "acc": 0.4500781148672104,
+        "acc_std": 0.00020670405214893295,
+        "flip_vs_real": 7.812499825377017e-05
+      },
+      "constant": {
+        "acc": 0.44999998807907104,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "zeros": {
+        "acc": 0.44999998807907104,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "noise": {
+        "acc": 0.44999998807907104,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      }
+    },
+    "embedding_diversity": {
+      "n": 1600,
+      "dim": 16,
+      "mean_pairwise_cosine": 0.9979875683784485,
+      "emb_norm_mean": 1.2233582735061646,
+      "emb_norm_cv": 0.10316009819507599
+    },
+    "subject_decode": {
+      "subject_decode_acc": 0.11041666666666666,
+      "chance": 0.0625,
+      "n_subjects": 16,
+      "n_test": 480
+    }
+  }
+}

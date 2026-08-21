@@ -1,0 +1,722 @@
+{
+  "probes": {
+    "raw_K4": 0.55975
+  },
+  "args": {
+    "local_path": "/fs/scratch/PAS2301/alialavi/maestro-eeg-dataset",
+    "cache_root": "/fs/scratch/PAS2301/alialavi/cache",
+    "window_sec": 10.0,
+    "hop_sec": 5.0,
+    "split_setting": "loso",
+    "configs": "A0",
+    "folds": "all",
+    "epochs": 50,
+    "patience": 12,
+    "batch_size": 32,
+    "val_shuffles": 3,
+    "test_shuffles": 20,
+    "subjects": "all",
+    "out": "/users/PAS2301/alialavi/projects/multimodal_aad_dataset_osu/analysis/n_gh_checks/results/fixed/loso_A0.json"
+  },
+  "configs": {
+    "A0": {
+      "cfg": {
+        "mods": "('eeg',)",
+        "encoder": "legacy",
+        "head": "legacy",
+        "cand": "raw",
+        "anti": "False",
+        "lr": "0.001",
+        "opt": "adamw"
+      },
+      "folds": {
+        "0": {
+          "sel_margin": {
+            "acc": 0.5600000023841858,
+            "null_mean": 0.5600000023841858,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5600000023841858,
+            "flip_rate": 0.0,
+            "null_strat": 0.5600000023841858,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999510645866394,
+            "emb_cos_centered": 0.9390506744384766,
+            "emb_temporal_std": 0.015508301556110382,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5699999928474426,
+            "null_mean": 0.5699999928474426,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5699999928474426,
+            "flip_rate": 0.0,
+            "null_strat": 0.5699999928474426,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999938011169434,
+            "emb_cos_centered": 0.9742899537086487,
+            "emb_temporal_std": 0.01658867672085762,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "1": {
+          "sel_margin": {
+            "acc": 0.5099999904632568,
+            "null_mean": 0.5099999904632568,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5099999904632568,
+            "flip_rate": 0.0,
+            "null_strat": 0.5099999904632568,
+            "margin_strat": 0.0,
+            "emb_cos": 0.999928891658783,
+            "emb_cos_centered": 0.9101670980453491,
+            "emb_temporal_std": 0.02381371706724167,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5299999713897705,
+            "null_mean": 0.5299999713897705,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5299999713897705,
+            "flip_rate": 0.0,
+            "null_strat": 0.5299999713897705,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.8959940075874329,
+            "emb_temporal_std": 0.0034087887033820152,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "2": {
+          "sel_margin": {
+            "acc": 0.5699999928474426,
+            "null_mean": 0.5699999928474426,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5699999928474426,
+            "flip_rate": 0.0,
+            "null_strat": 0.5699999928474426,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999893307685852,
+            "emb_cos_centered": 0.9364203810691833,
+            "emb_temporal_std": 0.07997512072324753,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5699999928474426,
+            "null_mean": 0.5699999928474426,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5699999928474426,
+            "flip_rate": 0.0,
+            "null_strat": 0.5694999933242798,
+            "margin_strat": 0.0004999995231628196,
+            "emb_cos": 0.9999988079071045,
+            "emb_cos_centered": 0.9496369957923889,
+            "emb_temporal_std": 0.13710381090641022,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "3": {
+          "sel_margin": {
+            "acc": 0.23000000417232513,
+            "null_mean": 0.23000000417232513,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.23000000417232513,
+            "flip_rate": 0.0,
+            "null_strat": 0.23000000417232513,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999992251396179,
+            "emb_cos_centered": 0.9735148549079895,
+            "emb_temporal_std": 0.006360177416354418,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5199999809265137,
+            "null_mean": 0.5199999809265137,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5199999809265137,
+            "flip_rate": 0.0,
+            "null_strat": 0.5199999809265137,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.8488515019416809,
+            "emb_temporal_std": 0.0009821071289479733,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "4": {
+          "sel_margin": {
+            "acc": 0.4699999988079071,
+            "null_mean": 0.4719999969005585,
+            "null_std": 0.0039999961853027345,
+            "margin": -0.0019999980926513894,
+            "p_perm": 1.0,
+            "zeros_acc": 0.4699999988079071,
+            "flip_rate": 0.0019999999552965165,
+            "null_strat": 0.4714999973773956,
+            "margin_strat": -0.0014999985694885143,
+            "emb_cos": 0.9998679161071777,
+            "emb_cos_centered": 0.9017049670219421,
+            "emb_temporal_std": 0.46402961015701294,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.49000000953674316,
+            "null_mean": 0.49750000089406965,
+            "null_std": 0.006224948051536844,
+            "margin": -0.007499991357326485,
+            "p_perm": 0.9523809523809523,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.012499999720603228,
+            "null_strat": 0.4980000019073486,
+            "margin_strat": -0.007999992370605447,
+            "emb_cos": 0.9950023889541626,
+            "emb_cos_centered": 0.6626358032226562,
+            "emb_temporal_std": 0.29020220041275024,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "5": {
+          "sel_margin": {
+            "acc": 0.5799999833106995,
+            "null_mean": 0.5799999833106995,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5799999833106995,
+            "flip_rate": 0.0,
+            "null_strat": 0.5799999833106995,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999447464942932,
+            "emb_cos_centered": 0.8010154366493225,
+            "emb_temporal_std": 0.8110464215278625,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5799999833106995,
+            "null_mean": 0.5799999833106995,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5799999833106995,
+            "flip_rate": 0.0,
+            "null_strat": 0.5799999833106995,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999446868896484,
+            "emb_cos_centered": 0.8010155558586121,
+            "emb_temporal_std": 0.8110464215278625,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "6": {
+          "sel_margin": {
+            "acc": 0.5,
+            "null_mean": 0.5,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.0,
+            "null_strat": 0.5,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.9789930582046509,
+            "emb_temporal_std": 0.0016346212942153215,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5400000214576721,
+            "null_mean": 0.5400000214576721,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5400000214576721,
+            "flip_rate": 0.0,
+            "null_strat": 0.5400000214576721,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.9986699223518372,
+            "emb_temporal_std": 0.0017703743651509285,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "7": {
+          "sel_margin": {
+            "acc": 0.5299999713897705,
+            "null_mean": 0.5350000023841858,
+            "null_std": 0.006708224191075659,
+            "margin": -0.005000030994415261,
+            "p_perm": 0.9047619047619048,
+            "zeros_acc": 0.5400000214576721,
+            "flip_rate": 0.010999999754130841,
+            "null_strat": 0.5319999933242798,
+            "margin_strat": -0.0020000219345093218,
+            "emb_cos": 0.9994511604309082,
+            "emb_cos_centered": 0.6700357794761658,
+            "emb_temporal_std": 0.014731024391949177,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5400000214576721,
+            "null_mean": 0.5400000214576721,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5400000214576721,
+            "flip_rate": 0.0,
+            "null_strat": 0.5400000214576721,
+            "margin_strat": 0.0,
+            "emb_cos": 0.999998927116394,
+            "emb_cos_centered": 0.9817864298820496,
+            "emb_temporal_std": 0.01366349309682846,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "8": {
+          "sel_margin": {
+            "acc": 0.5299999713897705,
+            "null_mean": 0.5299999713897705,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5299999713897705,
+            "flip_rate": 0.004499999899417162,
+            "null_strat": 0.5299999713897705,
+            "margin_strat": 0.0,
+            "emb_cos": 0.999830424785614,
+            "emb_cos_centered": 0.8843029737472534,
+            "emb_temporal_std": 0.030324779450893402,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5,
+            "null_mean": 0.5,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.0,
+            "null_strat": 0.5,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999992251396179,
+            "emb_cos_centered": 0.9502569437026978,
+            "emb_temporal_std": 0.021200289949774742,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "9": {
+          "sel_margin": {
+            "acc": 0.5699999928474426,
+            "null_mean": 0.5809999823570251,
+            "null_std": 0.006244992042704201,
+            "margin": -0.010999989509582475,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5699999928474426,
+            "flip_rate": 0.013499999698251487,
+            "null_strat": 0.5784999847412109,
+            "margin_strat": -0.008499991893768266,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.9568977952003479,
+            "emb_temporal_std": 0.010123764164745808,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5600000023841858,
+            "null_mean": 0.5555000066757202,
+            "null_std": 0.009733951883937131,
+            "margin": 0.004499995708465598,
+            "p_perm": 0.5238095238095238,
+            "zeros_acc": 0.5799999833106995,
+            "flip_rate": 0.021999999508261682,
+            "null_strat": 0.5590000033378602,
+            "margin_strat": 0.0009999990463256392,
+            "emb_cos": 0.9999992251396179,
+            "emb_cos_centered": 0.9014027118682861,
+            "emb_temporal_std": 0.010467786341905594,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "10": {
+          "sel_margin": {
+            "acc": 0.5600000023841858,
+            "null_mean": 0.5600000023841858,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5600000023841858,
+            "flip_rate": 0.0,
+            "null_strat": 0.5600000023841858,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.9899873733520508,
+            "emb_temporal_std": 0.0030761160887777805,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5299999713897705,
+            "null_mean": 0.5299999713897705,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5299999713897705,
+            "flip_rate": 0.0,
+            "null_strat": 0.5299999713897705,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.9847989678382874,
+            "emb_temporal_std": 0.006719908211380243,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "11": {
+          "sel_margin": {
+            "acc": 0.5099999904632568,
+            "null_mean": 0.5099999904632568,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5099999904632568,
+            "flip_rate": 0.0,
+            "null_strat": 0.5099999904632568,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.8297214508056641,
+            "emb_temporal_std": 0.0012740523088723421,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5099999904632568,
+            "null_mean": 0.5099999904632568,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5099999904632568,
+            "flip_rate": 0.0,
+            "null_strat": 0.5099999904632568,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.8297214508056641,
+            "emb_temporal_std": 0.0012740523088723421,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "12": {
+          "sel_margin": {
+            "acc": 0.5099999904632568,
+            "null_mean": 0.5139999866485596,
+            "null_std": 0.005830946334016238,
+            "margin": -0.003999996185302779,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5099999904632568,
+            "flip_rate": 0.008999999798834323,
+            "null_strat": 0.5134999871253967,
+            "margin_strat": -0.003499996662139848,
+            "emb_cos": 0.9941810965538025,
+            "emb_cos_centered": 0.6664736270904541,
+            "emb_temporal_std": 0.045180488377809525,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5199999809265137,
+            "null_mean": 0.5179999828338623,
+            "null_std": 0.007483307636902781,
+            "margin": 0.0019999980926513894,
+            "p_perm": 0.6190476190476191,
+            "zeros_acc": 0.5199999809265137,
+            "flip_rate": 0.009499999787658453,
+            "null_strat": 0.5164999842643738,
+            "margin_strat": 0.003499996662139848,
+            "emb_cos": 0.9892028570175171,
+            "emb_cos_centered": 0.6748462915420532,
+            "emb_temporal_std": 0.04733017459511757,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "13": {
+          "sel_margin": {
+            "acc": 0.5,
+            "null_mean": 0.5,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.0,
+            "null_strat": 0.5,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.9853565692901611,
+            "emb_temporal_std": 0.0032060667872428894,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5,
+            "null_mean": 0.5,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.0,
+            "null_strat": 0.5,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.9770312309265137,
+            "emb_temporal_std": 0.002335901837795973,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "14": {
+          "sel_margin": {
+            "acc": 0.5199999809265137,
+            "null_mean": 0.5199999809265137,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5199999809265137,
+            "flip_rate": 0.0,
+            "null_strat": 0.5199999809265137,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999555349349976,
+            "emb_cos_centered": 0.7828387022018433,
+            "emb_temporal_std": 0.010605625808238983,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5099999904632568,
+            "null_mean": 0.5099999904632568,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5099999904632568,
+            "flip_rate": 0.0,
+            "null_strat": 0.5099999904632568,
+            "margin_strat": 0.0,
+            "emb_cos": 1.0,
+            "emb_cos_centered": 0.9932270050048828,
+            "emb_temporal_std": 0.001705125905573368,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        },
+        "15": {
+          "sel_margin": {
+            "acc": 0.38999998569488525,
+            "null_mean": 0.38999998569488525,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.38999998569488525,
+            "flip_rate": 0.0,
+            "null_strat": 0.38999998569488525,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999715685844421,
+            "emb_cos_centered": 0.9753368496894836,
+            "emb_temporal_std": 0.011328266002237797,
+            "chance": 0.25,
+            "n": 100
+          },
+          "sel_acc": {
+            "acc": 0.5,
+            "null_mean": 0.5,
+            "null_std": 0.0,
+            "margin": 0.0,
+            "p_perm": 1.0,
+            "zeros_acc": 0.5,
+            "flip_rate": 0.0,
+            "null_strat": 0.5,
+            "margin_strat": 0.0,
+            "emb_cos": 0.9999998807907104,
+            "emb_cos_centered": 0.8250136375427246,
+            "emb_temporal_std": 0.001805831678211689,
+            "chance": 0.25,
+            "n": 100
+          },
+          "n_params": 10425,
+          "rf_samples": 2187
+        }
+      },
+      "mean": {
+        "sel_margin": {
+          "acc": [
+            0.5024999910965562,
+            0.083553872145723
+          ],
+          "null_mean": [
+            0.5038749920204282,
+            0.08423395360227852
+          ],
+          "null_std": [
+            0.001424009922068677,
+            0.0025193654200188075
+          ],
+          "margin": [
+            -0.001375000923871994,
+            0.002912795053281109
+          ],
+          "p_perm": [
+            0.9940476190476191,
+            0.023053472298853673
+          ],
+          "zeros_acc": [
+            0.5031249942258,
+            0.08379429653438296
+          ],
+          "flip_rate": [
+            0.0024999999441206455,
+            0.004391041919415137
+          ],
+          "null_strat": [
+            0.5034687416628003,
+            0.08403430371470103
+          ],
+          "margin_strat": [
+            -0.0009687505662441219,
+            0.0021756361098901828
+          ],
+          "emb_cos": [
+            0.9995669052004814,
+            0.0013968565246840442
+          ],
+          "emb_cos_centered": [
+            0.8863635994493961,
+            0.10369774467355106
+          ],
+          "emb_temporal_std": [
+            0.09576363457017578,
+            0.21464771690006376
+          ],
+          "chance": [
+            0.25,
+            0.0
+          ]
+        },
+        "sel_acc": {
+          "acc": [
+            0.5293749943375587,
+            0.027492895488781345
+          ],
+          "null_mean": [
+            0.5294374941848219,
+            0.026628740675069266
+          ],
+          "null_std": [
+            0.0014651379732735473,
+            0.0031140169217187667
+          ],
+          "margin": [
+            -6.24998472630936e-05,
+            0.00224217144209948
+          ],
+          "p_perm": [
+            0.9434523809523809,
+            0.14207997931285726
+          ],
+          "zeros_acc": [
+            0.5312499925494194,
+            0.02847696239939287
+          ],
+          "flip_rate": [
+            0.0027499999385327102,
+            0.0061720133098590035
+          ],
+          "null_strat": [
+            0.5295624941587448,
+            0.026814684816361154
+          ],
+          "margin_strat": [
+            -0.00018749982118607122,
+            0.0021928485078407966
+          ],
+          "emb_cos": [
+            0.9990087300539017,
+            0.0028044123361765008
+          ],
+          "emb_cos_centered": [
+            0.890573650598526,
+            0.10528464500416153
+          ],
+          "emb_temporal_std": [
+            0.08547530898067635,
+            0.20112958917135987
+          ],
+          "chance": [
+            0.25,
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}

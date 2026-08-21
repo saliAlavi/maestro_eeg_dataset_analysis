@@ -1,0 +1,82 @@
+{
+  "mode": "eeg",
+  "tag": "w10_h5",
+  "loso": {
+    "real": {
+      "acc": 0.4968750011175871,
+      "acc_std": 0.04267885049022594,
+      "flip_vs_real": 0.0
+    },
+    "shuffle": {
+      "acc": 0.49617187585681677,
+      "acc_std": 0.04256765856457941,
+      "flip_vs_real": 0.0014843749668216333
+    },
+    "constant": {
+      "acc": 0.4968750011175871,
+      "acc_std": 0.04267885049022594,
+      "flip_vs_real": 0.0
+    },
+    "zeros": {
+      "acc": 0.4968750011175871,
+      "acc_std": 0.04267885049022594,
+      "flip_vs_real": 0.0
+    },
+    "noise": {
+      "acc": 0.4964843757916242,
+      "acc_std": 0.04264501535496187,
+      "flip_vs_real": 0.0007031249842839316
+    },
+    "embedding_diversity_mean": {
+      "mean_pairwise_cosine": 0.9994910545647144,
+      "emb_norm_cv": 0.04122504228507751
+    }
+  },
+  "within_fold0": {
+    "battery": {
+      "real": {
+        "acc": 0.4000000059604645,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "shuffle": {
+        "acc": 0.400390625,
+        "acc_std": 0.0004349781651962234,
+        "flip_vs_real": 0.00039062499126885086
+      },
+      "shuffle_xsubj": {
+        "acc": 0.400390625,
+        "acc_std": 0.0004349781651962234,
+        "flip_vs_real": 0.00039062499126885086
+      },
+      "constant": {
+        "acc": 0.4000000059604645,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "zeros": {
+        "acc": 0.4000000059604645,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      },
+      "noise": {
+        "acc": 0.4000000059604645,
+        "acc_std": 0.0,
+        "flip_vs_real": 0.0
+      }
+    },
+    "embedding_diversity": {
+      "n": 1600,
+      "dim": 16,
+      "mean_pairwise_cosine": 0.9997462630271912,
+      "emb_norm_mean": 0.8532736301422119,
+      "emb_norm_cv": 0.014988433569669724
+    },
+    "subject_decode": {
+      "subject_decode_acc": 0.13333333333333333,
+      "chance": 0.0625,
+      "n_subjects": 16,
+      "n_test": 480
+    }
+  }
+}

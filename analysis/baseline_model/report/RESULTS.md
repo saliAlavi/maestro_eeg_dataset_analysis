@@ -33,6 +33,52 @@ margin overfits data-starved within folds — 5-fold, 5-seed ensemble):
 > Within-subject 4-way **crosses 0.35 at 15 s and reaches 0.406 at the whole trial**, over the
 > same flat ~0.26 null — real per-subject decoding, not just a cross-subject average.
 
+**Two-branch EEG fusion × window** (content + a *covert* EEG-spatial branch) lifts the shorter
+windows and holds the whole-trial number at ~0.40. The spatial branch is posterior alpha+beta
+band-power, **gaze-residualised** (so it reads covert neural direction, not eye movements), fused
+with the content decoder by an **out-of-fold-tuned** weight (admissible — never tuned on the
+scored fold). `report/curve_fuse_within.md`:
+
+> | window | content-only | fused (OOF) | null | Δ (neural) | p |
+> |---|---|---|---|---|---|
+> | 5 s | 0.313 | **0.347** [.319,.380] | 0.251 | +0.096 | 1.5e-9 |
+> | 15 s | 0.345 | **0.380** [.347,.413] | 0.254 | +0.126 | 1.3e-12 |
+> | **30 s** | 0.386 | **0.398** [.352,.448] | 0.250 | +0.148 | 5.0e-9 |
+>
+> **Fusion beats content-only at every window** (+0.03 at 5 s, +0.035 at 15 s): the brain carries
+> both envelope-tracking *and* covert spatial-attention information, and the OOF weight only ever
+> helps (it drops to 0 for subjects whose covert-spatial branch is at chance). The whole-trial
+> four-way sits **right at 0.40** — the honest ceiling for a 100-trial-per-subject corpus (the
+> long-window estimate is noisy, n=100), reached without touching gaze/video (reserved for the
+> method paper). Both routes — content-only 0.406 and fusion 0.398 — put intra 4-way at ~0.40.
+
+**LOSO: the same fusion reduces to content-only** (`report/curve_fuse_loso.md`). When the fusion
+weight is tuned *across subjects* (admissible — never on the scored subject), it goes to **0 at
+every window**: the covert EEG-spatial branch is real *per subject* but **does not transfer across
+subjects**, so a single global weight cannot use it (a fixed b=1.5 actively *hurts* LOSO). LOSO
+four-way is therefore carried by content alone — **0.360 → 0.466** (5→30 s), crossing **0.40 at
+~10 s**, Δ over null **+0.11 → +0.22, all p<10⁻¹¹** — consistent with the headline LOSO curve above.
+So **fusion is a within-subject lever, not a cross-subject one**.
+
+**The overt-orienting branches, for context** (`report/{video,imu}_curve.md`). Three non-EEG
+modalities decode attended **direction** (where the listener orients), each rising with window,
+while **all carry zero talker CONTENT** (permuted-slot decoding stays at chance ~0.25 at every
+window). Whole-trial four-way (chance 0.25):
+
+> | modality | direction (within) | direction (LOSO) | content (within/LOSO) |
+> |---|---|---|---|
+> | gaze | 0.49–0.57 | 0.42–0.47 | ≈ chance |
+> | scene video (V-JEPA2) | 0.62–0.68 | 0.55–0.59 | ≈ chance |
+> | head IMU (accel+gyro) | 0.38–0.46 | 0.31–0.40 | ≈ chance |
+
+Vision is the strongest overt cue, head IMU the weakest (no magnetometer → head yaw only partly
+recoverable), but **every** overt modality reveals *where* attention points and **none** reveals
+*which talker* — that is the whole reason the EEG spatial branch is **gaze-residualised** (the overt
+cue is strong, so the covert-neural claim must survive removing it) and that the four-way content
+task is **permuted** (so location cannot leak into it). Gaze/video/IMU are reported only to
+characterise the dataset; they are **not** fused into the EEG-only headline (they are the method
+paper's multimodal levers).
+
 ## The null is honest at every window (the key property)
 - **Theoretical chance is exactly 0.25 at every window.** The candidates are the four *real*
   co-present talkers, so the number of choices never changes with window length — and a

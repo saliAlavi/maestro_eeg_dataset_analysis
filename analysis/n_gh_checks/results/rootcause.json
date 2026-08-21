@@ -1,0 +1,57 @@
+{
+  "loudness_oracle": 1.0,
+  "shape_probe": 0.65,
+  "chance": 0.25,
+  "features": [
+    "kurtosis",
+    "skew",
+    "dyn_range_p95_p5",
+    "frac_silence_lt_-0.5",
+    "mod_0.5_4Hz",
+    "mod_4_8Hz",
+    "hf_8_20Hz",
+    "gini_sparsity"
+  ],
+  "per_feature": {
+    "kurtosis": {
+      "auc": 0.1901,
+      "four_way": 0.56,
+      "corr_loud": -0.2682567135328778
+    },
+    "skew": {
+      "auc": 0.21936666666666665,
+      "four_way": 0.52,
+      "corr_loud": -0.45712082963259754
+    },
+    "dyn_range_p95_p5": {
+      "auc": 0.6192,
+      "four_way": 0.39,
+      "corr_loud": 0.21558699419974925
+    },
+    "frac_silence_lt_-0.5": {
+      "auc": 0.4998166666666667,
+      "four_way": 0.25,
+      "corr_loud": -0.00832652531788682
+    },
+    "mod_0.5_4Hz": {
+      "auc": 0.5121333333333333,
+      "four_way": 0.3,
+      "corr_loud": 0.03411885436429421
+    },
+    "mod_4_8Hz": {
+      "auc": 0.42906666666666665,
+      "four_way": 0.34,
+      "corr_loud": -0.07842532053128236
+    },
+    "hf_8_20Hz": {
+      "auc": 0.4013333333333332,
+      "four_way": 0.36,
+      "corr_loud": -0.18912603643456125
+    },
+    "gini_sparsity": {
+      "auc": 0.2967333333333334,
+      "four_way": 0.46,
+      "corr_loud": -0.42874851155414745
+    }
+  }
+}
