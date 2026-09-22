@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{iclr2027_conference,times}
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+
+\input{results_macros}          % every number in the paper resolves through \R{}
+
+\newcommand{\merit}{\textsc{Merit}}
+% candidate sets, named by how they are built (code names: raw / qmatch / shifted / shifted_qm)
+\newcommand{\cUnm}{\textsc{unmatched}}
+\newcommand{\cMat}{\textsc{matched}}
+\newcommand{\cSame}{\textsc{same-talker}}
+\newcommand{\cSameM}{\textsc{same-talker matched}}
+\newcommand{\pmv}[2]{$#1\!\pm\!#2$}
+\renewcommand{\arraystretch}{1.08}
+
+% explicit breaks: the small-caps title hyphenates badly if left to wrap
+\title{\textsc{Merit}: Making Every Modality\\
+       Earn Its Contribution in\\
+       Multimodal Attention Decoding}
+
+\author{Anonymous authors\\Paper under double-blind review}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_intro}
+\input{sections/02_setting}
+\input{sections/03_failures}
+\input{sections/04_method}
+\input{sections/05_setup}
+\input{sections/06_results}
+\input{sections/07_related}
+\input{sections/08_limitations}
+\input{sections/09_statements}
+
+\bibliographystyle{iclr2027_conference}
+\bibliography{refs}
+
+\appendix
+\input{sections/A_failures}
+\input{sections/A_related}
+\input{sections/A_appendix}
+
+\end{document}

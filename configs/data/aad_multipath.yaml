@@ -1,0 +1,23 @@
+name: aad
+subjects: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__multipath
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward   # trial-disjoint, no look-ahead (intra-subject)
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5               # less window redundancy -> slower memorisation (window-time only, no recache)
+  audio_norm: table_power    # equalise candidate loudness (kills the SNR/loudness shortcut)
+  audio_level_norm: false
+  lp_hz: 10.0                # audio-envelope speech band
+  hp_hz: 1.0
+  eeg_lp_hz: 0               # KEEP EEG BROADBAND -> alpha survives for the directional path
+  norm_cand: true
+  norm_eeg: true
+  mm_task: match             # permuted real talkers -> content-based, no direction shortcut
+  audio_feats: true          # + HuBERT layer-9 (PCA) and GPT-2 surprisal candidate streams
+  w2v_pca_dim: 64

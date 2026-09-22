@@ -1,0 +1,19 @@
+name: aad
+subjects: [1, 2, 3]
+cache_dir: /fs/scratch/PAS2301/alialavi/projects/cache
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward   # time-stratified, no look-ahead | chrono_blocked | random
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5            # 50% window overlap -> hop = win/2
+  audio_level_norm: true  # equalise each speaker's loudness at source (table energy) -> kills level+shape confound (no-EEG RF 0.98->0.30)
+  norm_cand: false        # OFF: per-band z-norm distorts the envelope shape the EEG should track (and audio_level_norm already de-confounds)
+  norm_eeg: true          # per-channel z-score per window (standard, helps training)
+  mm_task: speaker        # speaker (4-class; CONFOUNDED on this corpus) | shifted (Accou/Francart MM, EEG-honest)
+  n_neg: 1                # shifted: number of same-speaker time-shifted spoilers (n_candidates = n_neg+1)
+  min_shift_s: 3.0        # shifted: min temporal separation of a spoiler from the matched window

@@ -1,0 +1,14 @@
+# A public two-talker AAD corpus (KU Leuven / DTU / NJU): EEG + two candidate
+# envelopes, no behavioural streams.  Only the coupling branch and the
+# acceptance probe apply, which is exactly what this evaluation tests.
+name: external
+corpus: nju
+cache_root: /fs/scratch/PAS2301/alialavi/cache
+window_sec: 10.0
+hop_sec: 5.0
+cand_mode: qmatch
+K: 2
+n_folds: 5
+val_frac: 0.2
+content_holdout: 0.2
+seed: 0

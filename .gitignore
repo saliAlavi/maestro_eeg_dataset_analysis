@@ -46,7 +46,34 @@ env/
 
 # ---------- Project-specific large / regenerable artifacts ----------
 
-docs
+# Generated/heavy docs artefacts are ignored, but the LaTeX SOURCES are the work
+# product and stay tracked.  A parent directory that is itself excluded cannot have
+# its contents re-included, so exclude the contents and re-admit the directories.
+docs/**
+!docs/**/
+!docs/**/*.tex
+!docs/**/*.bib
+!docs/**/*.sty
+!docs/**/*.bst
+!docs/**/*.cls
+!docs/**/*.md
+!docs/**/*.txt
+!docs/**/*.png
+!docs/**/*.pdf
+docs/**/*.log
+docs/**/*.aux
+docs/**/*.out
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.fls
+docs/**/*.fdb_latexmk
+docs/**/*.toc
+docs/**/*.zip
+docs/notebook_pdfs/**
+docs/taslp_draft/*.pdf
+docs/draft/*.pdf
+docs/analysis/*.pdf
+docs/publication/*.pdf
 
 # 41.7 GB HuggingFace release tree + 422 MB sample — never track
 hf_release/maestro-eeg-dataset/
@@ -62,6 +89,11 @@ analysis/slurm_logs/
 # Any local data symlinks or copies (the real data lives at /fs/ess/PAS2301/)
 data/
 local_data/
+# ...but src/data and configs/data are SOURCE, not data.
+!src/data/
+!src/data/**
+!configs/data/
+!configs/data/**
 
 # Notebooks export pdfs are regenerable
 docs/notebook_pdfs/
@@ -88,3 +120,11 @@ hf_release/maestro-loader-pkg/*.egg-info/
 *.key
 .huggingface/
 ~/.pypirc
+
+# never commit bytecode or notebook autosaves (placed last so the docs/ re-includes above cannot override them)
+__pycache__/
+*.pyc
+**/.ipynb_checkpoints/
+
+# W&B run files live on scratch (/fs/scratch/PAS2301/alialavi/projects/multimodal_aad__wandb), not in git
+wandb/

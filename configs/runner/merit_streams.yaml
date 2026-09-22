@@ -1,0 +1,28 @@
+# Per-stream credit: which input is the accuracy actually coming from?
+# All variants share one data build and one set of folds, so a difference
+# between two rows is a difference between two models and nothing else.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: eeg
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg]}
+  - name: eeg_gaze
+    model: {time_mods: [eeg, gaze], static_mods: [], orientation: [eeg, gaze]}
+  - name: eeg_imu
+    model: {time_mods: [eeg, imu], static_mods: [], orientation: [eeg, imu]}
+  - name: eeg_flow
+    model: {time_mods: [eeg, video], static_mods: [], orientation: [eeg, video]}
+  - name: eeg_fovea
+    model: {time_mods: [eeg], static_mods: [fovea], orientation: [eeg, fovea]}
+  - name: behaviour
+    model: {time_mods: [gaze, imu, video], static_mods: [fovea],
+            orientation: [gaze, imu, video, fovea], coupling: false,
+            adversary: false, w_contrib: 0.5}
+  - name: all
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea]}

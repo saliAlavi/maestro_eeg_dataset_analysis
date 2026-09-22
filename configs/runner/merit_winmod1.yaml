@@ -1,0 +1,22 @@
+# Short-window modality sweep, group 1. Within-subject, per-window decisions,
+# so these rows are directly comparable to the w5..w30 sweep and to the
+# benchmark's per-window table. Split into groups only so each array task fits
+# its walltime; all groups share the same data build and the same folds.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: false
+save_models: false
+variants:
+  - name: flow
+    model: {time_mods: [video], static_mods: [], orientation: [video],
+            coupling: false, adversary: false}
+  - name: fovea
+    model: {time_mods: [], static_mods: [fovea], orientation: [fovea],
+            coupling: false, adversary: false}
+  - name: behaviour
+    model: {time_mods: [gaze, imu, video], static_mods: [fovea],
+            orientation: [gaze, imu, video, fovea], coupling: false,
+            adversary: false, w_contrib: 0.5}

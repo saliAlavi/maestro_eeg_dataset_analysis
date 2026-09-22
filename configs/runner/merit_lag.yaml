@@ -1,0 +1,23 @@
+# Neural directionality.  RF = 63 samples ~ 0.98 s, so with an 8-sample (125 ms)
+# shift a future-directed encoder sees the EEG only at +125..+1109 ms relative to
+# the audio sample it scores -- the only band a stimulus-evoked response can
+# occupy -- and a past-directed encoder with the mirrored shift sees only
+# -1109..-125 ms, which no such response can occupy.  A contribution as large in
+# the acausal direction would be a shared artifact, not envelope tracking.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: causal
+    model: {time_mods: [eeg], static_mods: [], orientation: [], brain_dir: future,
+            lag_samples: 8}
+  - name: acausal
+    model: {time_mods: [eeg], static_mods: [], orientation: [], brain_dir: past,
+            lag_samples: -8}
+  - name: centred
+    model: {time_mods: [eeg], static_mods: [], orientation: [], brain_dir: centred,
+            lag_samples: 0}

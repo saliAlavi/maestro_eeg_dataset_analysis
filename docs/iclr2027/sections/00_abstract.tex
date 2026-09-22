@@ -1,0 +1,28 @@
+\begin{abstract}
+More than $1.5$ billion people live with hearing loss, and when several people
+talk at once, a hearing aid amplifies every voice alike. Auditory attention
+decoding (AAD) aims to solve this: it reads a listener's brain signals, finds the
+talker they are attending to, and lets the device amplify that talker. A real
+device will not see the brain alone. Glasses and earbuds can also track the eyes,
+the head and the scene, and these signals help, because people tend to look at
+the person they listen to. But they show where a listener is looking, not whom
+they are listening to. A decoder that leans on them works when the two agree and
+fails when they differ --- when a listener cannot move their eyes or head, or
+listens to someone they are not looking at --- which is exactly when a brain-based
+device is needed. A multimodal decoder must therefore use these signals without
+letting them replace the EEG, and accuracy alone cannot show whether it does. We
+present \merit{}, a decoder and an evaluation method built around one question:
+how much of the accuracy does each input earn? \merit{} shuffles each input
+stream across test examples, measures how much accuracy drops, and splits the
+result exactly across the streams with Shapley values. It also blocks two
+shortcuts by design: the candidate audio is checked before training so that it
+cannot reveal the answer, and the scoring function cannot rise above chance if it
+ignores the brain signal. On a public dataset with EEG, eye tracking, head motion
+and scene video, \merit{} improves on the published benchmark, reaching
+\R{v2hinge2/H4_nohinge_nodrop/within/acc2} four-way accuracy within listeners and
+\R{v2hinge2loso/H4_nohinge_nodrop/loso/acc2} on unseen listeners, where chance is
+$0.25$. The measurement also shows what accuracy hides: adding the behavioural
+streams raises accuracy but almost halves the brain's share of it. On two other
+public datasets, the same tests find a label imbalance in a widely used benchmark
+and flag results that accuracy alone would report as brain decoding.
+\end{abstract}

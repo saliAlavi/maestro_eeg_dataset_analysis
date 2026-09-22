@@ -1,0 +1,57 @@
+\section{Related work in more detail}
+\label{app:related}
+
+\paragraph{Auditory attention decoding.}
+Brain activity follows the envelope of the speech a listener attends to
+\citep{ding2012,lalor2009}. Standard decoders either rebuild the envelope from
+EEG and correlate it with each candidate \citep{osullivan2015}, or learn the
+match directly \citep{accou2021,monesi2020,accou2023,puffay2023}. A separate line
+decodes the \emph{direction} of attention without any audio
+\citep{vandecappelle2021}. The work closest to ours is \citet{rotaru2024}, who
+showed that direction decoding on several public datasets is driven largely by
+eye movements and by regularities in the trial design, not by attention. We bring
+the same concern to the matching task and to several recorded streams at once,
+and we make the check part of how models are chosen and reported rather than a
+test run afterwards.
+
+\paragraph{Shortcuts in datasets.}
+Models use whatever solves the task \citep{geirhos2020}, and benchmarks often
+contain cues that make the intended input unnecessary
+\citep{torralba2011,gururangan2018,goyal2017vqa}. The usual fixes are to rebalance
+the data \citep{goyal2017vqa} or to train against a branch that sees only the
+shortcut \citep{cadene2019rubi}. \merit{} does both --- it checks the candidate
+sets and it trains an audio-only adversary \citep{ganin2015} --- and adds one thing
+specific to the matching task: a scoring function in which the shortcut is
+impossible rather than discouraged (Section~\ref{sec:coupling}).
+
+\paragraph{Balancing modalities.}
+When modalities are trained together, the easiest one dominates, and the fused
+network can end up worse than its best single part \citep{wang2020gradblend}.
+This has been called modality competition \citep{huang2022competition} and a
+greedy learning process \citep{wu2022greedy}, and it is usually treated by
+evening out \emph{training} --- adjusting gradients as training runs
+\citep{peng2022ogm}, blending losses \citep{wang2020gradblend}, or dropping
+modalities at random. \merit{} looks at something different. Those methods balance
+how fast each modality learns; a scientific claim instead rests on how much each
+modality affects the decision \emph{at test time}, which is what
+Eq.~\ref{eq:shapley} reports. The two are not the same: in Table~\ref{tab:hinge},
+turning modality dropout on or off changes the EEG's credit very little, while the
+EEG's credit is still far below what it earns alone.
+
+\paragraph{Attribution.}
+Permutation importance \citep{breiman2001,fisher2019} measures how much a model
+depends on an input by breaking that input's link to the rest of the example.
+Shapley values \citep{shapley1953,lundberg2017} give the only way to split credit
+that adds up exactly, and SAGE \citep{covert2020} uses them for importance measured
+by performance over a whole dataset. We apply the same idea to whole streams,
+where there are few enough subsets ($2^M$) to compute it exactly;
+\citet{hessel2020} make a related point for multimodal models. What is new is not
+the measurement but how it is used: to choose checkpoints, and to report the
+brain's share alongside every accuracy. We also tried adding it to the training
+loss, and report that this does not help (Section~\ref{sec:res-hinge}).
+
+\paragraph{Components.}
+The contrastive term is InfoNCE \citep{oord2018} in the two-way arrangement of
+CLIP \citep{radford2021clip}, with negatives from the same listener; the
+anti-collapse term follows VICReg \citep{bardes2022vicreg}; and the foveal stream
+is a frozen V-JEPA\,2 encoder \citep{assran2025vjepa2}.

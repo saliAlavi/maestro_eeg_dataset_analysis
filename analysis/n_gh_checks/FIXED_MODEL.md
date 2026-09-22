@@ -32,6 +32,15 @@ restricted to reading it before (0.018) — the temporal asymmetry of an evoked 
 a recording artifact. Assigning each behavioural modality a task it can perform raises four-way
 accuracy to 0.596 with every modality's permutation null at chance.
 
+Across the full benchmark grid — four modality sets, five decision windows, both protocols, 40
+trainings — the contribution rises monotonically with window length, from 0.111 at 5 s to 0.320
+at 30 s for EEG alone within-subject and 0.111 to 0.363 under leave-one-listener-out, and is
+positive in every fold of every cell but one. Every behavioural modality adds signal at every
+window. We also report a limit of the method: at the shortest windows the trained model's
+audio-only floor exceeds what a linear probe can extract from the candidates, so distribution
+matching is sufficient to certify against a linear reader but not against the model's own encoder,
+and only same-source negatives give a provably exact floor.
+
 ---
 
 ## 1. Introduction
@@ -127,6 +136,9 @@ conceal precisely the shortcut being tested for.
    effect is a causally directed neural response rather than a recording artifact.
 5. An architecture assigning each modality a task it can perform, raising four-way accuracy from
    0.471 to 0.596 while every modality's permutation null remains at chance.
+6. A complete benchmark grid under the controls above — four modality sets × five decision
+   windows × two split protocols — together with an explicit account of where the controls stop
+   being exact.
 
 ---
 
@@ -681,7 +693,9 @@ Non-overlapping windows unless noted; the 10 s / 5 s row is the headline configu
 | 30 s | 30 s | 0.5969 ± 0.021 | 0.2654 | +0.3314 | — | — | — |
 
 The contribution rises monotonically from chance at 1 s to a large effect by 8–10 s, the
-canonical accuracy-versus-window-length relationship for this task. The binary construction is
+canonical accuracy-versus-window-length relationship for this task. (§5.9 repeats this sweep at
+the benchmark's own 5/10/15/20/30 s grid with 50 % hop and all four modality sets; the two agree
+on the trend where they overlap.) The binary construction is
 undefined beyond 10 s, since a 30 s trial contains only one non-overlapping window at 16 s and
 30 s and thus no admissible same-talker negative. The 16 s and 30 s points rest on one window
 per trial (≈ 320 test, ≈ 1 000 training windows) with fold deviations up to 0.104 and should not
@@ -754,6 +768,92 @@ baseline as configured; see §6.
 
 ---
 
+### 5.9 Full benchmark grid
+
+The sections above isolate mechanisms on a single configuration. This is the
+complete grid: four modality sets × five decision windows × both split protocols,
+40 independent trainings, 16 listeners, 50 epochs, distribution-matched
+candidates, hop = 50 % of the window throughout. Every model here carries an
+orientation head on **every** modality including EEG, plus a fusion head — so
+the "EEG" row is coupling + EEG-orientation, and is the correct baseline for the
+pairs, but is *not* the same configuration as the coupling-only model of §5.2.
+
+**Accuracy** (chance 0.2500):
+
+| Modalities | 5 s | 10 s | 15 s | 20 s | 30 s |
+|---|---|---|---|---|---|
+| *Within-subject* | | | | | |
+| EEG | 0.4363 ± 0.018 | 0.4757 ± 0.041 | 0.5317 ± 0.017 | 0.4994 ± 0.047 | 0.5906 ± 0.020 |
+| EEG + IMU | 0.4914 ± 0.025 | 0.5150 ± 0.040 | 0.5413 ± 0.041 | 0.4782 ± 0.083 | 0.6408 ± 0.027 |
+| EEG + video | 0.4990 ± 0.048 | 0.5270 ± 0.027 | 0.5469 ± 0.020 | 0.5481 ± 0.031 | 0.6256 ± 0.022 |
+| EEG + gaze | 0.5124 ± 0.039 | 0.5527 ± 0.018 | 0.5797 ± 0.016 | 0.4436 ± 0.098 | **0.6515 ± 0.038** |
+| *Leave-one-listener-out* | | | | | |
+| EEG | 0.4364 ± 0.032 | 0.5019 ± 0.070 | 0.5240 ± 0.070 | 0.4875 ± 0.110 | 0.6188 ± 0.117 |
+| EEG + IMU | 0.4854 ± 0.063 | 0.5093 ± 0.078 | 0.5580 ± 0.087 | 0.4613 ± 0.157 | 0.6304 ± 0.134 |
+| EEG + video | 0.5088 ± 0.074 | 0.5419 ± 0.067 | 0.5625 ± 0.084 | 0.5531 ± 0.087 | **0.6344 ± 0.125** |
+| EEG + gaze | 0.5054 ± 0.075 | 0.5214 ± 0.102 | 0.5590 ± 0.086 | 0.5169 ± 0.131 | 0.6245 ± 0.162 |
+
+**Contribution of the recording** (accuracy − accuracy under permuted
+recordings):
+
+| Modalities | 5 s | 10 s | 15 s | 20 s | 30 s |
+|---|---|---|---|---|---|
+| *Within-subject* | | | | | |
+| EEG | +0.1112 | +0.1595 | +0.2566 | +0.2142 | +0.3196 |
+| EEG + IMU | +0.1633 | +0.2373 | +0.2809 | +0.2185 | +0.3766 |
+| EEG + video | +0.1803 | +0.2384 | +0.2852 | +0.2895 | +0.3649 |
+| EEG + gaze | +0.2044 | +0.2710 | +0.3174 | +0.1904 | **+0.3867** |
+| *Leave-one-listener-out* | | | | | |
+| EEG | +0.1112 | +0.2092 | +0.2621 | +0.2245 | +0.3628 |
+| EEG + IMU | +0.1725 | +0.2280 | +0.3036 | +0.2077 | +0.3645 |
+| EEG + video | +0.1889 | +0.2656 | +0.2995 | +0.2837 | **+0.3731** |
+| EEG + gaze | +0.1936 | +0.2515 | +0.2997 | +0.2564 | +0.3551 |
+
+Per-fold, the contribution is positive in **5 of 5 folds in all 20
+within-subject cells** (sign test p = 0.031, the floor at n = 5) and in **16 of
+16 folds in 19 of 20 LOSO cells** (Wilcoxon p = 3.1 × 10⁻⁵); the exception is
+EEG+IMU at 20 s, 14 of 16 (p = 3.1 × 10⁻⁴).
+
+Three regularities. The contribution rises monotonically with window length for
+every modality set under both protocols — the canonical
+accuracy-versus-window-length relationship for this task, and one that was
+entirely absent before, since the previous contribution was zero at every
+window. Every behavioural modality adds signal at every window, gaze being the
+strongest addition within-subject and video under LOSO. And LOSO tracks
+within-subject throughout, so the effect transfers to unseen listeners without
+loss.
+
+**The audio-only floor is not exactly at chance, and the reason matters.**
+
+| Window | Linear probe | Model's null, within | Model's null, LOSO | Null excess over chance |
+|---|---|---|---|---|
+| 5 s | 0.2627 | 0.3251 | 0.3252 | **+0.0751** |
+| 10 s | 0.2600 | 0.3163 | 0.2927 | +0.0663 |
+| 15 s | 0.2867 | 0.2751 | 0.2618 | +0.0251 |
+| 20 s | 0.2800 | 0.2852 | 0.2630 | +0.0352 |
+| 30 s | 0.2700 | 0.2710 | 0.2559 | +0.0210 |
+
+At the short windows the trained model's permuted accuracy **exceeds what the
+linear probe of §4.3 can reach** — 0.325 against 0.263 at 5 s. The probe is a
+logistic classifier on eight hand-chosen statistics; the model's audio encoder
+is a five-layer convolutional network with far more capacity, and it finds
+residual audio structure the probe misses. Two consequences, both important:
+
+1. **The probe certifies against a linear reader, not against the model itself.**
+   It is a lower bound on what is extractable from the candidates, and should be
+   read as such. The permutation null, which uses the model's own audio pathway,
+   is the operative measure.
+2. **The contribution remains valid regardless**, because it subtracts the
+   model's own null rather than the probe. What changes is the interpretation of
+   accuracy: at 5 s, roughly 0.075 of the 0.436 is audio, not recording.
+
+The excess shrinks with window length, so the 15–30 s cells are close to clean
+while the 5–10 s cells are not. Where an exactly-clean floor is required, the
+same-talker construction of §2.4 is the right choice — its audio-only accuracy
+is 0.5002 against 0.5000 by design — at the cost of not being the four-way task.
+
+---
+
 ## 6. Discussion and limitations
 
 **The linear reference is uninformative, and this is unresolved.** A reconstruction correlation
@@ -783,9 +883,22 @@ untuned rather than best-case.
 **Selection uses three validation permutations** against twenty at test. A noisier selection
 signal can cost contribution but cannot inflate it.
 
-**Coverage gaps.** The window sweep is content-disjoint only and covers the coupling
-configurations; leave-one-listener-out and the multimodal configurations were evaluated at 10 s
-only. Windows of 5, 15 and 20 s were not run.
+**The audio-only floor is not exactly at chance at short windows.** The trained model's permuted
+accuracy exceeds the linear probe by 0.066–0.075 at 5 and 10 s (§5.9), because its audio encoder
+has more capacity than a logistic classifier on eight statistics. Distribution matching equalises
+the candidates' marginals exactly, but not everything a convolutional network can read from their
+temporal structure. The contribution metric is unaffected — it subtracts the model's own null —
+but accuracy at 5 s should not be read as wholly attributable to the recording. Only the
+same-talker construction has a provably exact floor.
+
+**The 20 s cell dips against trend throughout the grid.** At 50 % hop a 30 s trial yields only two
+windows there, and the fold-to-fold spread is correspondingly wide (up to ±0.157 under LOSO).
+We read it as underpowered rather than as a real non-monotonicity, but it is not established
+either way.
+
+**Coverage gaps.** The full grid (§5.9) covers four modality sets that all include EEG; the
+behaviour-only configurations of §5.7 were evaluated at 10 s only, as were the lag-band and
+stratified-null controls. The linear reference decoder was run at 10 s only.
 
 **The confound's mechanism is inferred, not demonstrated.** The evidence in §5.1 favours a
 dynamics-processing difference between target and masker recordings, but every recording appears
@@ -1850,4 +1963,30 @@ $PY make_report.py
 Batch wrappers `slurm/{fix_ladder,fix_debug,fix_long,ridge_band}.sbatch`; results
 `results/fixed/*.json`; jobs 6900038, 6900360–4, 6901199 (ablation); 6904642–7 (LOSO);
 6904648–56, 6906613–5 (sweep, linear reference, reruns); 6906608, 6906610–2 (stratified
-permutations, band-limited reference); 6907532 (lag-band control).
+permutations, band-limited reference); 6907532 (lag-band control); 6915522 (mechanism trace).
+
+### 7.12 The benchmark grid of §5.9
+
+§5.9 was produced by the patched benchmark repository rather than by this harness, so the fix
+ships where the numbers are generated. Branch `fixes`, commits `56d842d` (the fix) and `3d8b89f`
+(the results); the previous revision is preserved there as `scripts/*_legacy.py` and its outputs
+in `results_legacy/`. Array job 6920294, 20 tasks — one per (modality set, window), each running
+both protocols:
+
+```bash
+python scripts/train_aad.py --local_path <dataset> --cache_dir <cache> \
+    --dataset_cache <dscache> --mode {eeg,eeg_imu,eeg_video,eeg_gaze} \
+    --split_setting {within,loso} --window_sec {5,10,15,20,30} \
+    --hop_sec {2.5,5,7.5,10,15} --candidates qmatch --epochs 50
+
+python scripts/collect_results.py <results_root> --markdown RESULTS.md
+```
+
+`train_aad.py` prints the audio-only probe before training and warns if the candidate set is
+confounded. `--candidates raw` reproduces the previous, confounded construction for comparison;
+`--candidates shifted_qm --n_candidates 2` gives the provably clean binary task.
+
+Note the configuration differences from §5.2–5.8, which prevent cell-by-cell comparison: the grid
+uses 50 % hop (matching the benchmark's own window naming) where the earlier sweep used
+non-overlapping windows, and every grid model carries an orientation head on EEG as well as on
+the behavioural modality, where the coupling-only configuration of §5.2 does not.

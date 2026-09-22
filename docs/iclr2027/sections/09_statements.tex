@@ -1,0 +1,40 @@
+\subsection*{AI use statement}
+
+Generative AI tools were used substantively in this work and their use is
+disclosed here in full. An AI coding assistant was used to write the decoder,
+data and evaluation code in \texttt{src/} and to produce the first draft of this
+manuscript's text, working from the authors' prior analyses, design decisions and
+experimental results. It was not used to generate research ideas, to select which
+hypotheses to test, or to produce any experimental result: every number reported
+here comes from a training run whose configuration, execution and outputs are
+recorded on disk, and the manuscript's numbers are inserted mechanically from
+those outputs rather than written by hand, so that an unsupported cell is visible
+rather than silent (Appendix~\ref{app:repro}). The authors have read and verified
+the code, re-derived the coupling-score and Shapley claims of
+Section~\ref{sec:method} independently, and checked the cited literature against the
+primary sources. The authors take full responsibility for the final content of
+this work, including all text, claims and artifacts.
+
+\subsection*{Ethics statement}
+
+The dataset was collected under institutional review with informed consent, and
+we use it as released; no new data from people was collected for this work. Some
+of the present authors released the benchmark we build on. This gave us access to
+its code and to its authors' own account of its limits, and readers should keep
+it in mind when reading our comparisons. When we cite the benchmark's numbers we
+take them from its paper, rather than re-running it in a setting we chose.
+Attention decoding is meant for hearing devices. We state clearly that the
+behavioural streams measure where a listener faces, not what they attend to
+(Section~\ref{sec:intro}), because a device that confused the two would fail
+exactly for the listeners who cannot turn their head or eyes.
+
+\subsection*{Reproducibility statement}
+
+The decoder, the data code and all tests form one package with one configuration
+file, and every experiment in the paper is one command (Appendix~\ref{app:repro}).
+All settings are listed in Appendix~\ref{app:hp}, and none were tuned. At test
+time the order of the candidates is fixed by each window's index, so every model
+we compare sees exactly the same inputs, and the models inside one run share one
+dataset and one set of folds. Each test set is scored once, and the shuffled
+baseline behind every reported number is never used for training or for choosing
+a checkpoint.

@@ -1,0 +1,65 @@
+\section{Three ways to be right for the wrong reason}
+\label{sec:failures}
+
+\paragraph{(i) The audio gives the answer away.}
+\label{sec:conf}
+The decoder sees the candidate audio, so anything in the audio that marks the
+attended talker solves the task without the brain. Holding out listeners or
+stimuli does not help, because the mark belongs to the \emph{role} of attended
+talker, so it is present for every listener and every stimulus. Making all
+candidates equally loud does not help either. Loudness is removed exactly by
+standardising each candidate, but standardising only fixes the mean and the
+variance. Every statistic that does not change with scale survives: skew,
+kurtosis, sparsity and the balance between frequency bands. On this dataset the
+attended and ignored talkers differ in exactly these. The peak-to-average ratio of
+the envelope alone separates them with an effect size of
+$d=\R{sep/envelopecrestdB/d}$. The dataset's authors trace this to the loudness
+adjustment, which clipped the attended talker's peaks \citep{maestro2026}.
+
+We therefore test each candidate set \emph{before} training, with an
+\textbf{acceptance probe}: a logistic regression on eight statistics that do not
+depend on scale, evaluated on held-out content. A clean candidate set must score
+$1/K$. The \cUnm{} set scores \R{probe/raw/K4/excess} above chance.
+\cMat{} brings this down to \R{probe/qmatch/K4} against $0.25$, and
+same-talker candidates to \R{probe/shifted_qm/K2} against $0.50$
+(Table~\ref{tab:probe}).
+
+\paragraph{(ii) The standard scoring function has a shortcut.}
+\label{sec:degenerate}
+The standard score normalises the brain and audio embeddings at each time step,
+multiplies them, averages over time and applies a linear layer
+\citep{accou2021,monesi2020}. Suppose the brain encoder outputs the same unit
+vector $\hat c$ at every step. Then the time average splits apart and the score
+becomes $w^\top(\hat c \odot \frac1T\sum_t \hat a_{k,t}) + b$: a linear classifier
+on the averaged audio, with exactly the power needed to read the audio mark of
+(i). So the architecture contains an audio-only decoder, which it reaches by
+letting the brain encoder go constant --- and this solution is easier to find
+than the intended one. Problem (i) makes the audio shortcut \emph{enough}; problem
+(ii) makes it \emph{reachable}.
+
+\paragraph{(iii) Easy streams crowd out the brain.}
+\label{sec:freeload}
+When several streams are trained together, the model relies most on the easiest
+one \citep{wang2020gradblend,huang2022competition,wu2022greedy,peng2022ogm}.
+Here this changes what the result means. Gaze, head motion and scene video show
+where the listener is \emph{facing}, which in a room of loudspeakers predicts the
+attended talker well \citep{kidd2005,rotaru2024}. Only the EEG follows what the
+talker is \emph{saying}. A fused decoder that quietly relies on gaze reports a
+higher number while supporting a weaker claim.
+
+As Section~\ref{sec:intro} argues, it also fails exactly for the listeners a brain-based device
+is for: those who cannot, or choose not to, face the talker they listen to.
+
+\paragraph{One test catches all three.}
+\label{sec:perm}
+Shuffling a recorded stream across test windows, while each window keeps its own
+candidates and label, costs accuracy only if the decoder uses that stream. We
+shuffle the recording, not the labels: shuffling the labels would also break the
+link between the audio and the answer, and would hide the very shortcut we are
+testing for (Appendix~\ref{app:perm}). Let
+$v(T)$ be the accuracy when the streams in the set $T$ are left intact and the
+others are shuffled. Then $v(\emptyset)$ is what \emph{this} model can get from the
+audio alone, measured through its own audio pathway. The probe bounds what a
+simple reader can take from the audio; the shuffled accuracy measures what this
+decoder actually takes. Appendix~\ref{app:failures} gives all three problems in
+more detail.

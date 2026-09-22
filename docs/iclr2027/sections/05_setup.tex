@@ -1,0 +1,45 @@
+\section{Experimental setup}
+\label{sec:setup}
+
+Every result is defined by four choices: the candidate set, the split, the
+decision window and the set of streams. Every accuracy comes with its own
+shuffled baseline; an accuracy without one is not a result. Besides accuracy,
+the baseline and the contribution, we report a permutation $p$-value
+$(\#\{v_{\text{null}}\!\ge\!v\}+1)/(n+1)$, whose smallest possible value with
+twenty shuffles is $0.048$; the Shapley credit $\phi_m$; the \emph{flip rate},
+the fraction of windows whose chosen candidate changes when the stream is
+shuffled; accuracy with the stream replaced by zeros; and the \emph{collapse},
+the mean cosine similarity between the time-centred embeddings of different
+windows, where a value near one means every window produces the same pattern.
+
+Training uses AdamW \citep{loshchilov2019adamw} with learning rate $10^{-3}$,
+batches of $32$ windows from one listener, and at most $50$ epochs. Checkpoints
+are chosen on validation data by the rule of Section~\ref{sec:selection}, with
+three shuffles, and the chosen checkpoint is scored once on the test set with
+twenty. \textbf{We did no hyper-parameter search}: every setting was fixed once
+in advance (Appendix~\ref{app:hp}), so these numbers are not tuned. To compare
+architectures, the first row of our ablation runs the benchmark's model
+\citep{maestro2026} --- its encoder, its cosine-then-linear score and plain
+cross-entropy --- inside our training loop and splits, so that differences
+between rows come from the model and not from the protocol. We run it on both
+candidate sets. Neither run is meant to reproduce the benchmark's published
+numbers, which use its own training loop, a longer schedule and all streams;
+when we cite those numbers we take them from the paper.
+
+\paragraph{Why this dataset.}
+Crowding out between streams can only be studied when the streams are recorded
+\emph{and} the listener is free to produce them. This is rare. Public AAD datasets
+record EEG plus a few electrodes near the eyes for cleaning artifacts, and
+nothing else \citep{fuglsang2018dtu}, and their designs deliberately hold the
+listener still: earphones that simulate the room, a chin rest
+\citep{yan2024fourspeaker}, a sound booth. The closest dataset, AV-GC-AAD
+\citep{geirnaert2024avgc}, separates gaze from attention on purpose, to catch
+decoders that read gaze. That is the right tool for asking \emph{whether} a
+decoder uses gaze instead of the brain, and the wrong tool for asking how credit
+is shared among five streams, because four of them have been designed to carry no
+information. As far as we know, MAESTRO is the only public AAD dataset that
+records eye tracking, head motion and scene video together with EEG from a
+listener who is free to move in a room with several loudspeakers
+(Appendix~\ref{app:corpora}). The parts of \merit{} that do not need these streams
+--- the audio probe and the coupling score --- work on any matching dataset, and
+we test them on two (Section~\ref{sec:res-mm}).

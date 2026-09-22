@@ -1,0 +1,13 @@
+name: synthetic
+subjects: [1, 2, 3]
+cache_dir: /fs/scratch/PAS2301/alialavi/projects/cache
+kind: main
+n_folds: 3
+overwrite_cache: false
+seed: 0
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_level_norm: true

@@ -1,0 +1,26 @@
+name: aad
+subjects: [1, 2, 3]
+# CONFOUND-FREE match-mismatch: candidates = the ATTENDED talker's envelope (true-aligned)
+# vs time-shifted copies of the SAME envelope. Identical content + SNR -> audio carries
+# zero info about the answer; only EEG temporal tracking can pick the aligned one.
+# Reuses the aad_recon cache (mm_task/n_neg are materialise-time, not in the cache tag).
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_recon
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_norm: table_power
+  audio_level_norm: false
+  lp_hz: 10.0
+  hp_hz: 1.0
+  norm_cand: true
+  norm_eeg: false
+  mm_task: shifted           # attended talker, true-aligned vs time-shifted negatives
+  n_neg: 1                   # binary match-mismatch (chance 0.5) -- the classic AAD test
+  min_shift_s: 3.0           # negatives shifted >=3 s, far beyond the model's +-375 ms lag search

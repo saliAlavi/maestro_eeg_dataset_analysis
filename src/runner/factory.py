@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from ..common.registry import Registry
 from .aad_runner import AADRunner
+from .merit_runner import MeritRunner
 from .transfer_runner import TransferSSLRunner
 
 RUNNER_REGISTRY = Registry("runner")
 RUNNER_REGISTRY.register("aad")(AADRunner)
+RUNNER_REGISTRY.register("merit")(MeritRunner)
 RUNNER_REGISTRY.register("transfer_ssl")(TransferSSLRunner)
 
 

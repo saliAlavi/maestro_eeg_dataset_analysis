@@ -1,0 +1,49 @@
+name: merit
+tag: ""
+
+# --- architecture ---
+time_mods: [eeg, gaze, imu, video]
+static_mods: [fovea]
+orientation: [eeg, gaze, imu, video, fovea]   # streams that get an audio-free speaker head
+coupling: true                 # EEG<->envelope correlation branch
+dim: 16                        # shared descriptor width D
+layers: 5                      # dilations 1,2,4,8,16 -> RF 63 samples ~ 0.98 s @ 64 Hz
+spatial_filters: 8             # 32 electrodes -> 8 virtual sensors
+dropout: 0.1
+gates: true                    # non-negative per-stream gate (keeps the decision readable)
+adversary: true                # audio-only head behind a gradient-reversal layer
+modality_dropout: 0.3
+
+# Lag-band control (§ neural directionality). brain_dir=future & lag_samples=8 confines
+# the EEG to +125..+1109 ms relative to the audio it scores -- the only band a neural
+# response can occupy; past & -8 gives the mirrored, acausal band.
+brain_dir: centred             # centred | future | past
+lag_samples: 0
+
+# --- objective ---
+anti_shortcut: true            # CLIP-over-brain + brain null hinges + anti-collapse + adversary
+w_aux: 0.3                     # per-stream auxiliary speaker CE
+w_contrib: 0.5                 # per-stream permutation (contribution) hinges  <-- the new term
+contrib_margin: 0.3
+contrib_zeros: true
+
+train:
+  epochs: 50
+  patience: 12
+  batch_size: 32               # one listener per batch (contrastive negatives)
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  val_shuffles: 3
+  test_shuffles: 200        # p-value floor 1/201 = 0.005
+  select: credit               # credit | contribution | acc  (checkpoint criterion)
+  select_beta: 1.0             # weight on the WORST per-stream Shapley credit
+  hinge_target: 0.05           # per-stream contribution above which the hinge relaxes
+  hinge_mode: solo             # solo | gated | uniform
+encoder: v2                    # v2 | legacy  (ablation: the published encoder)
+head: corr                     # corr | legacy (ablation: the published scoring function)
+
+# --- v2 improvements ---
+trial_level: false             # sum window scores over a trial and decide once
+subject_adapt: false           # listener-conditioned rank-r spatial correction
+subject_rank: 2

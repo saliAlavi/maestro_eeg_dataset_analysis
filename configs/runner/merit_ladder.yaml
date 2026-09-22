@@ -1,0 +1,34 @@
+# Ablation ladder, EEG only.  Each row changes exactly one thing from the row
+# above.  Run once on `raw` candidates and once on `qmatch` (see the sbatch).
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: L0_published
+    model: {time_mods: [eeg], static_mods: [], orientation: [], encoder: legacy,
+            head: legacy, anti_shortcut: false, w_contrib: 0.0, adversary: false,
+            train: {select: acc}}
+  - name: L1_encoder
+    model: {time_mods: [eeg], static_mods: [], orientation: [], encoder: v2,
+            head: legacy, anti_shortcut: false, w_contrib: 0.0, adversary: false,
+            train: {select: acc}}
+  - name: L2_corr_head
+    model: {time_mods: [eeg], static_mods: [], orientation: [], encoder: v2,
+            head: corr, anti_shortcut: false, w_contrib: 0.0, adversary: false,
+            train: {select: acc}}
+  - name: L3_anti_shortcut
+    model: {time_mods: [eeg], static_mods: [], orientation: [], encoder: v2,
+            head: corr, anti_shortcut: true, w_contrib: 0.0, adversary: true,
+            train: {select: acc}}
+  - name: L4_contribution_sel
+    model: {time_mods: [eeg], static_mods: [], orientation: [], encoder: v2,
+            head: corr, anti_shortcut: true, w_contrib: 0.0, adversary: true,
+            train: {select: contribution}}
+  - name: L5_credit
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg], encoder: v2,
+            head: corr, anti_shortcut: true, w_contrib: 0.5, adversary: true,
+            train: {select: credit}}

@@ -1,0 +1,76 @@
+\section{More detail on the three problems}
+\label{app:failures}
+
+This section gives the steps behind Section~\ref{sec:failures} that the main text
+states briefly.
+
+\subsection{Why making the candidates equally loud is not enough}
+\label{app:conf}
+
+Every step of the envelope pipeline is linear, so scaling a recording by $\alpha$
+scales its envelope by $\alpha$: $\mathrm{env}(\alpha x)=\alpha\,\mathrm{env}(x)$.
+Standardising each candidate then subtracts its mean and divides by its standard
+deviation, which removes any change of the form $x\mapsto\alpha x+\beta$. Playing a
+recording $15$\,dB louder or quieter therefore gives exactly the same
+standardised envelope. A pure difference in loudness cannot survive, so it cannot
+be what gives the answer away.
+
+What does survive is every property that scaling and shifting leave unchanged.
+Standardising fixes only two numbers per candidate, the mean and the variance.
+Skew, kurtosis, sparsity, ratios between percentiles and the balance between
+frequency bands all pass through untouched. If the attended and ignored
+recordings differ in any of these, no rescaling can help --- and on this dataset
+they do: the envelope's peak-to-average ratio alone separates attended and ignored
+talkers with an effect size of $d=\R{sep/envelopecrestdB/d}$. A fix must therefore either make the candidates'
+whole distributions identical (\cMat{}) or remove the difference between
+attended and ignored recordings altogether (same-talker candidates). Reporting
+chance does not help either, since the mark lifts accuracy well above it.
+
+\subsection{How the standard score reduces to an audio classifier}
+\label{app:degenerate}
+
+The standard score has one convolution stack for the recording and one, shared
+across candidates, for the audio. At each time step $t$ it normalises the brain
+embedding $c_t$ and the candidate embedding $a_{k,t}$ to unit length, multiplies
+them element by element, averages over time and applies a linear layer:
+$\mathrm{score}_k = w^\top\big(\frac1T\sum_t \hat c_t\odot\hat a_{k,t}\big)+b$.
+Now let the brain encoder output the same unit vector at every step,
+$\hat c_t=\hat c$. The brain term no longer depends on $t$, so it moves out of the
+average:
+\begin{equation}
+  \mathrm{score}_k \;=\; w^\top\!\Big(\hat c \odot \tfrac1T\textstyle\sum_t \hat a_{k,t}\Big) + b
+  \;=\; \tilde w^\top \bar a_k + b,\qquad \tilde w=w\odot\hat c .
+\end{equation}
+This is a linear classifier on the time-averaged audio embedding $\bar a_k$ of
+each candidate, and it can read any audio mark the audio encoder learns to
+represent. The model reaches it simply by letting the brain encoder go constant,
+which is easier than learning to follow the speech. The time-centred score of
+Eq.~\ref{eq:coupling} closes this route: with a constant brain embedding,
+$e-\bar e=0$, every correlation is zero, and every candidate gets the same score.
+
+\subsection{Why a joint shuffle cannot see crowding out}
+\label{app:freeload}
+
+Shuffling all recorded streams together measures how much the model uses the
+listener's signals as a whole. Suppose EEG alone earns a contribution of $0.40$.
+Now add a gaze stream that is easier to read, and suppose the fused model earns
+$0.55$ in total, but only $0.20$ of it from the EEG. The joint contribution went
+\emph{up}, from $0.40$ to $0.55$, while the brain's share fell by half. A joint
+shuffle reports the first change and hides the second. Only a split per stream,
+such as the Shapley values of Eq.~\ref{eq:shapley}, shows both. The numbers of
+Table~\ref{tab:hinge} follow exactly this pattern.
+
+\subsection{Why we shuffle the recording, not the labels}
+\label{app:perm}
+
+A common check shuffles the labels and retrains or re-scores. That is the wrong
+test here. Shuffling the labels breaks the link between the audio and the answer
+as well as the link between the brain and the answer, so a decoder that reads
+only the audio also drops to chance, and the shortcut we are testing for is
+hidden. We instead shuffle the \emph{recording} across test windows and keep each
+window's own candidates and label. A decoder that reads the audio keeps its
+accuracy; only a decoder that uses the recording loses any. The accuracy that
+remains, $v(\emptyset)$, is what \emph{this} model gets from the audio alone,
+measured through its own audio pathway. The linear probe bounds what a simple
+reader can take from the audio; $v(\emptyset)$ measures what this decoder
+actually takes.

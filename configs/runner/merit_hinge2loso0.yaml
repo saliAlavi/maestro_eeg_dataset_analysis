@@ -1,0 +1,26 @@
+# NOTE: these runs used data.orient_feats=true but never put 'orient' in
+# data.static_mods, so the per-trial orienting descriptors were not built and
+# the model trained without them.  The configs below state what actually ran,
+# so rerunning them reproduces the paper.
+# Clean 2x2 for the contribution hinge at the v2 operating point.
+# Every variant carries listener adaptation, so the only things that vary are
+# whether the per-stream hinge is in the loss and whether modality dropout is on.
+# The earlier `credit_best` arms confounded the hinge with listener adaptation.
+name: merit
+device: auto
+protocols: [loso]
+max_folds: null
+folds: null
+certify: false
+save_models: false
+variants:
+  - name: H1_hinge_drop
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea],
+            trial_level: true, brain_dir: future, lag_samples: 8,
+            subject_adapt: true}
+  - name: H2_nohinge_drop
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea],
+            trial_level: true, brain_dir: future, lag_samples: 8,
+            subject_adapt: true, w_contrib: 0.0}

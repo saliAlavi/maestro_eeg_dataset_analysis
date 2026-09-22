@@ -1,0 +1,24 @@
+name: aad
+subjects: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+# Longer 15 s decision windows for content-based attended-source detection.
+# Reuses the aad_recon trial arrays (cloned to the win15 tag; data is window-independent).
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_recon
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward
+window:
+  win_s: 15.0                 # 15 s windows -> more integration per source-detection decision
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.75              # hop 3.75 s -> ~5 windows/trial for training
+  audio_norm: table_power
+  audio_level_norm: false
+  lp_hz: 10.0
+  hp_hz: 1.0
+  norm_cand: true
+  norm_eeg: false
+  mm_task: speaker           # candidates = 6 sources; pick the attended (1..4)
+  n_neg: 1
+  min_shift_s: 3.0

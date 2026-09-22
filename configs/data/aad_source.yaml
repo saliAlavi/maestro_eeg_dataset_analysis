@@ -1,0 +1,27 @@
+name: aad
+subjects: [1, 2, 3]
+# REUSES the aad_spec cache (broadband EEG + table-power envelopes + raw gaze).
+# Same cache-affecting params -> same .npz tag (win5_sr64_b28_pwT_lp10_elp0).
+# gaze_traj_len is materialise-time (not in the tag), so bumping it needs NO rebuild.
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_spec
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_norm: table_power
+  audio_level_norm: false
+  lp_hz: 10.0                  # envelopes in the speech-tracking band (content branch)
+  eeg_lp_hz: 0.0              # EEG broadband -> alpha/beta for the spatial branch
+  hp_hz: 1.0
+  gaze_traj_len: 32          # longer raw gaze trajectory for the conv gaze encoder (azimuth)
+  norm_cand: true
+  norm_eeg: false             # raw EEG -> in-model BatchNorm + learned spatial/CSP filters
+  mm_task: speaker
+  n_neg: 1
+  min_shift_s: 3.0

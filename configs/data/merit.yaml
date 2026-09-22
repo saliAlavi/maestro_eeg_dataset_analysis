@@ -1,0 +1,34 @@
+name: merit
+subjects: all                      # "all" = the 16 listeners, or a list [1,2,3]
+cache_root: /fs/scratch/PAS2301/alialavi/cache
+dataset_path: /fs/scratch/PAS2301/alialavi/maestro-eeg-dataset
+vjepa_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__vjepa
+
+modalities: [eeg, gaze, imu, video]   # time-series streams (64 Hz)
+static_mods: [fovea]                  # frozen V-JEPA 2 per-window embeddings
+
+window_sec: 10.0
+hop_sec: 5.0
+
+# Candidate construction. qmatch = distribution-matched co-present talkers (four-way);
+# shifted_qm = same-talker temporal negatives, the only construction whose audio-only
+# Bayes accuracy is exactly 1/K. raw = the standard, confounded construction (ablation).
+cand_mode: qmatch                  # raw | qmatch | shifted | shifted_qm
+K: 4
+
+n_folds: 5                         # content-disjoint within-subject folds
+val_frac: 0.2                      # inner validation carved from TRAIN only
+content_holdout: 0.2               # global content holdout layered on LOSO
+seed: 0
+
+# smoke-test knobs (null in real runs): subset the materialised store
+limit_subjects: null               # e.g. [1,2,3]
+limit_content: null                # e.g. 20  -> only stimuli eval_001..eval_020
+
+# --- v2 improvements (all default-off so earlier results stay reproducible) ---
+crop_len: null                 # e.g. 640 -> store whole trials, crop 10 s windows
+n_train_crops: 5               # random crops per trial per epoch (more training data)
+n_eval_crops: 5                # deterministic eval grid; 5 reproduces the w10/h5 cache
+euclidean_align: false         # label-free per-listener covariance whitening of EEG
+orient_feats: false            # per-trial gaze/head descriptors from the RAW recordings
+audio_feats: env               # env | env_onset (adds the rectified envelope derivative)

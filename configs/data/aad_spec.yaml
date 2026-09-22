@@ -1,0 +1,28 @@
+name: aad
+subjects: [1, 2, 3]
+# Spectral/lateralisation cache: EEG kept broadband (alpha 8-12 Hz + beta) so the
+# lateralisation signal survives. Separate cache tag from the envelope cache.
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_spec
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward     # trial-level, no leakage
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_norm: table_power      # (audio unused by spectral models; kept for cache consistency)
+  audio_level_norm: false
+  lp_hz: 10.0                  # envelope lowpass (unused here)
+  eeg_lp_hz: 0.0              # EEG: NO extra lowpass -> keep alpha/beta (resample already anti-aliases <32 Hz)
+  hp_hz: 1.0
+  gaze_traj_len: 16          # raw subject-relative gaze x/y trajectory length (azimuth cue; materialise-time)
+  norm_cand: true
+  norm_eeg: false              # CRITICAL: per-channel z-score would erase the L-R power asymmetry that IS
+                               # the alpha-lateralisation signal. Keep raw (preprocessed) amplitude; the
+                               # encoder's BatchNorm handles scale across the batch.
+  mm_task: speaker             # candidates = 6 speakers; classify attended (1..4) from EEG
+  n_neg: 1
+  min_shift_s: 3.0

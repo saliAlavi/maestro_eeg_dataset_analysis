@@ -7,6 +7,7 @@ Usage:
 
 Modes:
     prepare  -- build/cache the windowed dataset for the requested subjects.
+    certify  -- audio-only acceptance probe for every candidate construction.
     train    -- full protocol sweep for one model (logs to wandb, saves to scratch).
     selftest -- run the whole stack on synthetic data, wandb disabled.
 """
@@ -30,6 +31,47 @@ def _prepare(cfg: DictConfig) -> None:
     dm = build_datamodule(cfg.data)
     dm.prepare()
     log.info("prepare done for subjects %s", list(cfg.data.subjects))
+
+
+def _certify(cfg: DictConfig) -> None:
+    """Run the audio-only acceptance probe on every candidate construction.
+
+    Model-independent and run before any training: a construction whose
+    audio-only Bayes accuracy is above 1/K concedes that much of the reported
+    accuracy to a decoder that never consults the recording.
+    """
+    import pandas as pd
+    from omegaconf import open_dict
+
+    from .data.merit_data import role_separation
+    from .runner.merit_runner import _build_merit_data
+
+    rows, sep = [], None
+    for mode, K in [("raw", 4), ("qmatch", 4), ("shifted", 3), ("shifted_qm", 3),
+                    ("shifted", 2), ("shifted_qm", 2)]:
+        c = cfg.copy()
+        with open_dict(c):
+            c.data.cand_mode, c.data.K = mode, K
+        dm = _build_merit_data(c).prepare()
+        p = dm.certify()
+        rows.append({"construction": mode, "K": K, "audio_only_probe": p,
+                     "chance": 1.0 / K, "excess": p - 1.0 / K,
+                     "window_sec": dm.window_sec, "n_windows": dm.store.n})
+        if mode == "raw" and K == 4:
+            # what the confound IS, measured on the envelopes the model is fed
+            sep = pd.DataFrame(role_separation(dm.bank["A"], dm.bank["pos"]))
+            log.info("target-vs-masker shape separation:\n%s",
+                     sep.to_string(index=False))
+        log.info("%-12s K=%d  probe=%.4f  chance=%.4f  excess=%+.4f",
+                 mode, K, p, 1.0 / K, p - 1.0 / K)
+    df = pd.DataFrame(rows)
+    root = ProjectPaths(cfg.project).ensure().root
+    if sep is not None:
+        sep.to_csv(root / "credit_role_separation.csv", index=False)
+    out = root / "credit_candidate_probes.csv"
+    df.to_parquet(str(out).replace(".csv", ".parquet"), index=False)
+    df.to_csv(out, index=False)
+    log.info("wrote %s\n%s", out, df.to_string(index=False))
 
 
 def _selftest(cfg: DictConfig) -> None:
@@ -70,6 +112,8 @@ def main(cfg: DictConfig) -> None:
     mode = cfg.get("mode", "train")
     if mode == "prepare":
         _prepare(cfg)
+    elif mode == "certify":
+        _certify(cfg)
     elif mode == "selftest":
         _selftest(cfg)
     elif mode == "train":

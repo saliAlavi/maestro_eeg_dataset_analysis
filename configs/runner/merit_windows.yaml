@@ -1,0 +1,19 @@
+# Decision-window sweep: a leaner stream set than credit_streams, since the
+# point of the sweep is the shape of contribution-vs-window, not the full grid.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: eeg
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg]}
+  - name: eeg_gaze
+    model: {time_mods: [eeg, gaze], static_mods: [], orientation: [eeg, gaze]}
+  - name: eeg_fovea
+    model: {time_mods: [eeg], static_mods: [fovea], orientation: [eeg, fovea]}
+  - name: all
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea]}

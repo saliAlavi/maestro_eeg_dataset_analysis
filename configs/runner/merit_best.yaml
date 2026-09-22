@@ -1,0 +1,28 @@
+# NOTE: these runs used data.orient_feats=true but never put 'orient' in
+# data.static_mods, so the per-trial orienting descriptors were not built and
+# the model trained without them.  The configs below state what actually ran,
+# so rerunning them reproduces the paper.
+# The full stack across stream sets, with the solo-gated contribution hinge.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: false
+save_models: false
+variants:
+  - name: eeg
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: future, lag_samples: 8}
+  - name: eeg_orient
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: future, lag_samples: 8}
+  - name: all
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea],
+            trial_level: true, brain_dir: future, lag_samples: 8,
+            subject_adapt: true}
+  - name: all_nohinge
+    model: {time_mods: [eeg, gaze, imu, video], static_mods: [fovea],
+            orientation: [eeg, gaze, imu, video, fovea],
+            w_contrib: 0.0, trial_level: true, brain_dir: future, lag_samples: 8}

@@ -1,0 +1,25 @@
+name: aad
+subjects: [1, 2, 3]
+# REUSES the aad_recon cache (same cache-affecting params -> same .npz tag
+# win5_sr64_b28_pwT_lp10). norm_eeg is materialise-time (not in the tag), so
+# flipping it to false needs NO re-caching.
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_recon
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_norm: table_power      # 6 speakers loudness-equalised by documented power -> EEG-honest
+  audio_level_norm: false
+  lp_hz: 10.0                  # EEG + envelopes in the ~1-10 Hz speech-tracking band
+  hp_hz: 1.0
+  norm_cand: true              # per-(speaker,band) z-score (envelope shape, not level)
+  norm_eeg: false              # NO per-channel z-score -> keep relative channel amplitude for the spatial/CSP filter
+  mm_task: speaker             # candidates = 6 fixed speakers; pick the attended (1..4) by EEG match
+  n_neg: 1
+  min_shift_s: 3.0

@@ -1,0 +1,49 @@
+\section{Setting}
+\label{sec:setting}
+
+\paragraph{Data and task.}
+MAESTRO \citep{maestro2026} has sixteen listeners and one hundred trials each.
+In every trial four talkers speak at once from loudspeakers at fixed positions,
+and the listener is told beforehand which one to attend to. Trials last about
+$30$\,s. Each talker recording is used only once, so no audio is shared between
+training and test. The attended talker is about $15$\,dB louder than the others
+in every trial. We use five streams, all resampled to $64$\,Hz and standardised
+per channel: EEG ($32$ channels), gaze ($6$), head motion ($6$), optical flow
+from the scene camera ($4$), and one new stream, a \emph{frozen} V-JEPA\,2 ViT-L
+embedding \citep{assran2025vjepa2} of the part of the scene the listener is
+looking at (one $1024$-d vector per window, never trained). Signals are cut into
+windows of $W$ seconds with hop $H$ ($W\!=\!10$, $H\!=\!5$ unless stated). Each
+example holds the streams, $K$ candidate speech envelopes of which one is
+correct, the index of the correct one, the loudspeaker each candidate came from,
+and the listener's identity. The candidates are placed in random order in every
+window, so their position says nothing. At test time the order is fixed by the
+window's index, so every model we compare sees exactly the same inputs
+(Appendix~\ref{app:data}).
+
+\paragraph{Candidate sets.}
+\label{sec:constructions}
+How the candidates are built decides what the task measures, so we name each set
+by how it is built. \cUnm{}: the four talkers of the trial, each standardised.
+This is the usual choice, and on this dataset it leaks the answer
+(Section~\ref{sec:failures}(i)). \cMat{}: the same four talkers after
+\emph{quantile matching}. We sort each candidate's values, average the sorted
+values across the four candidates, and give each candidate these averages back in
+its own time order. All four then contain exactly the same set of values, so no
+statistic of the values --- loudness, skew, sparsity or any other --- can tell
+them apart. Each keeps its own timing, and timing is what a brain response
+follows. This is the most we can remove from the audio without removing the
+signal the task is about. \cSame{}: the wrong candidates are the \emph{attended
+talker's own} speech, taken from other, non-overlapping parts of the same trial.
+All candidates then come from one voice and one loudspeaker, so neither the
+audio nor the listener's orientation can say which is correct, and chance is
+exact by construction \citep{accou2021}. Trials are long enough for $K\!=\!3$ and
+$K\!=\!2$. \cSameM{} applies both steps. We use \cMat{} for the four-way task
+and \cSameM{} as the strictest check that the EEG follows the speech.
+
+\paragraph{Splits.}
+\emph{Within-listener}, five folds: trials are split by their audio content, so no
+stimulus heard in training is heard again at test; every listener appears on both
+sides. \emph{Leave-one-listener-out} (LOSO), sixteen folds: one listener is held
+out, and $20\%$ of the audio content is also held out, so the test listener is new
+in both identity and content. A validation set is always taken from the training
+part, and each test set is scored once.

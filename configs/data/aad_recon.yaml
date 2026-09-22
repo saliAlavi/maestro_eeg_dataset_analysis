@@ -1,0 +1,23 @@
+name: aad
+subjects: [1, 2, 3]
+# Per CLAUDE.md cache convention: /fs/scratch/.../cache/{project}__{dataset}
+cache_dir: /fs/scratch/PAS2301/alialavi/cache/multimodal_aad__aad_recon
+kind: main
+n_folds: 5
+overwrite_cache: false
+seed: 0
+split_mode: chrono_forward     # trial-level, train strictly earlier than test -> no leakage
+window:
+  win_s: 5.0
+  sr: 64.0
+  n_bands: 28
+  overlap: 0.5
+  audio_norm: table_power      # equalise the 6 speakers by documented table power -> EEG-honest 4-way
+  audio_level_norm: false      # superseded by audio_norm
+  lp_hz: 10.0                  # confine EEG + envelopes to the ~1-10 Hz speech-tracking band
+  hp_hz: 1.0
+  norm_cand: true              # per-(speaker,band) z-score over the window
+  norm_eeg: true               # per-channel z-score over the window
+  mm_task: speaker             # candidates = 6 fixed speakers; classify the attended (1..4)
+  n_neg: 1
+  min_shift_s: 3.0

@@ -1,0 +1,25 @@
+# THE experiment: does adding strong behavioural streams kill the EEG pathway,
+# and does writing the per-stream permutation test into the loss prevent it?
+# Cross: contribution hinge on/off  x  checkpoint criterion accuracy/credit.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: all_nohinge_accsel
+    model: {w_contrib: 0.0, train: {select: acc}}
+  - name: all_nohinge_credsel
+    model: {w_contrib: 0.0, train: {select: credit}}
+  - name: all_hinge_accsel
+    model: {w_contrib: 0.5, train: {select: acc}}
+  - name: all_hinge_credsel
+    model: {w_contrib: 0.5, train: {select: credit}}
+  - name: all_hinge_uniform
+    model: {w_contrib: 0.5, train: {select: credit, hinge_mode: uniform}}
+  - name: all_hinge_nodrop
+    model: {w_contrib: 0.5, modality_dropout: 0.0, train: {select: credit}}
+  - name: all_nohinge_nodrop
+    model: {w_contrib: 0.0, modality_dropout: 0.0, train: {select: acc}}

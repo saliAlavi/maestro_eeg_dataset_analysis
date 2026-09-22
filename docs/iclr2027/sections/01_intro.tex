@@ -1,0 +1,96 @@
+\section{Introduction}
+\label{sec:intro}
+
+\paragraph{Why attention decoding matters.}
+About $1.5$ billion people live with some hearing loss, and the number is
+expected to reach $2.5$ billion by $2050$ \citep{who2021hearing}. The hardest
+situation for them is the one \citet{cherry1953} called the cocktail party
+problem: several people talking at once. A hearing aid can make sound louder, but
+it cannot tell which voice matters, so it amplifies all of them, including the
+ones the listener is trying to ignore. \emph{Auditory attention decoding} (AAD)
+addresses this \citep{osullivan2015,geirnaert2021}. The brain's response follows
+the speech a listener attends to \citep{ding2012,lalor2009}, so a decoder can
+read that response from EEG, find the attended talker, and steer a hearing device
+toward them \citep{pan2024neuroheed}.
+
+\paragraph{Why several streams matter.}
+Such a device will not see the brain alone. Glasses and earbuds already carry
+motion sensors, and eye trackers and cameras are being added to them. These
+signals are useful. In everyday listening, people turn their head and eyes toward
+the talker they follow \citep{hendrikse2019,best2023gaze,kidd2005}, and a hearing
+aid steered by an eye tracker has already been built \citep{kidd2013visually}. A
+realistic decoder should therefore combine these streams with the EEG, and doing
+so raises accuracy (Section~\ref{sec:res-hinge}).
+
+\paragraph{Why the EEG must still carry the decision.}
+Gaze and head motion show where a listener is \emph{facing}, not whom they are
+\emph{listening to}, and the two often differ. A driver listens to a passenger
+while watching the road. At a dinner table, people listen to one person while
+looking at another. Some listeners cannot move their eyes or head freely at all.
+A decoder that leans on the behavioural streams does well when facing and
+listening agree, and fails in exactly these cases. Those are the cases where a
+brain-based device is needed: when facing and listening agree, an eye tracker is
+enough. Whatever the EEG adds, it adds through the brain signal. A multimodal
+decoder should therefore use the other streams as helpers, but it must not let
+them replace the EEG. Accuracy cannot tell us whether this holds. A multimodal
+model is reported with one number, and that number does not say which input
+produced it; a decoder that reads only behaviour can look, from its accuracy,
+exactly like one that reads the brain \citep{rotaru2024}.
+
+The usual formulation is a matching task. The model sees a window of the
+recording and $K$ candidate speech signals, one of which is the attended talker,
+and it must pick that one; accuracy is compared with chance, $1/K$
+\citep{accou2021,monesi2020,puffay2023}. We show that this task can be solved
+without using the brain signal at all, in three ways (Section~\ref{sec:failures}).
+\textbf{(i) The audio gives the answer away.} Scaling each candidate to the same
+loudness does not make the candidates look alike: statistics such as skew and
+sparsity do not change with scale. On this dataset they differ between attended
+and ignored talkers, and a simple classifier that sees only the audio reaches
+\R{probe/raw/K4} four-way accuracy, against a chance of \R{probe/raw/K4/chance}.
+\textbf{(ii) The standard scoring function has a shortcut.} If the brain encoder
+outputs the same vector at every time step, the usual score turns into a
+classifier on the audio alone, and training often finds this solution.
+\textbf{(iii) Easy streams crowd out the brain.} When several streams are
+available, training leans on the easiest one
+\citep{wang2020gradblend,huang2022competition,wu2022greedy,peng2022ogm}. Here
+the easy streams measure where the listener is \emph{looking}, not what they are
+\emph{listening to}, so accuracy rises while the evidence for the claim shrinks.
+
+One test catches all three problems. We shuffle a recorded stream across the
+test windows, so each window gets another window's recording but keeps its own
+candidates and its own label, and we measure how much accuracy drops. We call the
+drop the \textbf{contribution} of that stream. A decoder that does not use a
+stream loses nothing when it is shuffled. This paper turns that test from an
+occasional check into the centre of the method.
+
+We work on MAESTRO \citep{maestro2026}, a public multimodal AAD dataset released
+with a benchmark. The benchmark already reports a permutation test: it shuffles
+the EEG, gaze, head motion and video \emph{together}, and its contributions are
+positive. That shows the listener's signals are used. It cannot show \emph{which}
+signal is used, and problem (iii) sits exactly there, because a joint test gives
+its largest value when a strong behavioural stream has pushed the brain aside.
+\merit{} shuffles each stream \emph{separately} and splits the total exactly
+across streams. It also decodes better than the benchmark:
+\R{v2hinge2/H4_nohinge_nodrop/within/acc2} four-way accuracy within listeners and
+\R{v2hinge2loso/H4_nohinge_nodrop/loso/acc2} on unseen listeners, against the
+benchmark's $0.698$ and $0.674$ (Section~\ref{sec:res-full}).
+
+\paragraph{Contributions.}
+\textbf{(1) A per-stream measure of credit} (Section~\ref{sec:shapley}). We
+compute each stream's Shapley value over all $2^M$ subsets of intact streams.
+The values add up exactly to the total contribution, and they are cheap enough
+to report for every run.
+\textbf{(2) A decoder in which the shortcuts are blocked by design}
+(Section~\ref{sec:method}). A time-centred correlation score gives every
+candidate the same score when the brain encoder is constant, so that shortcut
+lands exactly at chance. Heads that read gaze and head motion get no audio, so
+they cannot use audio cues. The candidate audio is tested before training.
+\textbf{(3) Choosing checkpoints by contribution, not accuracy}, which trades a
+little accuracy for a larger share of credit on the brain.
+\textbf{(4) Findings.} Adding behavioural streams cuts the brain's share of the
+credit almost in half; at two-second windows the EEG earns almost none of it.
+On two other public datasets, the same tests find a label imbalance in a widely
+used benchmark and show that high accuracy on both cannot be confirmed as brain
+activity. We also tested adding the permutation test to the training loss
+(Section~\ref{sec:hinges}); it does not increase the brain's share, and we report
+this in full.

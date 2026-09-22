@@ -1,0 +1,186 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{What the matching task allows}
+\label{sec:res-ladder}
+
+We change one thing at a time, starting from the benchmark's model run in our
+training loop. The benchmark itself uses matched candidates and reports positive
+contributions. Here we first pair its model with \cUnm{} candidates, the usual
+choice in the wider literature. This shows what the task allows; it is not a
+reproduction of the benchmark's result.
+
+With \cUnm{} candidates the benchmark's model reaches
+\R{ladder_raw/L0_published/within/acc} four-way accuracy, but its contribution is
+\R{ladder_raw/L0_published/within/contrib}, its decisions never change when the EEG
+is shuffled (flip rate \R{ladder_raw/L0_published/within/flip}), and its
+embeddings are nearly identical across windows (collapse
+\R{ladder_raw/L0_published/within/collapse}). The accuracy is real, but none of it
+comes from the EEG: this is the shortcut of Section~\ref{sec:failures}(ii). A
+better encoder raises accuracy to \R{ladder_raw/L1_encoder/within/acc} and leaves
+the contribution at \R{ladder_raw/L1_encoder/within/contrib} --- it simply reads
+the audio better. A change that raises accuracy is not, by itself, evidence; only
+the shuffle test shows this. The time-centred score gives the first non-zero
+contribution. With matched candidates the same benchmark model scores
+\R{ladder_qm/L0_published/within/acc}, which is chance.
+
+\subsection{More streams, less credit for the brain}
+\label{sec:res-hinge}
+
+\begin{table}[t]
+\caption{\textbf{More streams give more accuracy, and less credit to the brain.}
+Within-listener, \cMat{}, chance $0.25$. The four fused models share
+streams, data, folds, architecture and listener adaptation; they differ only in
+the contribution hinge and in modality dropout. $\phi_m$ is each stream's Shapley
+credit and the five add up to the contribution. The EEG-only model shows how much
+credit the brain earns on its own. Appendix~\ref{app:hinge2loso} gives the same
+four models on unseen listeners.}
+\label{tab:hinge}
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+& & & & \multicolumn{5}{c}{Shapley credit $\phi_m$}\\
+\cmidrule(l){5-9}
+Model & Accuracy & Null & Contrib. & EEG & gaze & head & flow & fovea \\
+\midrule
+EEG alone
+ & \R{v2onset/V4_subjadapt/within/acc} & \R{v2onset/V4_subjadapt/within/null} & \R{v2onset/V4_subjadapt/within/contrib}
+ & \R{v2onset/V4_subjadapt/within/contrib} & --- & --- & --- & --- \\
+\midrule
+\textbf{\merit{}} (no hinge, no dropout)
+ & \textbf{\R{v2hinge2/H4_nohinge_nodrop/within/acc}} & \R{v2hinge2/H4_nohinge_nodrop/within/null} & \textbf{\R{v2hinge2/H4_nohinge_nodrop/within/contrib}} & \R{v2hinge2/H4_nohinge_nodrop/within/shap/eeg} & \R{v2hinge2/H4_nohinge_nodrop/within/shap/gaze} & \R{v2hinge2/H4_nohinge_nodrop/within/shap/imu} & \R{v2hinge2/H4_nohinge_nodrop/within/shap/video} & \R{v2hinge2/H4_nohinge_nodrop/within/shap/fovea} \\
+No hinge, with dropout
+ & \R{v2hinge2/H2_nohinge_drop/within/acc} & \R{v2hinge2/H2_nohinge_drop/within/null} & \R{v2hinge2/H2_nohinge_drop/within/contrib} & \R{v2hinge2/H2_nohinge_drop/within/shap/eeg} & \R{v2hinge2/H2_nohinge_drop/within/shap/gaze} & \R{v2hinge2/H2_nohinge_drop/within/shap/imu} & \R{v2hinge2/H2_nohinge_drop/within/shap/video} & \R{v2hinge2/H2_nohinge_drop/within/shap/fovea} \\
+With hinge, no dropout
+ & \R{v2hinge2/H3_hinge_nodrop/within/acc} & \R{v2hinge2/H3_hinge_nodrop/within/null} & \R{v2hinge2/H3_hinge_nodrop/within/contrib} & \R{v2hinge2/H3_hinge_nodrop/within/shap/eeg} & \R{v2hinge2/H3_hinge_nodrop/within/shap/gaze} & \R{v2hinge2/H3_hinge_nodrop/within/shap/imu} & \R{v2hinge2/H3_hinge_nodrop/within/shap/video} & \R{v2hinge2/H3_hinge_nodrop/within/shap/fovea} \\
+With hinge, with dropout
+ & \R{v2hinge2/H1_hinge_drop/within/acc} & \R{v2hinge2/H1_hinge_drop/within/null} & \R{v2hinge2/H1_hinge_drop/within/contrib} & \R{v2hinge2/H1_hinge_drop/within/shap/eeg} & \R{v2hinge2/H1_hinge_drop/within/shap/gaze} & \R{v2hinge2/H1_hinge_drop/within/shap/imu} & \R{v2hinge2/H1_hinge_drop/within/shap/video} & \R{v2hinge2/H1_hinge_drop/within/shap/fovea} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The brain's share falls by almost half.}
+Adding the behavioural streams raises accuracy from \R{v2onset/V4_subjadapt/within/acc} to
+\R{v2hinge2/H4_nohinge_nodrop/within/acc}. But the EEG's credit falls from \R{v2onset/V4_subjadapt/within/contrib}, when it
+is the only stream, to \R{v2hinge2/H4_nohinge_nodrop/within/shap/eeg} in the fused model. More streams have
+not taught the model more about the brain; they have let it rely on the brain
+less. A joint shuffle cannot see this, because the joint contribution
+\emph{rises}, from \R{v2onset/V4_subjadapt/within/contrib} to \R{v2hinge2/H4_nohinge_nodrop/within/contrib}. This is why the
+per-stream split is the measurement, and the total is not. In the fused model the
+foveal embedding earns \R{v2hinge2/H4_nohinge_nodrop/within/shap/fovea}, more than the EEG: much of the
+accuracy is a statement about where the listener was looking.
+
+\paragraph{Putting the test in the loss does not fix it.}
+The contribution hinge never raised the brain's credit above the matching model
+without it. With modality dropout it lowered the EEG's credit from
+\R{v2hinge2/H2_nohinge_drop/within/shap/eeg} to \R{v2hinge2/H1_hinge_drop/within/shap/eeg}; without dropout it made no real
+difference (\R{v2hinge2/H3_hinge_nodrop/within/shap/eeg} against \R{v2hinge2/H4_nohinge_nodrop/within/shap/eeg}). The reason is the
+interaction. Dropout removes streams at random during training, so the
+validation contribution that sets the hinge's weights is measured on a model that
+keeps being asked to work without them, and the hinge then pushes whichever
+stream looks unused --- rarely the EEG. On unseen listeners the models without the
+hinge keep more credit on the brain in both pairs (Appendix~\ref{app:hinge2loso}).
+A measurement that cannot be pushed up by training against it is one worth
+trusting. The one training choice that did raise the brain's credit was choosing
+checkpoints by contribution: in an earlier version of this experiment, at
+$W=10$\,s, it moved the
+EEG's credit from \R{hinge/all_nohinge_accsel/within/shap/eeg} to
+\R{hinge/all_nohinge_credsel/within/shap/eeg} (Table~\ref{tab:hingew10}).
+
+\paragraph{Which model we call \merit{}.}
+\merit{} is the model without the hinge and without dropout. It is not the most
+accurate of the four in either protocol. It keeps the most credit on the brain on
+unseen listeners (\R{v2hinge2loso/H4_nohinge_nodrop/loso/shap/eeg}) and ties for the most within listeners
+--- and credit is what we select for. Choosing it costs less than $0.02$ in
+accuracy in each protocol.
+
+\subsection{The full system, and the benchmark}
+\label{sec:res-full}
+
+The results above make one decision per window. But the listener attends to one
+talker for the whole trial, so Table~\ref{tab:full} adds, one at a time: one
+decision per trial, made by summing the window scores; training on random crops
+of the whole trial; limiting the coupling to delays after the sound; a small
+per-listener correction of the EEG channels; and a second audio channel that marks
+speech onsets. The candidates stay matched and the splits stay the same.
+
+\begin{table}[t]
+\caption{\textbf{Improvement ladder}, EEG only, within-listener, \cMat{},
+chance $0.25$. Each row adds one change to the row above. The last row is a
+control, not a step: it limits the coupling to delays \emph{before} the sound,
+where no brain response to that sound can be.}
+\label{tab:full}
+\centering\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& Accuracy & Null & Contribution \\
+\midrule
+Random crops, one decision per window & \R{v2onset/V1_crops/within/acc} & \R{v2onset/V1_crops/within/null} & \R{v2onset/V1_crops/within/contrib} \\
+\;+ one decision per trial         & \R{v2onset/V2_trial/within/acc} & \R{v2onset/V2_trial/within/null} & \R{v2onset/V2_trial/within/contrib} \\
+\;+ only delays after the sound    & \R{v2onset/V3_causal/within/acc} & \R{v2onset/V3_causal/within/null} & \R{v2onset/V3_causal/within/contrib} \\
+\textbf{\merit{}, EEG only} (+ per-listener correction) & \textbf{\R{v2onset/V4_subjadapt/within/acc}} & \R{v2onset/V4_subjadapt/within/null} & \textbf{\R{v2onset/V4_subjadapt/within/contrib}} \\
+\midrule
+\;\emph{control:} only delays before the sound & \R{v2onset/V3b_acausal/within/acc} & \R{v2onset/V3b_acausal/within/null} & \R{v2onset/V3b_acausal/within/contrib} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{What each change is worth.}
+One decision per trial is by far the largest gain: the contribution rises from
+\R{v2onset/V1_crops/within/contrib} to \R{v2onset/V2_trial/within/contrib} on the
+same windows. Limiting the coupling to delays after the sound adds a little, and
+the control confirms the direction: delays before the sound reach only
+\R{v2onset/V3b_acausal/within/contrib}. The per-listener correction raises the
+contribution from \R{v2onset/V3_causal/within/contrib} to
+\R{v2onset/V4_subjadapt/within/contrib}, and the onset channel raises accuracy
+from \R{v2ladder/V4_subjadapt/within/acc} to \R{v2onset/V4_subjadapt/within/acc}.
+
+\paragraph{Against the benchmark.}
+We compare with the benchmark at its longest window, $30$\,s, which --- like our
+per-trial decision --- gives one decision per trial \citep{maestro2026}. There it
+reports $0.591$ for EEG alone within listeners and $0.619$ on unseen listeners,
+and $0.698$ and $0.674$ for its best multimodal models; its contributions are
+$+0.320$ and $+0.363$ for EEG alone, and $+0.413$ for all streams on unseen
+listeners. \merit{} reaches \R{v2onset/V4_subjadapt/within/acc} for EEG alone within listeners
+(contribution \R{v2onset/V4_subjadapt/within/contrib}), \R{v2hinge2/H4_nohinge_nodrop/within/acc} with all streams
+(\R{v2hinge2/H4_nohinge_nodrop/within/contrib}), and \R{v2hinge2loso/H4_nohinge_nodrop/loso/acc} with all streams on unseen
+listeners (\R{v2hinge2loso/H4_nohinge_nodrop/loso/contrib}, positive in \R{v2hinge2loso/H4_nohinge_nodrop/loso/pos} folds). Three of
+the four comparisons improve on both accuracy and contribution.
+
+The fourth, EEG alone on unseen listeners, does not: \R{v2bestloso/eeg/loso/acc}
+against $0.619$, with contribution \R{v2bestloso/eeg/loso/contrib}. The per-listener
+correction behind our largest within-listener gain cannot, by design, help a
+listener it has never seen. Our gains on the \emph{brain} signal are therefore
+shown within listeners.
+
+\subsection{Is the EEG signal real?}
+\label{sec:res-mm}
+
+Four checks, with details in Appendix~\ref{app:more}.
+\textbf{Same-talker candidates.} When all candidates come from the attended
+talker's own speech, the audio alone is at chance and no orienting cue can help;
+EEG alone still contributes \R{mm3/eeg/within/contrib} at $K\!=\!3$ and
+\R{mm2/eeg/within/contrib} at $K\!=\!2$.
+\textbf{Direction in time.} Limited to delays of $+125$ to $+1109$\,ms after the
+sound, where a brain response must be, the contribution is
+\R{lag_qm/causal/within/contrib}; the mirror image before the sound gives
+\R{lag_qm/acausal/within/contrib}. This rules out an electrical echo of the sound
+at zero delay, and slow drift that is the same in both directions.
+\textbf{Window length.} The contribution grows with the window, as it should for
+this task \citep{geirnaert2021} (Figure~\ref{fig:window}). At short windows the
+behavioural streams take over: at $2$\,s the EEG alone contributes
+\R{w2/eeg/within/contrib} while the foveal embedding alone contributes
+\R{w2/fovea/within/contrib} (Appendix~\ref{app:shortwin}).
+\textbf{Other datasets.} On two public two-talker datasets the audio probe is at
+chance on DTU but \R{extprobe/kul/w10/excess} above chance on KU~Leuven,
+because one of its two talkers is the attended one in \R{extprior/kul/nrole} of \R{extprior/kul/ntrials} trials
+(Appendix~\ref{app:external}). On KU~Leuven and DTU the coupling branch reaches
+\R{extkulwithinst/eeg_centred/within/acc} and \R{extdtuwithinst/eeg_centred/within/acc}
+even with same-talker candidates, but the direction-in-time check does not pass:
+delays before and after the sound score the same. We therefore do not count these
+as brain decoding (Appendix~\ref{app:externalcoupling}). At the $5$\,s window used by recent work,
+the coupling branch is more accurate on unseen listeners of both datasets than
+NeuroToken \citep{alavi2026neurotoken}, the strongest prior result without data
+leakage (Table~\ref{tab:published}). A plain accuracy report
+would have done so.

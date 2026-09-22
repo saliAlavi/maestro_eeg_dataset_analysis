@@ -1,0 +1,247 @@
+\section{\merit}
+\label{sec:method}
+
+The name states the goal: every input should earn its share of the result.
+\merit{} has two branches that answer two different questions. The
+\textbf{coupling branch} asks whether the recording follows a candidate's speech
+over time. Only EEG enters it, because only EEG has a timed relationship with a
+speech signal. The \textbf{orientation branch} asks which loudspeaker the
+listener was facing. It receives no audio, so it cannot use audio cues.
+Figure~\ref{fig:arch} shows the whole decoder.
+
+\begin{figure}[t]
+\centering
+\definecolor{cIn}{HTML}{E8EFFB}\definecolor{cInB}{HTML}{3B6FB6}
+\definecolor{cCo}{HTML}{E4EDFA}\definecolor{cCoB}{HTML}{3B6FB6}
+\definecolor{cOr}{HTML}{E4F1EA}\definecolor{cOrB}{HTML}{3F8560}
+\definecolor{cFz}{HTML}{F1EAF7}\definecolor{cFzB}{HTML}{8E5BA6}
+\definecolor{cAd}{HTML}{FBEDE1}\definecolor{cAdB}{HTML}{BB6C24}
+\resizebox{0.72\textwidth}{!}{%
+\begin{tikzpicture}[font=\scriptsize,>=Stealth,x=1cm,y=1cm,
+  nd/.style={draw,rounded corners=2pt,align=center,line width=0.6pt,inner sep=3pt},
+  inp/.style={nd,fill=cIn,draw=cInB,minimum width=20mm,minimum height=5.6mm},
+  enc/.style={nd,fill=white,draw=gray!60,minimum width=21mm,minimum height=5.6mm},
+  frz/.style={nd,fill=cFz,draw=cFzB,minimum width=21mm,minimum height=5.6mm},
+  fl/.style={->,line width=0.6pt,gray!50!black},
+  fld/.style={->,line width=0.6pt,dashed,cAdB}]
+
+  % --- inputs (column 0) ---
+  \node[inp] (eeg)  at (0, 0.00) {EEG $T\!\times\!32$};
+  \node[inp] (gaze) at (0,-0.78) {gaze $T\!\times\!6$};
+  \node[inp] (imu)  at (0,-1.56) {head $T\!\times\!6$};
+  \node[inp] (flow) at (0,-2.34) {flow $T\!\times\!4$};
+  \node[inp] (fov)  at (0,-3.12) {fovea $1024$};
+  \node[inp] (aud)  at (0,-4.45) {$a_1\dots a_K$};
+
+  % --- encoders (column 1) ---
+  \node[enc] (e1) at (3.1, 0.00) {dilated enc};
+  \node[enc] (e2) at (3.1,-0.78) {dilated enc};
+  \node[enc] (e3) at (3.1,-1.56) {dilated enc};
+  \node[enc] (e4) at (3.1,-2.34) {dilated enc};
+  \node[frz] (e5) at (3.1,-3.12) {\textbf{frozen} proj};
+  \node[enc] (ea) at (3.1,-4.45) {shared audio enc};
+
+  % --- branches (column 2) ---
+  \node[nd,fill=cCo,draw=cCoB,minimum width=34mm,minimum height=7.5mm]
+       (cpl) at (7.1, 0.00) {$s_k=\tau\,w^{\!\top}\mathrm{corr}_t(e,\hat a_k)$\\[-1pt]
+                             \scriptsize centred over $t$ and over $k$};
+  \node[nd,fill=cOr,draw=cOrB,minimum width=34mm,minimum height=11mm]
+       (ori) at (7.1,-2.10) {speaker heads \emph{(no audio)}\\[-1pt]
+                             \scriptsize gate $+$ fusion $\to$ 4 logits};
+  \node[cCoB,font=\bfseries\tiny,anchor=south] at (7.1,0.55)
+       {COUPLING BRANCH --- \emph{what} is attended};
+  \node[cOrB,font=\bfseries\tiny,anchor=north] at (7.1,-2.72)
+       {ORIENTATION BRANCH --- \emph{where} attention points};
+
+  % --- adversary ---
+  \node[nd,fill=cAd,draw=cAdB,minimum width=34mm,minimum height=5.6mm]
+       (adv) at (7.1,-4.45) {audio-only adversary (GRL)};
+
+  % --- scores + loss (columns 3, 4) ---
+  \node[nd,fill=gray!10,draw=gray!55,minimum width=17mm,minimum height=9mm]
+       (sc) at (10.9,-1.05) {$K$ slot\\scores};
+  \node[nd,fill=white,draw=cCoB,minimum width=30mm,minimum height=14mm]
+       (loss) at (14.1,-1.05) {cross-entropy\\$+$ contrastive\\[1pt]\scriptsize $+$ EEG null hinge, anti-collapse};
+
+  % --- wiring ---
+  \foreach \a/\b in {eeg/e1,gaze/e2,imu/e3,flow/e4,fov/e5,aud/ea} \draw[fl] (\a)--(\b);
+  \draw[fl] (e1) -- (cpl);
+  \draw[fl] (ea.east) -- ++(0.35,0) |- (cpl.south west);
+  \draw[fld] (ea) -- (adv);
+  \draw[fl] (e1.east) -- ++(0.18,0) |- (ori.west);
+  \foreach \e in {e2,e3,e4,e5} \draw[fl] (\e.east) -- ++(0.18,0) |- (ori.west);
+  \draw[fl] (cpl.east) -- ++(0.4,0) |- (sc.north west);
+  \draw[fl] (ori.east) -- ++(0.4,0) |- (sc.south west);
+  \node[font=\tiny,anchor=west] at (9.05,-1.95) {gather by $\pi$};
+  \draw[fl] (sc) -- (loss);
+\end{tikzpicture}}
+\caption{\textbf{\merit{}.} The coupling branch compares the EEG with each
+candidate using a correlation over time with the mean removed. A brain encoder
+that outputs the same vector at every step therefore gives every candidate a
+score of zero, which is chance. The orientation branch gets \emph{no audio}, so
+it cannot use audio cues. The model encodes once and scores separately, so a
+trained model can be re-scored under any shuffle of any stream without encoding
+again.}
+\label{fig:arch}
+\end{figure}
+
+\paragraph{Encoders sized to the brain response.}
+Each stream goes through five dilated temporal convolutions
+\citep{yu2016dilated} with dilations $1,2,4,8,16$ and GroupNorm
+\citep{wu2018groupnorm} after each layer. This gives a window of $63$ samples
+($0.98$\,s at $64$\,Hz), about the time over which the cortical response to
+speech unfolds \citep{lalor2009}. There is no activation on the last layer, and
+padding is symmetric; Appendix~\ref{app:encoder} explains both choices. One-sided
+versions restrict the model to a chosen range of delays
+(Section~\ref{sec:res-mm}).
+
+\paragraph{A score that cannot use a constant brain signal.}
+\label{sec:coupling}
+For each of the $D\!=\!16$ embedding dimensions we compute the correlation over
+time between the EEG embedding $e$ and the candidate embedding $\hat a_k$. We
+combine the $D$ values with a weight vector that has no bias, scale by a learned
+temperature, and subtract the mean over candidates:
+\begin{equation}
+  \tilde e=\frac{e-\overline{e}}{\lVert e-\overline{e}\rVert_2},\qquad
+  c_d(k)=\textstyle\sum_t \tilde e_{t,d}\,\tilde a_{k,t,d},\qquad
+  s_k=\tau\, w^{\!\top} c(k),\qquad
+  \mathrm{score}_k=s_k-\tfrac1K\textstyle\sum_j s_j .
+  \label{eq:coupling}
+\end{equation}
+Removing the time average is the key step. If the encoder outputs the same
+vector at every time step --- the state it falls into once it learns to ignore
+its input --- then $e-\overline e$ is \emph{exactly zero}. Every $c_d(k)$ is
+then zero, all $K$ scores are equal, and accuracy is exactly chance. The
+shortcut of Section~\ref{sec:failures}(ii) is not discouraged by a penalty; it is
+impossible. Two more properties follow. Correlation ignores scale, so a candidate
+cannot win by being louder. Subtracting the mean over candidates removes anything
+added equally to all of them, which is why $w$ has no bias.
+
+\paragraph{Orientation heads with no audio, and an audio-only adversary.}
+Gaze, head motion, scene motion and the foveal embedding show where the listener
+is facing. They have no timed relationship with speech, so asking them to match a
+speech envelope makes no sense --- and doing so made them collapse in our first
+attempt. Instead, each one feeds a classifier that predicts the loudspeaker index
+from the mean and standard deviation of its embedding over time. These heads get
+\textbf{no audio input}, so shuffling them drops accuracy to chance, and anything
+above chance is earned by the recording. The EEG also gets such a head, because
+attention shifts brain activity toward one side. A learned, non-negative weight
+per stream and a small fusion layer combine the loudspeaker scores, which are then
+added to the coupling scores. Separately, a small head tries to find the correct
+candidate from the audio alone, behind a gradient-reversal layer
+\citep{ganin2015}. Any audio cue it can read is thereby trained out of the audio
+encoder. This matters because the probe of Section~\ref{sec:failures}(i) is
+linear and can miss cues that a network finds.
+
+\paragraph{Training objective.}
+Let a batch hold $B$ windows from one listener. For window $i$, $\ell_i\in
+\mathbb{R}^K$ are the final candidate scores, $y_i$ is the correct candidate,
+$r_i$ is the attended loudspeaker, $e_i$ is the EEG embedding and
+$a_i^{+}=\hat a_{i,y_i}$ is the embedding of the correct candidate. We write
+$s(e,a)=\tau\,w^{\!\top}c(e,a)$ for the coupling score of Eq.~\ref{eq:coupling}
+before centring over candidates, and $\rho$ for a shift of the batch by one
+window. \merit{} minimises
+\begin{equation}
+  \mathcal{L}=\mathcal{L}_{\text{task}}
+  +0.3\,\mathcal{L}_{\text{aux}}+\mathcal{L}_{\text{con}}
+  +0.5\,\mathcal{L}_{\text{null}}+0.1\,\mathcal{L}_{\text{col}}
+  +0.3\,\mathcal{L}_{\text{adv}},
+  \label{eq:loss}
+\end{equation}
+with the six terms
+\begin{align*}
+  \mathcal{L}_{\text{task}} &= \tfrac1B\textstyle\sum_i
+      \mathrm{CE}_{0.1}\big(\ell_i,\,y_i\big),
+  \qquad
+  \mathcal{L}_{\text{aux}} = \tfrac{1}{B|\mathcal{O}|}\textstyle\sum_i\sum_{m\in\mathcal{O}}
+      \mathrm{CE}\big(u_i^m,\,r_i\big),\\
+  \mathcal{L}_{\text{con}} &= -\tfrac{1}{2B}\textstyle\sum_i\Big[
+      \log\frac{e^{S_{ii}}}{\sum_{j}e^{S_{ij}}}
+      +\log\frac{e^{S_{ii}}}{\sum_{j}e^{S_{ji}}}\Big],
+  \qquad S_{ij}=s\big(e_i,a_j^{+}\big),\\
+  \mathcal{L}_{\text{null}} &= \tfrac1B\textstyle\sum_i\Big[
+      \mathrm{sp}\big(s(e_{\rho(i)},a_i^{+})-s(e_i,a_i^{+})+\mu\big)
+      +\mathrm{sp}\big(s(\mathbf{0},a_i^{+})-s(e_i,a_i^{+})+\mu\big)\Big],\\
+  \mathcal{L}_{\text{col}} &= \tfrac{1}{BD}\textstyle\sum_{i,d}
+      \max\big(0,\;\gamma-\mathrm{std}_t\,e_{i,t,d}\big)
+      +\tfrac{0.04}{D}\textstyle\sum_{d\neq d'}C_{dd'}^2,\\
+  \mathcal{L}_{\text{adv}} &= \tfrac1B\textstyle\sum_i
+      \mathrm{CE}\big(\big[g(R(f_{i,k}))\big]_{k=1}^{K},\,y_i\big),
+  \qquad f_{i,k}=\big[\,\mathrm{mean}_t\,\hat a_{i,k}\,;\,\mathrm{std}_t\,\hat a_{i,k}\big].
+\end{align*}
+Here $\mathrm{CE}_{0.1}$ is cross-entropy with label smoothing $0.1$ and
+$\mathrm{sp}$ is softplus. $\mathcal{L}_{\text{task}}$ trains the decision.
+$\mathcal{L}_{\text{aux}}$ gives each orientation head $m\in\mathcal{O}$ its own
+loudspeaker prediction $u_i^m$, so the strongest stream cannot take all the
+gradient. $\mathcal{L}_{\text{con}}$ is a two-way contrastive loss
+\citep{oord2018,radford2021clip} that asks which window's EEG goes with which
+window's speech; the batch comes from one listener, so the EEG cannot be matched
+by listener identity, and a constant encoder cannot lower this loss.
+$\mathcal{L}_{\text{null}}$ requires the real EEG to give the correct candidate a
+higher coupling score than another window's EEG or a zeroed EEG does, by a margin
+$\mu=0.5$. $\mathcal{L}_{\text{col}}$ keeps the spread over time of each embedding
+dimension above $\gamma=0.5$ --- the quantity that falls to zero when an encoder
+stops using its input --- and discourages dimensions from copying each other,
+where $C$ is the covariance of the time-centred embeddings over all windows and
+time steps \citep{bardes2022vicreg}. $\mathcal{L}_{\text{adv}}$ trains a small
+network $g$ to find the correct candidate from summary statistics of the audio
+embeddings alone; $R$ is a gradient-reversal layer \citep{ganin2015}, which
+leaves the forward pass unchanged and flips the sign of the gradient that reaches
+the audio encoder, so any audio cue $g$ can read is trained out of it.
+
+\paragraph{Tested but not used: a contribution hinge.}
+\label{sec:hinges}
+The EEG hinge above acts on the coupling score only. A natural next step is to
+apply the same test to the \emph{final} decision, for every stream. For each
+stream $m$ we tried
+\begin{equation}
+  \mathcal{L}^{\text{contrib}}_m=
+  \mathrm{softplus}\big(\sigma_y(z_{m\leftarrow\rho})-\sigma_y(z)+\delta\big)
+  +\mathrm{softplus}\big(\sigma_y(z_{m\leftarrow 0})-\sigma_y(z)+\delta\big),
+  \label{eq:hinge}
+\end{equation}
+where $\sigma_y(\ell)=\ell_y-\frac1K\sum_k\ell_k$ is the score of the correct
+candidate minus the mean score, $z_{m\leftarrow\rho}$ replaces stream $m$ with
+another window's copy, $z_{m\leftarrow 0}$ replaces it with zeros, and
+$\delta\!=\!0.3$ is the margin. The hinge arms add $0.5\sum_m\lambda_m\mathcal{L}^{\text{contrib}}_m$
+to Eq.~\ref{eq:loss}. After each epoch the weight of stream $m$ is set from its
+validation contribution $c_m$ in the fused model and the contribution
+$c_m^{\text{solo}}$ it reaches through its own head alone:
+\begin{equation}
+  \lambda_m=\mathrm{clip}\Big(\frac{\max(0,\;c_m^{\text{solo}}-c_m)}{c_m^{\text{solo}}},\;0,\;1\Big),
+  \label{eq:gate}
+\end{equation}
+so a stream that can do well alone but is ignored by the fused model is pushed
+hardest. The hinge does not raise the brain's share of credit
+(Section~\ref{sec:res-hinge}), so \merit{} trains without it; we report it
+because the reason it fails is informative.
+
+\paragraph{Choosing checkpoints by contribution.}
+\label{sec:selection}
+If a shortcut exists, picking the epoch with the best validation accuracy picks
+the epoch that uses the shortcut best. We keep instead the epoch that maximises
+\begin{equation}
+  \big(v(M)-v(\emptyset)\big) + \beta\,\min_m \phi_m,\qquad \beta=1,
+  \label{eq:criterion}
+\end{equation}
+the validation contribution plus the credit of the \emph{weakest} stream. An epoch that is accurate because it rides one stream loses
+to a slightly less accurate epoch that uses all of them. We compute both criteria
+at every epoch and report both.
+
+\paragraph{Credit: a split that adds up exactly.}
+\label{sec:shapley}
+The contributions of single streams do not add up to the total, because streams
+overlap --- gaze and the foveal embedding both describe where the listener
+looks --- and interact. The Shapley value \citep{shapley1953} over subsets of
+\emph{intact} streams is the only split that does add up:
+\begin{equation}
+  \phi_m=\!\!\sum_{T\subseteq M\setminus\{m\}}\!\!
+  \frac{|T|!\,(|M|-|T|-1)!}{|M|!}\Big[v(T\cup\{m\})-v(T)\Big],
+  \qquad \sum_{m}\phi_m=v(M)-v(\emptyset).
+  \label{eq:shapley}
+\end{equation}
+This is permutation feature importance \citep{breiman2001,fisher2019,covert2020}
+applied to whole streams. With $M\!=\!5$ streams there are only $32$ subsets, so
+we compute it exactly, and no subset needs the inputs to be encoded again. The
+same random shuffles are used for every subset, so differences between subsets
+are not shuffle noise.

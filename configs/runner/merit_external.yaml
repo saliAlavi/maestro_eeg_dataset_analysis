@@ -1,0 +1,19 @@
+# EEG-only coupling branch on a public corpus, with the lag-band control.
+# No behavioural streams exist in these corpora, so contribution == phi_eeg.
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: true
+save_models: false
+variants:
+  - name: eeg_centred
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            brain_dir: centred, lag_samples: 0}
+  - name: eeg_causal
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            brain_dir: future, lag_samples: 8}
+  - name: eeg_acausal
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            brain_dir: past, lag_samples: -8}

@@ -1,0 +1,26 @@
+# Improvement ladder, EEG only. Each row adds one thing to the row above.
+# All rows share one data build (whole-trial storage + random crops).
+name: merit
+device: auto
+protocols: [within]
+max_folds: null
+folds: null
+certify: false
+save_models: false
+variants:
+  - name: V1_crops
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: false, brain_dir: centred, lag_samples: 0}
+  - name: V2_trial
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: centred, lag_samples: 0}
+  - name: V3_causal
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: future, lag_samples: 8}
+  - name: V3b_acausal
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: past, lag_samples: -8}
+  - name: V4_subjadapt
+    model: {time_mods: [eeg], static_mods: [], orientation: [eeg],
+            trial_level: true, brain_dir: future, lag_samples: 8,
+            subject_adapt: true}

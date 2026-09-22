@@ -1,0 +1,8 @@
+name: merit
+device: auto
+protocols: [within]            # within | loso
+max_folds: null
+certify: true                  # run the audio-only acceptance probe before training
+save_models: false
+folds: null                    # e.g. [0] -> only the first fold of each protocol
+variants: null                 # list of {name, model:{overrides}} sharing one data build
