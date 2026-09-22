@@ -1,0 +1,171 @@
+{
+  "fused_within": {
+    "per_fold": {
+      "within_f0": {
+        "accuracy": 0.8031,
+        "shuffled_accuracy": 0.2784,
+        "contribution": 0.5247,
+        "eeg_credit": 0.2317
+      },
+      "within_f1": {
+        "accuracy": 0.8188,
+        "shuffled_accuracy": 0.2632,
+        "contribution": 0.5555,
+        "eeg_credit": 0.2716
+      },
+      "within_f2": {
+        "accuracy": 0.8219,
+        "shuffled_accuracy": 0.2596,
+        "contribution": 0.5623,
+        "eeg_credit": 0.2262
+      },
+      "within_f3": {
+        "accuracy": 0.8562,
+        "shuffled_accuracy": 0.2813,
+        "contribution": 0.5749,
+        "eeg_credit": 0.2646
+      },
+      "within_f4": {
+        "accuracy": 0.8019,
+        "shuffled_accuracy": 0.2687,
+        "contribution": 0.5332,
+        "eeg_credit": 0.2177
+      }
+    },
+    "mean_accuracy": 0.8204,
+    "mean_contribution": 0.5501
+  },
+  "fused_loso": {
+    "per_fold": {
+      "loso_s1": {
+        "accuracy": 0.55,
+        "shuffled_accuracy": 0.2783,
+        "contribution": 0.2718,
+        "eeg_credit": 0.237
+      },
+      "loso_s2": {
+        "accuracy": 0.9,
+        "shuffled_accuracy": 0.291,
+        "contribution": 0.609,
+        "eeg_credit": 0.2165
+      },
+      "loso_s3": {
+        "accuracy": 0.85,
+        "shuffled_accuracy": 0.2588,
+        "contribution": 0.5913,
+        "eeg_credit": 0.1721
+      },
+      "loso_s4": {
+        "accuracy": 0.85,
+        "shuffled_accuracy": 0.2858,
+        "contribution": 0.5643,
+        "eeg_credit": 0.0304
+      },
+      "loso_s5": {
+        "accuracy": 0.85,
+        "shuffled_accuracy": 0.2623,
+        "contribution": 0.5878,
+        "eeg_credit": 0.1431
+      },
+      "loso_s6": {
+        "accuracy": 0.65,
+        "shuffled_accuracy": 0.2995,
+        "contribution": 0.3505,
+        "eeg_credit": 0.2638
+      },
+      "loso_s7": {
+        "accuracy": 0.75,
+        "shuffled_accuracy": 0.267,
+        "contribution": 0.483,
+        "eeg_credit": 0.0593
+      },
+      "loso_s8": {
+        "accuracy": 0.6,
+        "shuffled_accuracy": 0.2183,
+        "contribution": 0.3818,
+        "eeg_credit": 0.158
+      },
+      "loso_s9": {
+        "accuracy": 0.65,
+        "shuffled_accuracy": 0.2305,
+        "contribution": 0.4195,
+        "eeg_credit": 0.1732
+      },
+      "loso_s10": {
+        "accuracy": 0.95,
+        "shuffled_accuracy": 0.268,
+        "contribution": 0.682,
+        "eeg_credit": 0.2609
+      },
+      "loso_s11": {
+        "accuracy": 0.35,
+        "shuffled_accuracy": 0.223,
+        "contribution": 0.127,
+        "eeg_credit": 0.1112
+      },
+      "loso_s12": {
+        "accuracy": 0.75,
+        "shuffled_accuracy": 0.2298,
+        "contribution": 0.5202,
+        "eeg_credit": 0.2799
+      },
+      "loso_s13": {
+        "accuracy": 0.95,
+        "shuffled_accuracy": 0.2753,
+        "contribution": 0.6747,
+        "eeg_credit": 0.2296
+      },
+      "loso_s14": {
+        "accuracy": 0.6,
+        "shuffled_accuracy": 0.2228,
+        "contribution": 0.3773,
+        "eeg_credit": 0.3215
+      },
+      "loso_s15": {
+        "accuracy": 1.0,
+        "shuffled_accuracy": 0.3055,
+        "contribution": 0.6945,
+        "eeg_credit": 0.0984
+      },
+      "loso_s16": {
+        "accuracy": 0.85,
+        "shuffled_accuracy": 0.2905,
+        "contribution": 0.5595,
+        "eeg_credit": 0.2252
+      }
+    },
+    "mean_accuracy": 0.7563,
+    "mean_contribution": 0.4934
+  },
+  "eeg_within": {
+    "per_fold": {
+      "within_f0": {
+        "accuracy": 0.675,
+        "shuffled_accuracy": 0.3225,
+        "contribution": 0.3525
+      },
+      "within_f1": {
+        "accuracy": 0.6625,
+        "shuffled_accuracy": 0.2309,
+        "contribution": 0.4316
+      },
+      "within_f2": {
+        "accuracy": 0.6844,
+        "shuffled_accuracy": 0.369,
+        "contribution": 0.3154
+      },
+      "within_f3": {
+        "accuracy": 0.7531,
+        "shuffled_accuracy": 0.3194,
+        "contribution": 0.4337
+      },
+      "within_f4": {
+        "accuracy": 0.5912,
+        "shuffled_accuracy": 0.1879,
+        "contribution": 0.4033
+      }
+    },
+    "mean_accuracy": 0.6732,
+    "mean_contribution": 0.3873
+  }
+}

@@ -1,0 +1,21 @@
+# Released weights: the EEG-only MERIT model of Table 2, saved per fold.
+name: merit
+device: auto
+protocols:
+- within
+max_folds: null
+folds: null
+certify: false
+save_models: true
+variants:
+- name: V4_subjadapt
+  model:
+    time_mods:
+    - eeg
+    static_mods: []
+    orientation:
+    - eeg
+    trial_level: true
+    brain_dir: future
+    lag_samples: 8
+    subject_adapt: true

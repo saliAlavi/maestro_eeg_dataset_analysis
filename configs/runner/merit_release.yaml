@@ -1,0 +1,31 @@
+# Released weights: the fused MERIT model (no hinge, no dropout), saved per fold.
+name: merit
+device: auto
+protocols:
+- within
+max_folds: null
+folds: null
+certify: false
+save_models: true
+variants:
+- name: H4_nohinge_nodrop
+  model:
+    time_mods:
+    - eeg
+    - gaze
+    - imu
+    - video
+    static_mods:
+    - fovea
+    orientation:
+    - eeg
+    - gaze
+    - imu
+    - video
+    - fovea
+    trial_level: true
+    brain_dir: future
+    lag_samples: 8
+    subject_adapt: true
+    w_contrib: 0.0
+    modality_dropout: 0.0
