@@ -90,7 +90,8 @@ them on their exact test folds.
 - `refs.bib` → `maestro2026`: fill in the real venue / year / arXiv id.
   Entries `rotaru2024`, `wu2022greedy`, `assran2025vjepa2` are web-verified; the
   rest were written from memory and should be checked.
-- Author block and acknowledgements (currently the anonymous placeholder).
+- Author block: Donald S. Williamson (CSE, OSU) is in `\author{}` (hidden until
+  `\iclrfinalcopy`); the remaining co-authors and acknowledgements are still to add.
 - Trim the main text to 9 pages once all result tables are populated.
 - `% VERIFY` comments in `sections/06_results.tex` mark prose whose direction
   must be re-read against the final numbers.
