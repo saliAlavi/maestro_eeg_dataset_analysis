@@ -14,13 +14,14 @@ Attention Decoding*.
 The paper for MERIT (`src/models/merit/`, to be renamed). Every number in the manuscript is
 generated from measured run outputs; nothing is typed by hand.
 
-## Reproduce everything: `reproduce.ipynb`
+## Reproduce everything: `notebooks/merit_iclr2027_reproduce.ipynb`
 
-[`reproduce.ipynb`](reproduce.ipynb) rebuilds every figure, table and number in
-the manuscript, lists the training jobs behind them (and can submit them), loads
-all 26 released checkpoints from [`weights/merit/`](../../weights/merit/) with
-`strict=True`, and re-scores them on their exact test folds. It runs from the
-repository alone — see the next section.
+[`notebooks/merit_iclr2027_reproduce.ipynb`](../../notebooks/merit_iclr2027_reproduce.ipynb)
+rebuilds every figure, table and number in the manuscript, lists the training
+jobs behind them (and can submit them), loads all 26 released checkpoints from
+[`weights/merit/`](../../weights/merit/) with `strict=True`, and re-scores them
+on their exact test folds. It runs from the repository alone — see the next
+section.
 
 ## How numbers get into the paper
 
@@ -81,7 +82,7 @@ K=4 vs. K=2) never merge.
 models the paper calls MERIT: fused within-listener (5 folds), fused LOSO
 (16 folds) and EEG-only within-listener (5 folds), each with `state_dict` +
 full model config. `weights/merit/README.md` documents loading;
-`reproduce.ipynb` §5–6 verifies all 26 load with `strict=True` and re-scores
+`notebooks/merit_iclr2027_reproduce.ipynb` §5–6 verifies all 26 load with `strict=True` and re-scores
 them on their exact test folds.
 
 ## Open items before submission

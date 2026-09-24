@@ -26,6 +26,16 @@ Run cell-by-cell. Notebook 00 installs all dependencies; notebooks 01–08 are i
 | 07 | [`nb07_multimodal_fusion`](nb07_multimodal_fusion.ipynb) | Late fusion of EEG + gaze + IMU + speaker-azimuth features for AAD. |
 | 08 | [`nb08_benchmark_protocol`](nb08_benchmark_protocol.ipynb) | Official evaluation protocol, reference baselines, submission template. |
 
+## Repo-internal notebook: `merit_iclr2027_reproduce.ipynb`
+
+[`merit_iclr2027_reproduce.ipynb`](merit_iclr2027_reproduce.ipynb) is different
+from the numbered series above: it reproduces the **MERIT ICLR 2027 paper**
+(`docs/iclr2027/`) — every figure, table and macro, plus loading and re-scoring
+the 26 released checkpoints in `weights/merit/`. It runs against this
+repository's `src/` stack (conda env `nips`) rather than the PyPI loader, and
+is committed with its outputs. See `docs/iclr2027/README.md` for the full
+reproduction pipeline.
+
 ## Two backends — sample vs. full dataset
 
 Each notebook has a single configuration block at the top:
