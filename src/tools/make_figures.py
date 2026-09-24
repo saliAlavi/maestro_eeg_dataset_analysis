@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt          # noqa: E402
 import numpy as np                        # noqa: E402
 import pandas as pd                       # noqa: E402
 
-from .make_macros import PREF, load       # noqa: E402
+from .make_macros import PREF, find_aux, load   # noqa: E402
 
 # a brand-neutral, colour-blind-safe categorical ramp, consistent across figures
 C = {"eeg": "#3B6FB6", "eeg_gaze": "#C9752B", "eeg_fovea": "#4C9A6B",
@@ -28,6 +28,13 @@ def _style(ax):
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", color="0.9", lw=0.7)
     ax.set_axisbelow(True)
+
+
+def _save(fig, out, name):
+    """The pdf goes into the manuscript; a png twin is kept for notebooks."""
+    fig.savefig(os.path.join(out, name + ".pdf"), bbox_inches="tight")
+    fig.savefig(os.path.join(out, name + ".png"), bbox_inches="tight", dpi=200)
+    print(f"wrote {name}.pdf/.png")
 
 
 def window_sweep(df, probes, out):
@@ -74,8 +81,7 @@ def window_sweep(df, probes, out):
     ax[1].legend(frameon=False, fontsize=8)
     _style(ax[1])
     fig.tight_layout()
-    fig.savefig(os.path.join(out, "window_sweep.pdf"), bbox_inches="tight")
-    print("wrote window_sweep.pdf")
+    _save(fig, out, "window_sweep")
 
 
 def credit_bars(df, out):
@@ -123,8 +129,7 @@ def credit_bars(df, out):
     ax.legend(frameon=False, fontsize=8, ncol=5, loc="upper left")
     _style(ax)
     fig.tight_layout()
-    fig.savefig(os.path.join(out, "credit_bars.pdf"), bbox_inches="tight")
-    print("wrote credit_bars.pdf")
+    _save(fig, out, "credit_bars")
 
 
 def main():
@@ -135,8 +140,8 @@ def main():
     plt.rcParams.update({"font.size": 9, "axes.labelsize": 9,
                          "savefig.dpi": 200, "pdf.fonttype": 42})
     df = load()
-    f = "/fs/scratch/PAS2301/alialavi/projects/multimodal_aad/credit_candidate_probes.csv"
-    probes = pd.read_csv(f) if os.path.exists(f) else None
+    f = find_aux("credit_candidate_probes.csv")
+    probes = pd.read_csv(f) if f else None
     if df.empty:
         print("no results yet")
         return

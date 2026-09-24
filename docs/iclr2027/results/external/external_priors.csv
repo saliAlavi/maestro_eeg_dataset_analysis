@@ -1,0 +1,4 @@
+corpus,role,n_role,n_trials,prior
+kul,track 1,256,320,0.8
+dtu,male,534,1080,0.49444444444444446
+nju,left,335,668,0.5014970059880239

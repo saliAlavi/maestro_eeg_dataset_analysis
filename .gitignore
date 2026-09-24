@@ -75,6 +75,12 @@ docs/draft/*.pdf
 docs/analysis/*.pdf
 docs/publication/*.pdf
 
+# The ICLR paper's reproduction notebook and its tracked snapshot of measured
+# run outputs (scratch is purged; this is what make_macros/make_figures fall
+# back to, kept small by src/tools/snapshot_results.py)
+!docs/iclr2027/reproduce.ipynb
+!docs/iclr2027/results/**
+
 # 41.7 GB HuggingFace release tree + 422 MB sample — never track
 hf_release/maestro-eeg-dataset/
 hf_release/maestro-eeg-dataset-sample/
