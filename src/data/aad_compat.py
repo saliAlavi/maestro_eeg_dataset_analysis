@@ -20,9 +20,17 @@ _ANALYSIS = Path(__file__).resolve().parents[2] / "analysis"
 if str(_ANALYSIS) not in sys.path:
     sys.path.insert(0, str(_ANALYSIS))
 
-import aad_utils as A  # noqa: E402
-import aad_utils.config as _C  # noqa: E402
-import aad_utils.io as _IO  # noqa: E402
+# The package lives in the repo's analysis/ directory, which a code-only
+# release does not ship. It is needed only to rebuild caches from the raw
+# recordings, so its absence must not break importing the rest of src/.
+try:
+    import aad_utils as A  # noqa: E402
+    import aad_utils.config as _C  # noqa: E402
+    import aad_utils.io as _IO  # noqa: E402
+    _IMPORT_ERR = None
+except ImportError as _e:
+    A = _C = _IO = None
+    _IMPORT_ERR = _e
 
 
 def _patch_paths() -> None:
@@ -38,29 +46,39 @@ def _patch_paths() -> None:
     A.PAIRS_DIR = correct_pairs
 
 
-_patch_paths()
+if A is not None:
+    _patch_paths()
 
-# Re-export the loaders we use, post-patch.
-DATA_ROOT = _C.DATA_ROOT
-EXPERIMENT_DIR = _C.EXPERIMENT_DIR
-EEG_CHANNELS = _C.EEG_CHANNELS
-EEG_SFREQ = _C.EEG_SFREQ
-ATTENDED_HEMISPHERE = _C.ATTENDED_HEMISPHERE
-PAIRS_DIR = _C.EXPERIMENT_DIR / "pairs"
+    # Re-export the loaders we use, post-patch.
+    DATA_ROOT = _C.DATA_ROOT
+    EXPERIMENT_DIR = _C.EXPERIMENT_DIR
+    EEG_CHANNELS = _C.EEG_CHANNELS
+    EEG_SFREQ = _C.EEG_SFREQ
+    ATTENDED_HEMISPHERE = _C.ATTENDED_HEMISPHERE
+    PAIRS_DIR = _C.EXPERIMENT_DIR / "pairs"
 
-load_trials_csv = A.load_trials_csv
-trial_name = A.trial_name
-load_eeg_trial = A.load_eeg_trial
-load_eeg_time = A.load_eeg_time
-load_gaze_trial_2d = A.load_gaze_trial_2d
-load_audio_timestamps = A.load_audio_timestamps
-load_raw_gaze = A.load_raw_gaze
-load_raw_imu = A.load_raw_imu
-align_modalities_to_trial = A.align_modalities_to_trial
-eeg_raw_to_mne = A.eeg_raw_to_mne
-preprocess_eeg = A.preprocess_eeg
-gammatone_envelope = A.gammatone_envelope
-bootstrap_ci = A.bootstrap_ci
+    load_trials_csv = A.load_trials_csv
+    trial_name = A.trial_name
+    load_eeg_trial = A.load_eeg_trial
+    load_eeg_time = A.load_eeg_time
+    load_gaze_trial_2d = A.load_gaze_trial_2d
+    load_audio_timestamps = A.load_audio_timestamps
+    load_raw_gaze = A.load_raw_gaze
+    load_raw_imu = A.load_raw_imu
+    align_modalities_to_trial = A.align_modalities_to_trial
+    eeg_raw_to_mne = A.eeg_raw_to_mne
+    preprocess_eeg = A.preprocess_eeg
+    gammatone_envelope = A.gammatone_envelope
+    bootstrap_ci = A.bootstrap_ci
+
+
+def __getattr__(name):
+    # Only consulted for names the block above did not define, i.e. when
+    # aad_utils was unavailable (PEP 562).
+    raise ModuleNotFoundError(
+        f"src.data.aad_compat.{name} needs the 'aad_utils' package from the "
+        "repo's analysis/ directory, which is only required to rebuild caches "
+        "from the raw recordings") from _IMPORT_ERR
 
 
 def sanity_check() -> dict:
