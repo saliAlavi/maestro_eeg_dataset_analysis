@@ -90,15 +90,19 @@ Each stream goes through five dilated temporal convolutions
 \citep{yu2016dilated} with dilations $1,2,4,8,16$ and GroupNorm
 \citep{wu2018groupnorm} after each layer. This gives a window of $63$ samples
 ($0.98$\,s at $64$\,Hz), about the time over which the cortical response to
-speech unfolds \citep{lalor2009}. There is no activation on the last layer, and
-padding is symmetric; Appendix~\ref{app:encoder} explains both choices. One-sided
-versions restrict the model to a chosen range of delays
-(Section~\ref{sec:res-mm}).
+speech unfolds \citep{lalor2009}. There is no activation on the last layer,
+because a rectified output has no negative values and squeezes all the
+correlations the score depends on toward one. Padding is symmetric, because the
+brain responds $100$--$300$\,ms \emph{after} the sound, so an encoder that looks
+only backward in time cannot see the response. Appendix~\ref{app:encoder}
+details both choices. One-sided versions restrict the model to a chosen range of
+delays (Section~\ref{sec:res-mm}).
 
 \paragraph{A score that cannot use a constant brain signal.}
 \label{sec:coupling}
 For each of the $D\!=\!16$ embedding dimensions we compute the correlation over
-time between the EEG embedding $e$ and the candidate embedding $\hat a_k$. We
+time between the EEG embedding $e$ and the embedding $\hat a_k$ that the shared
+audio encoder computes from the $k$-th candidate envelope. We
 combine the $D$ values with a weight vector that has no bias, scale by a learned
 temperature, and subtract the mean over candidates:
 \begin{equation}
@@ -118,14 +122,16 @@ cannot win by being louder. Subtracting the mean over candidates removes anythin
 added equally to all of them, which is why $w$ has no bias.
 
 \paragraph{Orientation heads with no audio, and an audio-only adversary.}
-Gaze, head motion, scene motion and the foveal embedding show where the listener
-is facing. They have no timed relationship with speech, so asking them to match a
-speech envelope makes no sense --- and doing so made them collapse in our first
-attempt. Instead, each one feeds a classifier that predicts the loudspeaker index
-from the mean and standard deviation of its embedding over time. These heads get
+Gaze, head motion, scene motion and the foveal stream --- a frozen V-JEPA\,2
+embedding of the patch of scene around the gaze point
+(Section~\ref{sec:setup}) --- show where the listener is facing. They have no
+timed relationship with speech, so asking them to match a speech envelope makes
+no sense --- and doing so made them collapse in our first attempt. Instead, each
+one feeds a classifier head that predicts the loudspeaker index from the mean
+and standard deviation of its embedding over time. These classifier heads get
 \textbf{no audio input}, so shuffling them drops accuracy to chance, and anything
-above chance is earned by the recording. The EEG also gets such a head, because
-attention shifts brain activity toward one side. A learned, non-negative weight
+above chance is earned by the recording. The EEG also gets such a classifier
+head, because attention shifts brain activity toward one side. A learned, non-negative weight
 per stream and a small fusion layer combine the loudspeaker scores, which are then
 added to the coupling scores. Separately, a small head tries to find the correct
 candidate from the audio alone, behind a gradient-reversal layer
@@ -170,7 +176,10 @@ with the six terms
   \qquad f_{i,k}=\big[\,\mathrm{mean}_t\,\hat a_{i,k}\,;\,\mathrm{std}_t\,\hat a_{i,k}\big].
 \end{align*}
 Here $\mathrm{CE}_{0.1}$ is cross-entropy with label smoothing $0.1$ and
-$\mathrm{sp}$ is softplus. $\mathcal{L}_{\text{task}}$ trains the decision.
+$\mathrm{sp}$ is softplus. $\mathcal{L}_{\text{task}}$ is the decision loss:
+the cross-entropy between the $K$ final candidate scores $\ell_i$ and the index
+$y_i$ of the attended candidate, so it trains everything that feeds those
+scores.
 $\mathcal{L}_{\text{aux}}$ gives each orientation head $m\in\mathcal{O}$ its own
 loudspeaker prediction $u_i^m$, so the strongest stream cannot take all the
 gradient. $\mathcal{L}_{\text{con}}$ is a two-way contrastive loss

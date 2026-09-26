@@ -1,21 +1,57 @@
 \section{Related work}
+\label{sec:related}
 
+\paragraph{Decoding auditory attention.}
 Brain activity follows the speech a listener attends to \citep{ding2012,lalor2009}.
-Decoders either rebuild the speech envelope from EEG and compare it with each
-candidate \citep{osullivan2015}, or learn the match directly
-\citep{accou2021,monesi2020,puffay2023}; a separate line decodes the direction of
-attention \citep{vandecappelle2021}. Closest to our concern, \citet{rotaru2024}
-showed that direction decoding on several public datasets relies largely on eye
-movements rather than attention. We bring that concern to the matching task and
-to several streams at once, and make the check part of training and model choice
-rather than an after-the-fact test. The problem is a case of shortcut learning
+The oldest decoders are linear: they rebuild the speech envelope from the EEG and
+compare the reconstruction with each talker \citep{osullivan2015}. They are
+simple and well understood, but they need windows of tens of seconds to decide
+reliably \citep{geirnaert2021}, too slow for a hearing device. Deep models
+shorten the window in two ways. \emph{Match-mismatch} models learn directly
+whether a window of EEG goes with a window of speech
+\citep{accou2021,monesi2020,puffay2023}; our decoder belongs to this family.
+\emph{Direction} decoders drop the audio and classify which side the listener
+attends
+\citep{vandecappelle2021,yan2024darnet,fan2025listennet,ni2024dbpnet,xu2024densenet,zhang2025swim}.
+Both lines share a weakness: the reported accuracy often measures something other
+than attention. \citet{rotaru2024} showed that direction decoding on several
+public datasets relies largely on eye movements captured in the EEG rather than
+on attention, and when within-trial leakage between training and test is removed,
+recent direction decoders lose $17$ to $45$ points and several fall to chance
+\citep{alavi2026neurotoken} (Table~\ref{tab:published}). We bring the concern of
+\citet{rotaru2024} to the matching task and to several recorded streams at once,
+and make the check part of training and model choice rather than an
+after-the-fact test.
+
+\paragraph{Datasets.}
+The public AAD corpora record EEG and little else, and their designs deliberately
+hold the listener still, which is good for isolating the brain response and
+rules out the multimodal question: DTU uses earphones that simulate a room
+\citep{fuglsang2018dtu}, KU~Leuven a quiet booth \citep{biesmans2017kul,das2019kuldata},
+and a recent four-speaker dataset a chin rest \citep{yan2024fourspeaker}. A
+stream that was never recorded, from a listener who was not free to move, cannot
+compete with the EEG for credit. KU~Leuven has a further limitation we measure in
+Appendix~\ref{app:external}: one of its two talkers is attended in
+\R{extprior/kul/nrole} of \R{extprior/kul/ntrials} trials, so the audio alone
+carries part of the answer. AV-GC-AAD \citep{geirnaert2024avgc} records gaze and
+decouples it from attention on purpose --- the right tool for asking
+\emph{whether} a decoder reads gaze instead of the brain, but its other streams
+are designed to carry no information, so it cannot say how credit is shared among
+streams that do. MAESTRO \citep{maestro2026} records EEG, eye tracking, head
+motion and scene video from a listener who moves freely in a room of
+loudspeakers, which is why we work on it; its own limitation, an audio confound
+in the usual candidate construction, is the subject of
+Section~\ref{sec:failures}.
+
+\paragraph{Shortcut learning and multimodal balance.}
+The problem is a case of shortcut learning
 \citep{geirhos2020,torralba2011,gururangan2018}. The usual fixes rebalance the
 data \citep{goyal2017vqa} or train against a shortcut-only branch
 \citep{cadene2019rubi}; we add a scoring function in which the shortcut is
 impossible. Work on balancing modalities
 \citep{wang2020gradblend,huang2022competition,wu2022greedy,peng2022ogm} evens out
-how fast each stream learns; we measure each stream's effect on the decision at
-test time instead. The measurement is permutation importance
+how fast each stream learns during training; we measure each stream's effect on
+the decision at test time instead. The measurement is permutation importance
 \citep{breiman2001,fisher2019} and the Shapley value
 \citep{shapley1953,lundberg2017,covert2020} applied to whole streams; what is new
 is using it to choose models and to report every result.

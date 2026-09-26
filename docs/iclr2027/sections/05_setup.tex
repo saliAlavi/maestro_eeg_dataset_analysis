@@ -1,6 +1,25 @@
 \section{Experimental setup}
 \label{sec:setup}
 
+\paragraph{Data and task.}
+MAESTRO \citep{maestro2026} has sixteen listeners and one hundred trials each.
+In every trial four talkers speak at once from loudspeakers at fixed positions,
+and the listener is told beforehand which one to attend to. Trials last about
+$30$\,s. Each talker recording is used only once, so no audio is shared between
+training and test. The attended talker is about $15$\,dB louder than the others
+in every trial. We use five streams, all resampled to $64$\,Hz and standardised
+per channel: EEG ($32$ channels), gaze ($6$), head motion ($6$), optical flow
+from the scene camera ($4$), and one new stream, a \emph{frozen} V-JEPA\,2 ViT-L
+embedding \citep{assran2025vjepa2} of the part of the scene the listener is
+looking at (one $1024$-d vector per window, never trained). Signals are cut into
+windows of $W$ seconds with hop $H$ ($W\!=\!10$, $H\!=\!5$ unless stated). Each
+example holds the streams, $K$ candidate speech envelopes of which one is
+correct, the index of the correct one, the loudspeaker each candidate came from,
+and the listener's identity. The candidates are placed in random order in every
+window, so their position says nothing. At test time the order is fixed by the
+window's index, so every model we compare sees exactly the same inputs
+(Appendix~\ref{app:data}).
+
 Every result is defined by four choices: the candidate set, the split, the
 decision window and the set of streams. Every accuracy comes with its own
 shuffled baseline; an accuracy without one is not a result. Besides accuracy,
@@ -28,18 +47,11 @@ when we cite those numbers we take them from the paper.
 
 \paragraph{Why this dataset.}
 Crowding out between streams can only be studied when the streams are recorded
-\emph{and} the listener is free to produce them. This is rare. Public AAD datasets
-record EEG plus a few electrodes near the eyes for cleaning artifacts, and
-nothing else \citep{fuglsang2018dtu}, and their designs deliberately hold the
-listener still: earphones that simulate the room, a chin rest
-\citep{yan2024fourspeaker}, a sound booth. The closest dataset, AV-GC-AAD
-\citep{geirnaert2024avgc}, separates gaze from attention on purpose, to catch
-decoders that read gaze. That is the right tool for asking \emph{whether} a
-decoder uses gaze instead of the brain, and the wrong tool for asking how credit
-is shared among five streams, because four of them have been designed to carry no
-information. As far as we know, MAESTRO is the only public AAD dataset that
-records eye tracking, head motion and scene video together with EEG from a
-listener who is free to move in a room with several loudspeakers
-(Appendix~\ref{app:corpora}). The parts of \merit{} that do not need these streams
---- the audio probe and the coupling score --- work on any matching dataset, and
-we test them on two (Section~\ref{sec:res-mm}).
+\emph{and} the listener is free to produce them; Section~\ref{sec:related}
+reviews why the other public corpora rule this out by design. As far as we know,
+MAESTRO is the only public AAD dataset that records eye tracking, head motion
+and scene video together with EEG from a listener who is free to move in a room
+with several loudspeakers (Appendix~\ref{app:corpora}). The parts of \merit{}
+that do not need these streams --- the audio probe and the coupling score ---
+work on any matching dataset, and we test them on two
+(Section~\ref{sec:res-mm}).

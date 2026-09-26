@@ -29,13 +29,19 @@ same-talker candidates to \R{probe/shifted_qm/K2} against $0.50$
 The standard score normalises the brain and audio embeddings at each time step,
 multiplies them, averages over time and applies a linear layer
 \citep{accou2021,monesi2020}. Suppose the brain encoder outputs the same unit
-vector $\hat c$ at every step. Then the time average splits apart and the score
-becomes $w^\top(\hat c \odot \frac1T\sum_t \hat a_{k,t}) + b$: a linear classifier
-on the averaged audio, with exactly the power needed to read the audio mark of
-(i). So the architecture contains an audio-only decoder, which it reaches by
-letting the brain encoder go constant --- and this solution is easier to find
-than the intended one. Problem (i) makes the audio shortcut \emph{enough}; problem
-(ii) makes it \emph{reachable}.
+vector $\hat c$ at every step. This is not a hypothetical state: once the audio
+already carries the answer, the easiest way for gradient descent to lower the
+loss is to let the encoder ignore its noisy input and emit a constant, and we
+observe exactly this collapse when the standard model is trained on this data
+(Section~\ref{sec:res-ladder}). With a constant $\hat c$ the time average splits
+apart and the score becomes $w^\top(\hat c \odot \frac1T\sum_t \hat a_{k,t}) + b$,
+where $\hat a_{k,t}$ is the audio embedding of candidate $k$ at time step $t$,
+$T$ is the number of time steps in the window, $\odot$ is the elementwise
+product, and $w$ and $b$ are the weights and bias of the final linear layer.
+This is a linear classifier on the time-averaged audio, with exactly the power
+needed to read the audio mark of (i). So the architecture contains an audio-only
+decoder, which it reaches by letting the brain encoder go constant. Problem (i)
+makes the audio shortcut \emph{enough}; problem (ii) makes it \emph{reachable}.
 
 \paragraph{(iii) Easy streams crowd out the brain.}
 \label{sec:freeload}

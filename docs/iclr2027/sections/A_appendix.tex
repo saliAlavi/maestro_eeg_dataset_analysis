@@ -329,13 +329,13 @@ and several land near or below chance: the published numbers mostly measured the
 split, not the decoder. NeuroToken is the strongest prior result that survives a
 split without leakage. \textbf{On unseen listeners, \merit{} is more accurate than
 NeuroToken on both datasets}: \R{extkulloso5/eeg_centred/loso/acc} on
-KU~Leuven and \R{extdtuloso5/eeg_centred/loso/acc} on DTU, against NeuroToken's
-$0.634$ and $0.592$, and positive for every one of the
+KU~Leuven and \R{extdtuloso5/eeg_centred/loso/acc} on DTU
+(Table~\ref{tab:published}), and positive for every one of the
 \R{extkulloso5/eeg_centred/loso/nfolds} and \R{extdtuloso5/eeg_centred/loso/nfolds}
-held-out listeners. Within listeners it is not: NeuroToken reaches $0.864$ and
-$0.837$ against our \R{extkulwithin5/eeg_centred/within/acc} and
-\R{extdtuwithin5/eeg_centred/within/acc}, and DenseNet-3D is also higher on the four
-KU~Leuven listeners it was run on. The five direction decoders were re-run within
+held-out listeners. Within listeners it is not: NeuroToken is more accurate than
+our \R{extkulwithin5/eeg_centred/within/acc} and
+\R{extdtuwithin5/eeg_centred/within/acc} on both, and DenseNet-3D is also higher
+on the four KU~Leuven listeners it was run on. The five direction decoders were re-run within
 listeners only, so they have no unseen-listener number to compare. Two differences from our setting remain. First, NeuroToken holds
 out whole trials, while we hold out whole stimuli. KU~Leuven repeats stories across
 trials --- its third part replays the first --- so a split by trial can still put

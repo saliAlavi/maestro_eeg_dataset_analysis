@@ -10,8 +10,8 @@ it cannot tell which voice matters, so it amplifies all of them, including the
 ones the listener is trying to ignore. \emph{Auditory attention decoding} (AAD)
 addresses this \citep{osullivan2015,geirnaert2021}. The brain's response follows
 the speech a listener attends to \citep{ding2012,lalor2009}, so a decoder can
-read that response from EEG, find the attended talker, and steer a hearing device
-toward them \citep{pan2024neuroheed}.
+read that response from the electroencephalogram (EEG), find the attended
+talker, and steer a hearing device toward them \citep{pan2024neuroheed}.
 
 \paragraph{Why several streams matter.}
 Such a device will not see the brain alone. Glasses and earbuds already carry
@@ -34,22 +34,34 @@ enough. Whatever the EEG adds, it adds through the brain signal. A multimodal
 decoder should therefore use the other streams as helpers, but it must not let
 them replace the EEG. Accuracy cannot tell us whether this holds. A multimodal
 model is reported with one number, and that number does not say which input
-produced it; a decoder that reads only behaviour can look, from its accuracy,
-exactly like one that reads the brain \citep{rotaru2024}.
+produced it. A decoder that silently decides from gaze and head motion and a
+decoder that truly reads attention from the EEG can therefore report the same
+accuracy, even though only the second keeps working when facing and listening
+disagree. The risk is real: \citet{rotaru2024} found that decoders believed to
+read spatial attention from EEG owed most of their accuracy to eye movements
+captured in the recording.
 
 The usual formulation is a matching task. The model sees a window of the
 recording and $K$ candidate speech signals, one of which is the attended talker,
 and it must pick that one; accuracy is compared with chance, $1/K$
-\citep{accou2021,monesi2020,puffay2023}. We show that this task can be solved
-without using the brain signal at all, in three ways (Section~\ref{sec:failures}).
+\citep{accou2021,monesi2020,puffay2023}. We study it on MAESTRO
+\citep{maestro2026}, a public dataset in which sixteen listeners each attend one
+of four talkers speaking at once while EEG, eye tracking, head motion and scene
+video are recorded together (Section~\ref{sec:setup}). We show that this task
+can be solved without using the brain signal at all, in three ways
+(Section~\ref{sec:failures}).
 \textbf{(i) The audio gives the answer away.} Scaling each candidate to the same
 loudness does not make the candidates look alike: statistics such as skew and
 sparsity do not change with scale. On this dataset they differ between attended
 and ignored talkers, and a simple classifier that sees only the audio reaches
 \R{probe/raw/K4} four-way accuracy, against a chance of \R{probe/raw/K4/chance}.
-\textbf{(ii) The standard scoring function has a shortcut.} If the brain encoder
-outputs the same vector at every time step, the usual score turns into a
-classifier on the audio alone, and training often finds this solution.
+\textbf{(ii) The standard scoring function gives the model a path to the leak.}
+Problem (i) says the answer is \emph{present} in the audio; this one says the
+standard architecture can \emph{reach} it without the brain. If the brain
+encoder outputs the same vector at every time step --- the collapse an encoder
+falls into when its input stops helping --- the usual score reduces to a
+classifier on the audio alone, and training often finds this solution because it
+is easier than the intended one.
 \textbf{(iii) Easy streams crowd out the brain.} When several streams are
 available, training leans on the easiest one
 \citep{wang2020gradblend,huang2022competition,wu2022greedy,peng2022ogm}. Here
@@ -63,10 +75,9 @@ drop the \textbf{contribution} of that stream. A decoder that does not use a
 stream loses nothing when it is shuffled. This paper turns that test from an
 occasional check into the centre of the method.
 
-We work on MAESTRO \citep{maestro2026}, a public multimodal AAD dataset released
-with a benchmark. The benchmark already reports a permutation test: it shuffles
-the EEG, gaze, head motion and video \emph{together}, and its contributions are
-positive. That shows the listener's signals are used. It cannot show \emph{which}
+MAESTRO was released with a benchmark, and the benchmark already reports a
+permutation test: it shuffles the EEG, gaze, head motion and video
+\emph{together}, and its contributions are positive. That shows the listener's signals are used. It cannot show \emph{which}
 signal is used, and problem (iii) sits exactly there, because a joint test gives
 its largest value when a strong behavioural stream has pushed the brain aside.
 \merit{} shuffles each stream \emph{separately} and splits the total exactly
@@ -77,14 +88,16 @@ benchmark's $0.698$ and $0.674$ (Section~\ref{sec:res-full}).
 
 \paragraph{Contributions.}
 \textbf{(1) A per-stream measure of credit} (Section~\ref{sec:shapley}). We
-compute each stream's Shapley value over all $2^M$ subsets of intact streams.
+compute each stream's Shapley value over all $2^M$ subsets of the $M$ recorded
+streams ($M\!=\!5$ here), keeping the streams in a subset intact and shuffling
+the rest.
 The values add up exactly to the total contribution, and they are cheap enough
 to report for every run.
 \textbf{(2) A decoder in which the shortcuts are blocked by design}
 (Section~\ref{sec:method}). A time-centred correlation score gives every
 candidate the same score when the brain encoder is constant, so that shortcut
-lands exactly at chance. Heads that read gaze and head motion get no audio, so
-they cannot use audio cues. The candidate audio is tested before training.
+lands exactly at chance. The classifier heads that read gaze and head motion
+receive no audio, so they cannot use audio cues. The candidate audio is tested before training.
 \textbf{(3) Choosing checkpoints by contribution, not accuracy}, which trades a
 little accuracy for a larger share of credit on the brain.
 \textbf{(4) Findings.} Adding behavioural streams cuts the brain's share of the
