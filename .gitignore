@@ -112,6 +112,8 @@ Thumbs.db
 *.swo
 *~
 .scratch/
+# generated artifacts (supplementary zip + staging via src/tools/build_supplementary.py)
+tmp/
 
 # Loader build dir was created during pypi push
 hf_release/maestro-loader-pkg/dist/
